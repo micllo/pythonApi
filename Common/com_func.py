@@ -10,14 +10,13 @@ from email.mime.multipart import MIMEMultipart
 import smtplib
 import traceback
 from Config import config as cfg
-from Config import global_var as gv
 import requests
 import json
 
 
 log = FrameLog().log()
 
-NULL_LIST = [np.nan, np.NaN, " ", "", None, "nan", "NaN", "None", "null", []]
+NULL_LIST = [" ", "", None, "nan", "NaN", "None", "null", []]
 
 
 def is_null(tgt):
@@ -26,7 +25,7 @@ def is_null(tgt):
     :param tgt: 输入的string或者unicode
     :return: boolean
     """
-    if tgt not in NULL_LIST and not pd.isnull(tgt):
+    if tgt not in NULL_LIST:
         isnull_res = False
     else:
         isnull_res = True
@@ -52,19 +51,7 @@ class MyThread(threading.Thread):
 
 # 获取项目路径
 def project_path():
-    return os.path.split(os.path.realpath(__file__))[0].split('C')[0]
-
-
-# 获取当前的'类名/方法名/'(提供截屏路径使用)
-def get_current_function_name(class_instance):
-    return class_instance.__class__.__name__ + "/" + inspect.stack()[1][3] + "/"
-
-
-# 获取'config.ini'文件中的（ 获取 [test_url] 下的 baidu_rul 的值
-def get_config_ini(key, value):
-    config = configparser.ConfigParser()
-    config.read(project_path() + "Config/config_test_url.ini")
-    return config.get(key, value)
+    return os.path.split(os.path.realpath(__file__))[0].split('Common')[0]
 
 
 # 递归创建目录
@@ -146,7 +133,7 @@ def send_DD(dd_group_id, title, text, at_phones, is_at_all=False):
     data = {"msgtype": "markdown"}
     data["markdown"] = {"title": title, "text": text + at_text}
     data["at"] = {"atMobiles": at_mobiles, "isAtAll": at_all}
-    dd_url = gv.DD_BASE_URL + dd_group_id
+    dd_url = "https://oapi.dingtalk.com/robot/send?access_token=" + dd_group_id
     log.info(data)
     headers = {'Content-Type': 'application/json'}
     try:
@@ -155,9 +142,6 @@ def send_DD(dd_group_id, title, text, at_phones, is_at_all=False):
     except Exception as e:
         log.error("钉钉发送失败")
         log.error(e)
-
-
-
 
 
 if __name__ == "__main__":

@@ -13,6 +13,9 @@ NGINX_PORT = "7060"
 # Nginx中的接口反向代理名称
 NGINX_API_PROXY = "api_local"
 
+# 保存上传的用例文件
+UPLOAD_CASE_FILE = "/Users/micllo/Documents/works/GitHub/pythonApi/tmp/upload_case_file.xlsx"
+
 
 ############################################# 相 同 的 配 置 #############################################
 
