@@ -1,7 +1,7 @@
 /**
  *  执 行 导 入
  */
-function exec_import(nginx_api_proxy){
+function exec_import(pro_name, nginx_api_proxy){
     swal({
         title: "确定要执行导入吗?",
         text: "",
@@ -15,7 +15,6 @@ function exec_import(nginx_api_proxy){
             var file = $("#file").val().trim();
             var import_method = $("#import_method").val().trim();
             var file_suffix = file.split(".")[1]
-            var params_dict = {"file": file, "import_method": import_method};
             if(file == ""){
                 swal({text: "上传文件不能为空！", type: "error", confirmButtonText: "知道了"});
             }else if(file_suffix != "xls" && file_suffix != "xlsx" && file_suffix != "csv"){
@@ -25,34 +24,30 @@ function exec_import(nginx_api_proxy){
             }else{
                 // 获取file文件
                 var file_data = new FormData($("#import_action_form")[0]);
-                var file_data1 = new FormData($("#import_action_form")[1]);
-                var file_data2 = new FormData($("#import_action_form")[2]);
-                console.log(file_data)
-                console.log(file_data1)
-                console.log(file_data2)
-                console.log(typeof file_data)
                 // 调用ajax请求(同步)
-                var request_url = "/" + nginx_api_proxy + "/API/import_action/" + import_method
+                var request_url = "/" + nginx_api_proxy + "/API/import_action/" + pro_name + "/" + import_method
                 var response_info = request_interface_url_v2(url=request_url, method="POST", data=file_data, async=false, is_file=true);
                 if(response_info == "请求失败"){
                     swal({text: response_info, type: "error", confirmButtonText: "知道了"});
                     $("#exec_result").html(response_info);
                     $("#exec_result").removeClass().addClass("label label-danger");
                 }else{
-                    var msg = response_info["msg"];
+                    var msg = response_info.msg;
                     if (msg.search("成功") != -1){
                         swal({text: msg, type: "success", confirmButtonText: "知道了"});
-                        $("#exec_result").html(response_info.msg);
+                        $("#exec_result").html(msg);
                         $("#exec_result").removeClass().addClass("label label-success");
+                        setTimeout(function(){location.reload();}, 2000);
                     }else{
                         swal({text: msg, type: "error", confirmButtonText: "知道了"});
-                        $("#exec_result").html(response_info.msg);
+                        $("#exec_result").html(msg);
                         $("#exec_result").removeClass().addClass("label label-warning");
                     }
                 }
             }
-            // 清空'上传文件'选项
+            // 清空'上传文件'选项和'导入方式'下拉框
             $("#file").val("");
+            $("#import_method").val("");
         }
     }).catch((e) => {
         console.log(e)

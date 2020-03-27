@@ -73,20 +73,21 @@ def get_test_case_list(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
-    result_dict["test_case_list"] = []
+    result_dict["test_case_list"] = get_test_case(pro_name)
     return render_template('project.html', tasks=result_dict)
 
 
-@flask_app.route("/API/import_action/<import_method>", methods=["POST"])
-def import_action(import_method):
+@flask_app.route("/API/import_action/<pro_name>/<import_method>", methods=["POST"])
+def import_action(pro_name, import_method):
     """
     导入用例操作
+    :param pro_name
     :param import_method: 导入方式（批量新增、全部替换、批量替换）
     :return:
     """
     # 获取request中的upload文件
     upload_file = request.files.get("file", None)
-    res_info = case_import_action(upload_file, import_method)
+    res_info = case_import_action(pro_name, upload_file, import_method)
     return json.dumps(res_info, ensure_ascii=False)
 
 

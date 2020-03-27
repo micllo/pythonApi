@@ -56,7 +56,7 @@ def case_import_action(pro_name, upload_file, import_method):
         verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
         res_info["msg"] = verify_result
         if verify_result == "验证通过":
-            import_mongodb(pro_name, excel_list, import_method)
+            res_info["msg"] = import_mongodb(pro_name, excel_list, import_method)
     return res_info
 
 
@@ -67,14 +67,10 @@ def import_mongodb(pro_name, excel_list, import_method):
     :param excel_list:
     :param import_method: 导入方式（batch_insert、all_replace、batch_insert_and_replace）
     :return:
-
     【 备 注 】
     all_replace：先清空数据库，然后全部插入
-    batch_insert：先找出不在数据库中的用例列表，然后插入
-    batch_insert_and_replace：先区分'不在数据库中的用例列表'和'需要更新的用例列表'，分别执行插入和更新操作
-
-    【 步 骤 】
-
+    batch_insert：区分'不在数据库中的用例列表'和'需要更新的用例列表'，只执行插入操作
+    batch_insert_and_replace：区分'不在数据库中的用例列表'和'需要更新的用例列表'，分别执行插入和更新操作
     """
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -82,6 +78,7 @@ def import_mongodb(pro_name, excel_list, import_method):
             if import_method == "all_replace":
                 pro_db.drop()
                 pro_db.insert_many(filled_other_field(excel_list))
+                return "全部替换 操作成功 ！"
             else:
                 # 获取数据库中的'接口名称列表'
                 all_case_in_db = pro_db.find()
@@ -94,18 +91,23 @@ def import_mongodb(pro_name, excel_list, import_method):
                         update_list.append(line_dict)
                     else:
                         insert_list.append(line_dict)
-                print(insert_list)
-                print(update_list)
-                # 插入新增的数据
-                if not is_null(insert_list):
-                    pro_db.insert_many(filled_other_field(insert_list))
-                # 更新数据
-                if not is_null(update_list) and import_method == "batch_insert_and_replace":
-                    for line_dict in update_list:
-                        line_dict["update_time"] = get_current_iso_date()
-                        query_dict = {"interface_name": line_dict["interface_name"]}
-                        update_dict = {"$set": line_dict}
-                        pro_db.update(query_dict, update_dict)
+
+                if import_method == "batch_insert":
+                    # 插入新增的数据
+                    if not is_null(insert_list):
+                        pro_db.insert_many(filled_other_field(insert_list))
+                    return "批量新增 操作成功 ！"
+                else:  # batch_insert_and_replace
+                    if not is_null(insert_list):
+                        pro_db.insert_many(filled_other_field(insert_list))
+                    # 更新数据
+                    if not is_null(update_list):
+                        for line_dict in update_list:
+                            line_dict["update_time"] = get_current_iso_date()
+                            query_dict = {"interface_name": line_dict["interface_name"]}
+                            update_dict = {"$set": line_dict}
+                            pro_db.update(query_dict, update_dict)
+                    return "批量新增+替换 操作成功 ！"
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="导入'" + pro_name + "'项目excel测试用例数据")
             return "mongo error"
@@ -113,14 +115,6 @@ def import_mongodb(pro_name, excel_list, import_method):
 
 def filled_other_field(excel_list):
     """
-    14.响应信息：response_info
-    15.实际的关键字段值：actual_core_field_value    < (Mongo)list -> (Excel)string >
-    16.关键字段值比较结果：result_core_field_value
-    17.响应字段列表比较结果：result_field_name_list
-    18.测试结果：test_result
-    19.创建时间：create_time   < (Mongo)ISODate -> (Excel)string >
-    20.更新时间：update_time   < (Mongo)ISODate -> (Excel)string >
-
     【 填补其他的字段 】
     :param excel_list:
     :return:
@@ -138,14 +132,6 @@ def filled_other_field(excel_list):
     return excel_list
 
 
-def show_excel_list(excel_list):
-    for index, line_dict in enumerate(excel_list):
-        print("\n======= " + str(index) + " =========\n")
-        for key, value in line_dict.items():
-            print(value)
-            print(type(value))
-
-
 def verify_excel_and_transfer_format(excel_file):
     """
     【 验 证 并 装 换 Excel 用 例 格 式 】
@@ -156,17 +142,21 @@ def verify_excel_and_transfer_format(excel_file):
     3.检查必填项 -> get_not_null_field_list()
     4.检查是否存在重复的用例(接口名称)
     5.转换相关字段值的类型与格式
-    （1）执行模式：exec_mode
+    （1）验证模式：verify_mode
         问题：<Excel> 显示 1、2  <python> 显示 1.0、2.0 （ float类型 )
         解决：将 float 转换成 int 类型
     （2）用例状态：case_status
         问题：<Excel> 显示 FALSE、TRUE  <python> 显示 0、1 （ int类型 )
         解决：将 int 或 '其他形式字符串' 转换成 bool 类型（ 其他形式字符串：空、"false"、"true"、"False"、"True"等)
     （3）将(以","分割)的相关字段值转换成list -> get_list_field()
-        < 里面的每一个元素的类型都是'str'（eg: "5"、"True") >
+        - 检查这些字段中是否存在中文逗号
+        - < 里面的每一个元素的类型都是'str'（eg: "5"、"True") >
     """
     # 读取Excel用例文件
     excel_list = read_excel(excel_file, 0)
+
+    if excel_list == []:
+        return "上传的excel文件中没有用例", None
 
     # 1.获取用例字段名列表（去除前后空格）
     case_field_list = list(excel_list[0].keys())
@@ -195,12 +185,12 @@ def verify_excel_and_transfer_format(excel_file):
         interface_num_dict[interface_name] = interface_name_list.count(interface_name)
     for interface_name, num in interface_num_dict.items():
         if num > 1:
-            return "< interface_name = " + interface_name + " > 字段重复出现了 " + str(num) + " 次", None
+            return "interface_name = " + interface_name + " 字段重复出现了 " + str(num) + " 次", None
 
     # 5.转换字段值的类型与格式
     for index, line_dict in enumerate(excel_list):
         for key, value in line_dict.items():
-            if key.strip() == "exec_mode":
+            if key.strip() == "verify_mode":
                 line_dict[key] = int(value)
             if key.strip() == "case_status":
                 if type(value) is int:
@@ -211,10 +201,54 @@ def verify_excel_and_transfer_format(excel_file):
                 if value.strip() == "":
                     line_dict[key] = []
                 else:
-                    line_dict[key] = str(value.strip()).split(",")
+                    if "，" in value.strip():
+                        return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
+                    else:
+                        line_dict[key] = str(value.strip()).split(",")
 
     # show_excel_list(excel_list)
     return "验证通过", excel_list
+
+
+def show_excel_list(excel_list):
+    for index, line_dict in enumerate(excel_list):
+        print("\n======= " + str(index) + " =========\n")
+        for key, value in line_dict.items():
+            print(value)
+            print(type(value))
+
+
+def get_test_case(pro_name):
+    """
+    根据项目获取测试用例列表（上线的排在前面）
+    :param pro_name:
+    :return: 返回值
+    """
+    test_case_list = []
+    on_line_list = []
+    off_line_list = []
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            results = pro_db.find({}, {"_id": 0})
+            for res in results:
+                test_case_dict = dict()
+                test_case_dict["interface_name"] = res.get("interface_name")
+                test_case_dict["interface_url"] = res.get("interface_url")
+                test_case_dict["request_method"] = res.get("request_method")
+                test_case_dict["request_params"] = res.get("request_params")
+                test_case_dict["verify_mode"] = res.get("verify_mode")
+                test_case_dict["case_status"] = res.get("case_status")
+                test_case_dict["update_time"] = res.get("update_time")
+                if res.get("case_status"):
+                    on_line_list.append(test_case_dict)
+                else:
+                    off_line_list.append(test_case_dict)
+            test_case_list = on_line_list + off_line_list
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试用例列表")
+            return "mongo error"
+        finally:
+            return test_case_list
 
 
 if __name__ == "__main__":
