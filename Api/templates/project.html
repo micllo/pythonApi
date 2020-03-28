@@ -87,11 +87,6 @@
                                                     <input id="interface_name" name="interface_name" type="text" class="form-control" placeholder="接口名称">
                                                 </div>
                                             </div>
-                                            <div class="col-sm-2">
-                                                <div class="fg-line">
-                                                    <input id="request_method" name="request_method" type="text" class="form-control" placeholder="请求方式">
-                                                </div>
-                                            </div>
                                             <div class="col-sm-3">
                                                 <div class="fg-line">
                                                     <input id="interface_url" name="interface_url" type="text" class="form-control" placeholder="接口地址">
@@ -99,10 +94,24 @@
                                             </div>
                                             <div class="col-sm-2">
                                                 <div class="input-group">
+                                                    <span class="input-group-addon">请求方式：</span>
+                                                    <div class="fg-line">
+                                                        <select class="form-control" id="request_method" name="request_method">
+                                                            <option value="">全部</option>
+                                                            <option value="GET">GET</option>
+                                                            <option value="POST">POST</option>
+                                                            <option value="PUT">PUT</option>
+                                                            <option value="DELETE">DELETE</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-2">
+                                                <div class="input-group">
                                                     <span class="input-group-addon">用例状态：</span>
                                                     <div class="fg-line">
                                                         <select class="form-control" id="case_status" name="case_status">
-                                                            <option value=""></option>
+                                                            <option value="">全部</option>
                                                             <option value="true">上线</option>
                                                             <option value="false">下线</option>
                                                         </select>
@@ -111,13 +120,13 @@
                                             </div>
                                             <div class="col-sm-1">
                                                 <div class="input-group" id="search_btn">
-                                                    <button class="btn btn-success btn-icon" onclick="search_acrm_wl(this, 1, 'unknown')"><i class="fa fa-search"></i></button>
+                                                    <button class="btn btn-success btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>
                                                 </div>
                                             </div>
 
                                             <div class="col-sm-1">
                                                 <span class="input-group">
-                                                    <button class="btn btn-default" type="button" data-toggle="modal" data-target="#add_acrm_wl"><i class="fa fa-plus-circle fa-2x" style="color: #FFA07A"></i></button>
+                                                    <button class="btn btn-default" type="button" data-toggle="modal" data-target="#add_case_form"><i class="fa fa-plus-circle fa-2x" style="color: #FFA07A"></i></button>
                                                 </span>
                                             </div>
                                         </div>
@@ -129,41 +138,37 @@
                                                     <th>接口名称</th>
                                                     <th class="text-center">请求方式</th>
                                                     <th>接口地址</th>
-                                                    <th class="text-center">请求参数</th>
+                                                    <th class="text-center">验证关键字段</th>
                                                     <th class="text-center">验证模式</th>
                                                     <th class="text-center">用例状态</th>
                                                     <th class="text-center">更新时间</th>
                                                     <th class="text-center">操作</th>
                                                 </tr>
                                                 </thead>
-                                                <tbody id="acrm_wl_tbody">
+                                                <tbody id="case_tbody">
                                                 {% for test_case in test_case_list %}
+                                                    {% set _id = test_case["_id"] %}
                                                     {% set interface_name = test_case["interface_name"] %}
                                                     {% set request_method = test_case["request_method"] %}
                                                     {% set interface_url = test_case["interface_url"] %}
                                                     {% set request_params = test_case["request_params"] %}
+                                                    {% set compare_core_field_name = test_case["compare_core_field_name"] %}
+                                                    {% set expect_core_field_value = test_case["expect_core_field_value"] %}
+                                                    {% set expect_field_name_list = test_case["expect_field_name_list"] %}
                                                     {% set verify_mode = test_case["verify_mode"] %}
                                                     {% set case_status = test_case["case_status"] %}
                                                     {% set update_time = test_case["update_time"] %}
                                                     <tr>
                                                         <td style="width: 150px; display:table-cell; vertical-align:middle;">{{ interface_name }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">{{ request_method }}</td>
-                                                        <td style="width: 250px; display:table-cell; vertical-align:middle;">{{ interface_url }}</td>
-                                                        {% if request_params %}
-                                                            <td  class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">显示</td>
-                                                        {% else %}
-                                                            <td  class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;"> </td>
-                                                        {% endif %}
-                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">{{ verify_mode }}</td>
-                                                        {% if case_status %}
-                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;"><font color="#00A600">上线</font></td>
-                                                        {% else %}
-                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;"><font color="#DC143C">下线</font></td>
-                                                        {% endif %}
+                                                        <td style="width: 250px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
+                                                        <td  class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value }}">{{ compare_core_field_name }}</td>
+                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的响应字段列表" data-content="{{ expect_field_name_list }}">{{ verify_mode }}</td>
+                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;"> {% if case_status %} <font color="#00A600">上线</font> {% else %} <font color="#DC143C">下线</font> {% endif %} </td>
                                                         <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ update_time }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
-                                                            <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ id }}','{{ user_nm }}','{{ user_phone }}','{{ user_idcd }}','{{ user_src }}','{{ valid }}')" data-toggle="modal" data-target="#edit_acrm_wl"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
-                                                            <button class="btn btn-default" type="button" onclick="del_acrm_wl('{{ user_idcd }}')"><i class="fa fa-trash-o fa-lg" style="color: #ff0000"></i></button>
+                                                            <button class="btn btn-default" type="button" onclick="fill_edit_frame()" data-toggle="modal" data-target="#edit_case"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
+                                                            <button class="btn btn-default" type="button" onclick="del_case('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')"><i class="fa fa-trash-o fa-lg" style="color: #ff0000"></i></button>
                                                         </td>
                                                     </tr>
                                                 {% endfor %}
@@ -190,6 +195,105 @@
         <div style=" position:fixed;right:50px; bottom:30px; width:20px; height:20px;cursor:pointer">
             <a href="#"><span class="glyphicon glyphicon-eject" style = "font-size:30px;" aria-hidden="true"></span></a>
         </div>
+
+        <!-- 新增窗口 -->
+        <div id="add_case_form" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                        <div class="modal-title">
+                            <h2 class="text-center">新增测试用例</h2>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>接口名称：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="interface_name_all" placeholder="接口名称">
+                        </div>
+                        <div class="form-group">
+                            <label>接口地址：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="interface_url_all" placeholder="接口地址">
+                        </div>
+                        <div class="form-group">
+                            <label>请求方式：<font color="#DC143C">(必选)</font></label>
+                            <div class="fg-line">
+                                <select class="form-control" id="request_method_all">
+                                    <option value=""></option>
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>请求头文件：<font color="#B8860B">eg: &nbsp;{"Content-Type": "application/json"}</font></label>
+                            <input class="form-control" type="text" id="request_header_all" placeholder="请求头文件">
+                        </div>
+                        <div class="form-group">
+                            <label>请求参数：<font color="#B8860B">eg: &nbsp;?name=测试&age=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
+                            <input class="form-control" type="text" id="request_params_all" placeholder="请求参数">
+                        </div>
+                        <div class="form-group">
+                            <label>验证模式：<font color="#DC143C">(必选)</font></label>
+                            <div class="fg-line">
+                                <select class="form-control" id="verify_mode_all">
+                                    <option value=""></option>
+                                    <option value="1">仅验证关键字段</option>
+                                    <option value="2">同时验证关键字段和验证响应参数列表</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>待比较关键字段名：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <input class="form-control" type="text" id="compare_core_field_name_all" placeholder="待比较关键字段名">
+                        </div>
+                        <div class="form-group">
+                            <label>期望的关键字段值：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <input class="form-control" type="text" id="expect_core_field_value_all" placeholder="期望的关键字段值">
+                        </div>
+
+                        <div class="form-group">
+                            <label>期望的响应字段列表：</font><font color="#B8860B">eg: &nbsp;status,msg,code</font></label>
+                            <input class="form-control" type="text" id="expect_field_name_list_all" placeholder="期望的响应字段列表">
+                        </div>
+                        <div class="form-group">
+                            <label>依赖接口名称：</font><font color="#B8860B">eg: &nbsp;登录接口,获取验证码接口</font></label>
+                            <input class="form-control" type="text" id="depend_interface_all" placeholder="依赖接口名称">
+                        </div>
+                        <div class="form-group">
+                            <label>依赖字段名：</font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
+                            <input class="form-control" type="text" id="depend_field_name_all" placeholder="依赖字段名">
+                        </div>
+                        <div class="form-group">
+                            <label>依赖字段值：</font><font color="#B8860B">eg: &nbsp;123456,383838</font></label>
+                            <input class="form-control" type="text" id="depend_field_value_all" placeholder="依赖字段值">
+                        </div>
+                        <div class="form-group">
+                            <label>用例状态：</label>
+                            <div class="fg-line">
+                                <select class="form-control" id="case_status_all">
+                                    <option value="false">下线</option>
+                                    <option value="true">上线</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="save" onclick="add_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><span class="glyphicon glyphicon-floppy-disk"></span>保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <script src="/{{nginx_api_proxy}}/static/scripts/jquery.min.js" type="text/javascript"></script>
         <script src="/{{nginx_api_proxy}}/static/scripts/bootstrap.min.js" type="text/javascript"></script>

@@ -91,6 +91,42 @@ def import_action(pro_name, import_method):
     return json.dumps(res_info, ensure_ascii=False)
 
 
+@flask_app.route("/API/search_case/<pro_name>", methods=["GET"])
+def search_case(pro_name):
+    """
+    搜到用例
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["test_case_list"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/add_case/<pro_name>", methods=["POST"])
+def add_case(pro_name):
+    """
+    添加用例
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = get_case_add_result(request_json=request.json, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/del_case/<pro_name>", methods=["POST"])
+def del_case(pro_name):
+    """
+    删除用例
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = get_case_del_result(request_json=request.json, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
 # @flask_app.route("/WEB/sync_run_case/<pro_name>", methods=["POST"])
 # def run_case(pro_name):
 #     """

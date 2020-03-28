@@ -5,11 +5,12 @@ from Tools.excel_data import read_excel
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field
 from Tools.mongodb import MongodbUtils
 from Common.test_func import mongo_exception_send_DD
-from Common.com_func import is_null
+from Common.com_func import is_null, log
 from dateutil import parser
 from Tools.date_helper import get_current_iso_date
 import unittest
-
+import re
+from bson.objectid import ObjectId
 # sys.path.append("./")
 
 
@@ -140,7 +141,9 @@ def verify_excel_and_transfer_format(excel_file):
     （1）是否有多余的字段
     （2）是否有缺失的字段
     3.检查必填项 -> get_not_null_field_list()
-    4.检查是否存在重复的用例(接口名称)
+    4.检查是否存在重复的用例
+    （1）'接口名称'是否存在重复
+    （2）'请求方式+接口地址'是否存在重复
     5.转换相关字段值的类型与格式
     （1）验证模式：verify_mode
         问题：<Excel> 显示 1、2  <python> 显示 1.0、2.0 （ float类型 )
@@ -171,21 +174,31 @@ def verify_excel_and_transfer_format(excel_file):
             return "存在多余的列", None
 
     # 3.检查必填项
-    interface_name_list = []
     for index, line_dict in enumerate(excel_list):
         for key, value in line_dict.items():
             if key.strip() in get_not_null_field_list() and str(value).strip() == "":
                 return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段不能为空", None
-            if key.strip() == "interface_name":
-                interface_name_list.append(value)
 
-    # 4.检查是否存在重复的用例(接口名称)
-    interface_num_dict = {}
+    # 4.检查是否存在重复的用例(接口名称、请求方式+接口地址)
+    interface_name_list = []  # '接口名称'列表
+    method_and_url_list = []  # '请求方式+接口地址'列表
+    for index, line_dict in enumerate(excel_list):
+        interface_name_list.append(str(line_dict["interface_name"]).strip())
+        method_and_url_list.append(str(line_dict["request_method"]).strip() + str(line_dict["interface_url"]).strip())
+
+    interface_num_dict = {}  # 记录'接口名称'出现的次数 { "test_01": 1, "test_02": 2 }
     for interface_name in set(interface_name_list):
         interface_num_dict[interface_name] = interface_name_list.count(interface_name)
     for interface_name, num in interface_num_dict.items():
         if num > 1:
             return "interface_name = " + interface_name + " 字段重复出现了 " + str(num) + " 次", None
+
+    method_and_url_num_dict = {}  # 记录'请求方式+接口地址'出现的次数 { "GET/test/add": 1, "POST/test/update": 2 }
+    for method_and_url in set(method_and_url_list):
+        method_and_url_num_dict[method_and_url] = method_and_url_list.count(method_and_url)
+    for method_and_url, num in method_and_url_num_dict.items():
+        if num > 1:
+            return "request_method + interface_url = " + method_and_url + " 的组合重复出现了 " + str(num) + " 次", None
 
     # 5.转换字段值的类型与格式
     for index, line_dict in enumerate(excel_list):
@@ -229,13 +242,17 @@ def get_test_case(pro_name):
     off_line_list = []
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
-            results = pro_db.find({}, {"_id": 0})
+            results = pro_db.find({})
             for res in results:
                 test_case_dict = dict()
+                test_case_dict["_id"] = str(res.get("_id"))
                 test_case_dict["interface_name"] = res.get("interface_name")
                 test_case_dict["interface_url"] = res.get("interface_url")
                 test_case_dict["request_method"] = res.get("request_method")
                 test_case_dict["request_params"] = res.get("request_params")
+                test_case_dict["compare_core_field_name"] = res.get("compare_core_field_name")
+                test_case_dict["expect_core_field_value"] = res.get("expect_core_field_value")
+                test_case_dict["expect_field_name_list"] = res.get("expect_field_name_list")
                 test_case_dict["verify_mode"] = res.get("verify_mode")
                 test_case_dict["case_status"] = res.get("case_status")
                 test_case_dict["update_time"] = res.get("update_time")
@@ -246,15 +263,211 @@ def get_test_case(pro_name):
             test_case_list = on_line_list + off_line_list
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试用例列表")
-            return "mongo error"
+            return []
         finally:
             return test_case_list
 
 
+def get_case_search_result(request_args, pro_name):
+    """
+    获取用例搜索结果
+    :param request_args: GET请求参数
+    :param pro_name:
+    :return:
+    【 搜索逻辑 】
+    1.若有搜索内容且用例状态为全部，则将上线的用例排在前面
+    """
+    search_pattern = {}
+    if request_args:
+        interface_name = request_args.get("interface_name", "").strip()
+        interface_url = request_args.get("interface_url", "").strip()
+        request_method = request_args.get("request_method", "").strip()
+        case_status = request_args.get("case_status", "").strip()
+        if interface_name:
+            search_pattern["interface_name"] = re.compile(interface_name)
+        if interface_url:
+            search_pattern["interface_url"] = re.compile(interface_url)
+        if request_method:
+            search_pattern["request_method"] = request_method
+        if case_status:
+            if case_status == "true":
+                search_pattern["case_status"] = True
+            else:
+                search_pattern["case_status"] = False
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            if search_pattern:  # 判断是否存在搜索内容
+                results = pro_db.find(search_pattern)
+            else:
+                results = pro_db.find({})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目用例搜索结果")
+            return []
+
+    test_case_list = []
+    on_line_list = []
+    off_line_list = []
+    if results:
+        for res in results:
+            test_case_dict = dict()
+            test_case_dict["_id"] = str(res.get("_id"))
+            test_case_dict["interface_name"] = res.get("interface_name")
+            test_case_dict["interface_url"] = res.get("interface_url")
+            test_case_dict["request_method"] = res.get("request_method")
+            test_case_dict["request_params"] = str(res.get("request_params")).replace('"', "'")
+            test_case_dict["compare_core_field_name"] = str(res.get("compare_core_field_name"))
+            test_case_dict["expect_core_field_value"] = str(res.get("expect_core_field_value"))
+            test_case_dict["expect_field_name_list"] = str(res.get("expect_field_name_list"))
+            test_case_dict["verify_mode"] = res.get("verify_mode")
+            test_case_dict["case_status"] = res.get("case_status")
+            test_case_dict["update_time"] = str(res.get("update_time"))
+            if res.get("case_status"):
+                on_line_list.append(test_case_dict)
+            else:
+                off_line_list.append(test_case_dict)
+        test_case_list = on_line_list + off_line_list
+    return test_case_list
+
+
+def get_case_add_result(request_json, pro_name):
+    """
+    获取用例添加结果
+    :param request_json:
+    :param pro_name:
+    :return:
+
+    【 添 加 步 骤 】
+    1.验证必填项不能为空
+    2.检查需要转list的字段中是否存在中文的逗号
+    3.相关字段的格式转换
+    4.验证数据库中是否已存在
+    （1）'接口名称'
+    （2）'请求方式+接口地址'
+    5.插入数据库
+
+    【 字 段 格 式 】
+    01.接口名称：interface_name（ 必填 ）
+    02.接口地址：interface_url（ 必填 ）
+    03.请求方式：request_method（ 必填 ）
+    04.请求头文件：request_header
+    05.请求参数：request_params
+    06.验证模式：verify_mode（ 必填 ）                   < (表单)string -> (Mongo)int >
+    07.待比较关键字段名：compare_core_field_name（ 必填 ）< (表单)string -> (Mongo)list >（以","分割）
+    08.期望的关键字段值：expect_core_field_value（ 必填 ）< (表单)string -> (Mongo)list >（以","分割）
+    09.期望的响应字段列表：expect_field_name_list        < (表单)string -> (Mongo)list >（以","分割）
+    10.依赖接口名称：depend_interface                   < (表单)string -> (Mongo)list >（以","分割）
+    11.依赖字段名：depend_field_name                    < (表单)string -> (Mongo)list >（以","分割）
+    12.依赖字段值：depend_field_value                   < (表单)string -> (Mongo)list >（以","分割）
+    13.用例状态：case_status                            < (表单)string -> (Mongo)bool >
+    """
+
+    # 获取请求中的参数
+    interface_name = request_json.get("interface_name", "").strip()
+    interface_url = request_json.get("interface_url", "").strip()
+    request_method = request_json.get("request_method", "").strip()
+    request_header = request_json.get("request_header", "").strip()
+    request_params = request_json.get("request_params", "").strip()
+    verify_mode = request_json.get("verify_mode", "").strip()
+    compare_core_field_name = request_json.get("compare_core_field_name", "").strip()
+    expect_core_field_value = request_json.get("expect_core_field_value", "").strip()
+    expect_field_name_list = request_json.get("expect_field_name_list", "").strip()
+    depend_interface = request_json.get("depend_interface", "").strip()
+    depend_field_name = request_json.get("depend_field_name", "").strip()
+    depend_field_value = request_json.get("depend_field_value", "").strip()
+    case_status = request_json.get("case_status", "").strip()
+
+    # 1.验证必填项不能为空
+    if is_null(interface_name) or is_null(interface_url) or is_null(request_method) or is_null(verify_mode) \
+            or is_null(compare_core_field_name) or is_null(expect_core_field_value):
+        return "必填项不能为空"
+
+    # 2.检查需要转list的字段中是否存在中文的逗号
+    for each in [compare_core_field_name, expect_core_field_value, expect_field_name_list, depend_interface,
+               depend_field_name, depend_field_value]:
+        if "，" in each:
+            return "相关列表字段中 存在中文逗号 ！"
+
+    # 3.相关字段的格式转换
+    case_status = case_status == "true"
+    verify_mode = int(verify_mode)
+    compare_core_field_name = str(compare_core_field_name.strip()).split(",")
+    expect_core_field_value = str(expect_core_field_value.strip()).split(",")
+    # 若为空则赋值[],否则赋值['aa','bb']
+    expect_field_name_list = expect_field_name_list != "" and str(expect_field_name_list.strip()).split(",") or []
+    depend_interface = depend_interface != "" and str(depend_interface.strip()).split(",") or []
+    depend_field_name = depend_field_name != "" and str(depend_field_name.strip()).split(",") or []
+    depend_field_value = depend_field_value != "" and str(depend_field_value.strip()).split(",") or []
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            interface_name_case = pro_db.find_one({"interface_name": interface_name})
+            if interface_name_case:
+                return "接口名称 已存在 ！"
+            method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
+            if method_and_url_case:
+                return "请求方式 + 接口地址 已存在 ！"
+            # 插入数据库
+            current_iso_date = get_current_iso_date()
+            insert_dict = {}
+            insert_dict["interface_name"] = interface_name
+            insert_dict["interface_url"] = interface_url
+            insert_dict["request_method"] = request_method
+            insert_dict["request_header"] = request_header
+            insert_dict["request_params"] = request_params
+            insert_dict["verify_mode"] = verify_mode
+            insert_dict["compare_core_field_name"] = compare_core_field_name
+            insert_dict["expect_core_field_value"] = expect_core_field_value
+            insert_dict["expect_field_name_list"] = expect_field_name_list
+            insert_dict["depend_interface"] = depend_interface
+            insert_dict["depend_field_name"] = depend_field_name
+            insert_dict["depend_field_value"] = depend_field_value
+            insert_dict["case_status"] = case_status
+            insert_dict["response_info"] = ""
+            insert_dict["actual_core_field_value"] = []
+            insert_dict["result_core_field_value"] = ""
+            insert_dict["result_field_name_list"] = ""
+            insert_dict["test_result"] = ""
+            insert_dict["create_time"] = current_iso_date
+            insert_dict["update_time"] = current_iso_date
+            pro_db.insert(insert_dict)
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目添加测试用例")
+            return "mongo error"
+
+    return "新增成功"
+
+
+def get_case_del_result(request_json, pro_name):
+    """
+    获取用例删除结果
+    :param request_json:
+    :param pro_name:
+    :return:
+    """
+    # 获取请求中的参数
+    _id = request_json.get("_id", "").strip()
+    query_dict = {"_id": ObjectId(_id)}
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            remove_case = pro_db.find_one(query_dict)
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目删除测试用例")
+            return "mongo error"
+
+    if remove_case:
+        pro_db.remove(query_dict)
+        return "该用例删除成功 ！"
+    else:
+        return "要删除的用例不存在 ！ "
+
+
+
+
 if __name__ == "__main__":
     pass
-    verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
-    if verify_result == "验证通过":
-        import_mongodb("pro_demo_1", excel_list, "batch_insert_and_replace")  # batch_insert、all_replace、batch_insert_and_replace
-    else:
-        print(verify_result)
+    # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
+    # if verify_result == "验证通过":
+    #     import_mongodb("pro_demo_1", excel_list, "batch_insert_and_replace")  # batch_insert、all_replace、batch_insert_and_replace
+    # else:
+    #     print(verify_result)

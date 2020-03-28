@@ -10,7 +10,7 @@ def get_case_special_field_list():
     06.验证模式：verify_mode（ 必填 ）                   < (Excel)float  -> (Mongo)int >
     07.待比较关键字段名：compare_core_field_name（ 必填 ）< (Excel)string -> (Mongo)list >（以","分割）
     08.期望的关键字段值：expect_core_field_value（ 必填 ）< (Excel)string -> (Mongo)list >（以","分割）
-    09.待比较响应字段列表：compare_field_name_list       < (Excel)string -> (Mongo)list >（以","分割）
+    09.期望的响应字段列表：expect_field_name_list        < (Excel)string -> (Mongo)list >（以","分割）
     10.依赖接口名称：depend_interface                   < (Excel)string -> (Mongo)list >（以","分割）
     11.依赖字段名：depend_field_name                    < (Excel)string -> (Mongo)list >（以","分割）
     12.依赖字段值：depend_field_value                   < (Excel)string -> (Mongo)list >（以","分割）
@@ -31,7 +31,7 @@ def get_case_special_field_list():
     （2）验证：关键字段值、响应字段列表 ->  2
     """
     special_list = ["interface_name", "interface_url", "request_method", "request_header", "request_params",
-                    "verify_mode", "compare_core_field_name", "expect_core_field_value", "compare_field_name_list",
+                    "verify_mode", "compare_core_field_name", "expect_core_field_value", "expect_field_name_list",
                     "depend_interface", "depend_field_name", "depend_field_value", "case_status"]
     return special_list
 
@@ -57,12 +57,12 @@ def get_list_field():
     【 获 取 列 表 字 段 】< 表示可以通过","分割多个字段值 (Excel)string -> (Mongo)list  >
     01.待比较关键字段名：compare_core_field_name
     02.期望的关键字段值：expect_core_field_value
-    03.待比较响应字段列表：compare_field_name_list
+    03.期望的响应字段列表：expect_field_name_list
     04.依赖接口名称：depend_interface
     05.依赖字段名：depend_field_name
     06.依赖字段值：depend_field_value
     :return:
     """
-    list_field = ["compare_core_field_name", "expect_core_field_value", "compare_field_name_list",
+    list_field = ["compare_core_field_name", "expect_core_field_value", "expect_field_name_list",
                   "depend_interface", "depend_field_name", "depend_field_value"]
     return list_field
