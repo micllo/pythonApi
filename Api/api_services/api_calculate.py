@@ -154,6 +154,7 @@ def verify_excel_and_transfer_format(excel_file):
     （3）将(以","分割)的相关字段值转换成list -> get_list_field()
         - 检查这些字段中是否存在中文逗号
         - < 里面的每一个元素的类型都是'str'（eg: "5"、"True") >
+    （4）若存在'请求参数'，则需要检查是否以'?'或'{'开头
     """
     # 读取Excel用例文件
     excel_list = read_excel(excel_file, 0)
@@ -218,7 +219,10 @@ def verify_excel_and_transfer_format(excel_file):
                         return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
                     else:
                         line_dict[key] = str(value.strip()).split(",")
-
+            if key.strip() == "request_params":
+                if value:
+                    if not value.startswith("?") and not value.startswith("{"):
+                        return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段值 必须以 ? 或 { 开头 ！", None
     # show_excel_list(excel_list)
     return "验证通过", excel_list
 
@@ -290,7 +294,7 @@ def get_case_search_result(request_args, pro_name):
         if request_method:
             search_pattern["request_method"] = request_method
         if case_status:
-            if case_status == "true":
+            if case_status in ["true", "TRUE", "True"]:
                 search_pattern["case_status"] = True
             else:
                 search_pattern["case_status"] = False
@@ -330,21 +334,24 @@ def get_case_search_result(request_args, pro_name):
     return test_case_list
 
 
-def get_case_add_result(request_json, pro_name):
+def get_case_operation_result(request_json, pro_name, mode):
     """
     获取用例添加结果
     :param request_json:
     :param pro_name:
+    :param mode:  添加 add | 编辑 edit
     :return:
-
     【 添 加 步 骤 】
     1.验证必填项不能为空
     2.检查需要转list的字段中是否存在中文的逗号
-    3.相关字段的格式转换
-    4.验证数据库中是否已存在
+    3.若存在'请求参数'，则需要检查是否以'?'或'{'开头
+    4.相关字段的格式转换
+    5.整合公共的用例字段
+    6.验证数据库中是否已存在
     （1）'接口名称'
     （2）'请求方式+接口地址'
-    5.插入数据库
+        （ 注意：若为'编辑'模式，则先排除编辑自身后，在进行上述判断 ）
+    6.'新增'或'更新'用例数据
 
     【 字 段 格 式 】
     01.接口名称：interface_name（ 必填 ）
@@ -361,8 +368,8 @@ def get_case_add_result(request_json, pro_name):
     12.依赖字段值：depend_field_value                   < (表单)string -> (Mongo)list >（以","分割）
     13.用例状态：case_status                            < (表单)string -> (Mongo)bool >
     """
-
     # 获取请求中的参数
+    _id = request_json.get("_id", "").strip()
     interface_name = request_json.get("interface_name", "").strip()
     interface_url = request_json.get("interface_url", "").strip()
     request_method = request_json.get("request_method", "").strip()
@@ -388,8 +395,13 @@ def get_case_add_result(request_json, pro_name):
         if "，" in each:
             return "相关列表字段中 存在中文逗号 ！"
 
-    # 3.相关字段的格式转换
-    case_status = case_status == "true"
+    # 3.若存在'请求参数'，则需要检查是否以'?'或'{'开头
+    if request_params:
+        if not request_params.startswith("?") and not request_params.startswith("{"):
+            return "'请求参数' 必须以 ? 或 { 开头 ！"
+
+    # 4.相关字段的格式转换
+    case_status = case_status in ["true", "TRUE", "True"]
     verify_mode = int(verify_mode)
     compare_core_field_name = str(compare_core_field_name.strip()).split(",")
     expect_core_field_value = str(expect_core_field_value.strip()).split(",")
@@ -399,43 +411,54 @@ def get_case_add_result(request_json, pro_name):
     depend_field_name = depend_field_name != "" and str(depend_field_name.strip()).split(",") or []
     depend_field_value = depend_field_value != "" and str(depend_field_value.strip()).split(",") or []
 
+    # 5.整合公共的用例字段
+    current_iso_date = get_current_iso_date()
+    test_case_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
+                      "request_header": request_header, "request_params": request_params, "verify_mode": verify_mode,
+                      "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
+                      "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
+                      "depend_field_name": depend_field_name, "depend_field_value": depend_field_value,
+                      "case_status": case_status, "update_time": current_iso_date}
+
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
-            interface_name_case = pro_db.find_one({"interface_name": interface_name})
-            if interface_name_case:
-                return "接口名称 已存在 ！"
-            method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
-            if method_and_url_case:
-                return "请求方式 + 接口地址 已存在 ！"
-            # 插入数据库
-            current_iso_date = get_current_iso_date()
-            insert_dict = {}
-            insert_dict["interface_name"] = interface_name
-            insert_dict["interface_url"] = interface_url
-            insert_dict["request_method"] = request_method
-            insert_dict["request_header"] = request_header
-            insert_dict["request_params"] = request_params
-            insert_dict["verify_mode"] = verify_mode
-            insert_dict["compare_core_field_name"] = compare_core_field_name
-            insert_dict["expect_core_field_value"] = expect_core_field_value
-            insert_dict["expect_field_name_list"] = expect_field_name_list
-            insert_dict["depend_interface"] = depend_interface
-            insert_dict["depend_field_name"] = depend_field_name
-            insert_dict["depend_field_value"] = depend_field_value
-            insert_dict["case_status"] = case_status
-            insert_dict["response_info"] = ""
-            insert_dict["actual_core_field_value"] = []
-            insert_dict["result_core_field_value"] = ""
-            insert_dict["result_field_name_list"] = ""
-            insert_dict["test_result"] = ""
-            insert_dict["create_time"] = current_iso_date
-            insert_dict["update_time"] = current_iso_date
-            pro_db.insert(insert_dict)
+            if mode == "edit":
+                old_case_dict = pro_db.find_one({"_id": ObjectId(_id)})
+                old_interface_name = old_case_dict.get("interface_name")
+                old_request_method = old_case_dict.get("request_method")
+                old_interface_url = old_case_dict.get("interface_url")
+                if interface_name != old_interface_name:
+                    interface_name_case = pro_db.find_one({"interface_name": interface_name})
+                    if interface_name_case:
+                        return "接口名称 已存在 ！"
+                if request_method != old_request_method or interface_url != old_interface_url:
+                    method_and_url_case = pro_db.find_one(
+                        {"request_method": request_method, "interface_url": interface_url})
+                    if method_and_url_case:
+                        return "请求方式 + 接口地址 已存在 ！"
+                # 更新用例
+                pro_db.update({"_id": ObjectId(_id)}, {"$set": test_case_dict})
+            else:  # add
+                interface_name_case = pro_db.find_one({"interface_name": interface_name})
+                if interface_name_case:
+                    return "接口名称 已存在 ！"
+                method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
+                if method_and_url_case:
+                    return "请求方式 + 接口地址 已存在 ！"
+                # 新增用例
+                test_case_dict["response_info"] = ""
+                test_case_dict["actual_core_field_value"] = []
+                test_case_dict["result_core_field_value"] = ""
+                test_case_dict["result_field_name_list"] = ""
+                test_case_dict["test_result"] = ""
+                test_case_dict["create_time"] = current_iso_date
+                pro_db.insert(test_case_dict)
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目添加测试用例")
+            log.error(e)
+            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目'" + mode + "'测试用例")
             return "mongo error"
 
-    return "新增成功"
+    return "add" and "新增成功 ！" or "编辑成功 ！"
 
 
 def get_case_del_result(request_json, pro_name):
@@ -462,6 +485,52 @@ def get_case_del_result(request_json, pro_name):
         return "要删除的用例不存在 ！ "
 
 
+def get_case_by_id(request_args, pro_name):
+    """
+    通过id获取用例（填充编辑弹层）
+    :param request_args:
+    :param pro_name:
+    :return:
+      【 字 段 格 式 】
+      01.接口名称：interface_name（ 必填 ）
+      02.接口地址：interface_url（ 必填 ）
+      03.请求方式：request_method（ 必填 ）
+      04.请求头文件：request_header
+      05.请求参数：request_params
+      06.验证模式：verify_mode（ 必填 ）                   < (Mongo)int -> (表单)string >
+      07.待比较关键字段名：compare_core_field_name（ 必填 ）< (Mongo)list -> (表单)string >（以","分割）
+      08.期望的关键字段值：expect_core_field_value（ 必填 ）< (Mongo)list -> (表单)string >（以","分割）
+      09.期望的响应字段列表：expect_field_name_list        < (Mongo)list -> (表单)string >（以","分割）
+      10.依赖接口名称：depend_interface                   < (Mongo)list -> (表单)string >（以","分割）
+      11.依赖字段名：depend_field_name                    < (Mongo)list -> (表单)string >（以","分割）
+      12.依赖字段值：depend_field_value                   < (Mongo)list -> (表单)string >（以","分割）
+      13.用例状态：case_status                            < (Mongo)bool -> (表单)string >
+
+      < 以下字段不显示在导入表单中>
+      14.响应信息：response_info
+      15.实际的关键字段值：actual_core_field_value    < (Mongo)list -> (表单)string >（以","分割）
+      16.关键字段值比较结果：result_core_field_value
+      17.响应字段列表比较结果：result_field_name_list
+      18.测试结果：test_result
+      19.创建时间：create_time   < (Mongo)ISODate -> (表单)string >
+      20.更新时间：update_time   < (Mongo)ISODate -> (表单)string >
+
+    """
+    _id = request_args.get("_id", "").strip()
+    query_dict = {"_id": ObjectId(_id)}
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            test_case_dict = pro_db.find_one(query_dict)
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="通过id获取'" + pro_name + "'项目的测试用例")
+            return "mongo error"
+    # 将所有字段转换成 string 类型
+    for field, value in test_case_dict.items():
+        if field in ["_id", "verify_mode", "case_status", "create_time", "update_time"]:
+            test_case_dict[field] = str(value)
+        if field in get_list_field() or field == "actual_core_field_value":
+            test_case_dict[field] = ",".join(value)
+    return test_case_dict
 
 
 if __name__ == "__main__":

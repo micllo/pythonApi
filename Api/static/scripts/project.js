@@ -104,7 +104,7 @@ function search_case(pro_name, nginx_api_proxy) {
             }
             tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>" +
                 "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" +
-                "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame()\" data-toggle=\"modal\" data-target=\"#edit_acrm_wl\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
+                "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>" +
                 "</td>" +
                 "</tr>";
@@ -124,27 +124,27 @@ function search_case(pro_name, nginx_api_proxy) {
 function add_case(pro_name, nginx_api_proxy) {
 
     // 获取相应的添加内容
-    var interface_name_all = $("#interface_name_all").val().trim();
-    var interface_url_all = $("#interface_url_all").val().trim();
-    var request_method_all = $("#request_method_all").val().trim();
-    var request_header_all = $("#request_header_all").val().trim();
-    var request_params_all = $("#request_params_all").val().trim();
-    var verify_mode_all = $("#verify_mode_all").val().trim();
-    var compare_core_field_name_all = $("#compare_core_field_name_all").val().trim();
-    var expect_core_field_value_all = $("#expect_core_field_value_all").val().trim();
-    var expect_field_name_list_all = $("#expect_field_name_list_all").val().trim();
-    var depend_interface_all = $("#depend_interface_all").val().trim();
-    var depend_field_name_all = $("#depend_field_name_all").val().trim();
-    var depend_field_value_all = $("#depend_field_value_all").val().trim();
-    var case_status_all = $("#case_status_all").val().trim();
+    var interface_name = $("#interface_name_add").val().trim();
+    var interface_url = $("#interface_url_add").val().trim();
+    var request_method = $("#request_method_add").val().trim();
+    var request_header = $("#request_header_add").val().trim();
+    var request_params = $("#request_params_add").val().trim();
+    var verify_mode = $("#verify_mode_add").val().trim();
+    var compare_core_field_name = $("#compare_core_field_name_add").val().trim();
+    var expect_core_field_value = $("#expect_core_field_value_add").val().trim();
+    var expect_field_name_list = $("#expect_field_name_list_add").val().trim();
+    var depend_interface = $("#depend_interface_add").val().trim();
+    var depend_field_name = $("#depend_field_name_add").val().trim();
+    var depend_field_value = $("#depend_field_value_add").val().trim();
+    var case_status = $("#case_status_add").val().trim();
 
-    var add_dict = {"interface_name": interface_name_all, "interface_url": interface_url_all, "request_method": request_method_all,
-        "request_header": request_header_all, "request_params":request_params_all, "verify_mode": verify_mode_all,
-        "compare_core_field_name": compare_core_field_name_all, "expect_core_field_value": expect_core_field_value_all,
-        "expect_field_name_list": expect_field_name_list_all, "depend_interface": depend_interface_all, "depend_field_name": depend_field_name_all,
-        "depend_field_value": depend_field_value_all, "case_status": case_status_all};
+    var add_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
+        "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
+        "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
+        "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
+        "depend_field_name": depend_field_name, "depend_field_value": depend_field_value, "case_status": case_status};
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/add_case/" + pro_name
+    var request_url = "/" + nginx_api_proxy + "/API/operation_case/add/" + pro_name
     var response_info = request_interface_url_v2(url=request_url, method="POST", data=add_dict, async=false);
     if(response_info == "请求失败") {
         swal({text: response_info, type: "error", confirmButtonText: "知道了"});
@@ -195,3 +195,77 @@ function del_case(pro_name, nginx_api_proxy, _id) {
 }
 
 
+/**
+ *  填充编辑弹框（ 编辑之前 ）
+ */
+function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
+
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "?_id=" + _id
+    var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+    if(response_info != "请求失败"){
+        var test_case = response_info.test_case
+        // 填充编辑框
+        // var label = document.getElementById("case_id_edit");
+        // label.innerText = _id;
+        $("#case_id_edit").text(_id)
+        $("#interface_name_edit").val(test_case.interface_name);
+        $("#interface_url_edit").val(test_case.interface_url);
+        $("#request_method_edit").val(test_case.request_method);
+        $("#request_header_edit").val(test_case.request_header);
+        $("#request_params_edit").val(test_case.request_params);
+        $("#verify_mode_edit").val(test_case.verify_mode);
+        $("#compare_core_field_name_edit").val(test_case.compare_core_field_name);
+        $("#expect_core_field_value_edit").val(test_case.expect_core_field_value);
+        $("#expect_field_name_list_edit").val(test_case.expect_field_name_list);
+        $("#depend_interface_edit").val(test_case.depend_interface);
+        $("#depend_field_name_edit").val(test_case.depend_field_name);
+        $("#depend_field_value_edit").val(test_case.depend_field_value);
+        $("#case_status_edit").val(test_case.case_status);
+    }
+}
+
+
+
+/**
+ *  编辑用例
+ */
+function edit_case(pro_name, nginx_api_proxy) {
+
+
+    // 获取相应的添加内容
+    var _id = $("#case_id_edit").html().trim();
+    var interface_name = $("#interface_name_edit").val().trim();
+    var interface_url = $("#interface_url_edit").val().trim();
+    var request_method = $("#request_method_edit").val().trim();
+    var request_header = $("#request_header_edit").val().trim();
+    var request_params = $("#request_params_edit").val().trim();
+    var verify_mode = $("#verify_mode_edit").val().trim();
+    var compare_core_field_name = $("#compare_core_field_name_edit").val().trim();
+    var expect_core_field_value = $("#expect_core_field_value_edit").val().trim();
+    var expect_field_name_list = $("#expect_field_name_list_edit").val().trim();
+    var depend_interface = $("#depend_interface_edit").val().trim();
+    var depend_field_name = $("#depend_field_name_edit").val().trim();
+    var depend_field_value = $("#depend_field_value_edit").val().trim();
+    var case_status = $("#case_status_edit").val().trim();
+
+    var edit_dict = {"_id": _id, "interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
+        "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
+        "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
+        "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
+        "depend_field_name": depend_field_name, "depend_field_value": depend_field_value, "case_status": case_status};
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/operation_case/edit/" + pro_name
+    var response_info = request_interface_url_v2(url=request_url, method="POST", data=edit_dict, async=false);
+    if(response_info == "请求失败") {
+        swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+    }else{
+        var msg = response_info.msg;
+        if (msg.search("成功") != -1){
+            swal({text: response_info.msg, type: "success", confirmButtonText: "知道了"});
+            setTimeout(function(){location.reload();}, 2000);
+        }else {
+            swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
+        }
+    }
+}
