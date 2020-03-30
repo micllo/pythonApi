@@ -176,7 +176,7 @@ function del_case(pro_name, nginx_api_proxy, _id) {
             var del_dict = {"_id": _id}
             // 调用ajax请求(同步)
             var request_url = "/" + nginx_api_proxy + "/API/del_case/" + pro_name
-            var response_info = request_interface_url_v2(url=request_url, method="POST", data=del_dict, async=false);
+            var response_info = request_interface_url_v2(url=request_url, method="DELETE", data=del_dict, async=false);
             if(response_info == "请求失败") {
                 swal({text: response_info, type: "error", confirmButtonText: "知道了"});
             }else{

@@ -49,7 +49,7 @@ function request_interface_url_v2(url, method, data="", async=false, is_file=fal
             response_text = "请求失败"
         }
     };
-    if (method.toLowerCase() == "post" && data != ""){
+    if (["post", "delete"].includes(method.toLowerCase()) && data != ""){
         if(typeof data == "string"){
             parameter_ajax["data"] = data;
         }else {

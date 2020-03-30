@@ -27,9 +27,9 @@ def test_get_request_no_params():
 @flask_app.route("/test/test_get_request", methods=["GET"])
 def test_get_request():
     params = request.args
-    test_str = params.get("test_str")  # str
-    test_int = params.get("test_int")  # str
-    test_bool = params.get("test_bool")  # str
+    test_str = params.get("test_str", "")  # str
+    test_int = params.get("test_int", "")  # str
+    test_bool = params.get("test_bool", "")  # str
     result_dict = {"test_str": test_str, "test_int": test_int, "test_bool": test_bool}
     msg = REQUEST_SUCCESS
     re_dict = interface_template(msg, result_dict)
@@ -116,7 +116,7 @@ def operation_case(pro_name, mode):
     return json.dumps(res_info, ensure_ascii=False)
 
 
-@flask_app.route("/API/del_case/<pro_name>", methods=["POST"])
+@flask_app.route("/API/del_case/<pro_name>", methods=["DELETE"])
 def del_case(pro_name):
     """
     删除用例
