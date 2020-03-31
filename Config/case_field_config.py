@@ -13,11 +13,11 @@ def get_case_special_field_list():
     09.期望的响应字段列表：expect_field_name_list        < (Excel)string -> (Mongo)list >（以","分割）
     10.依赖接口名称：depend_interface                   < (Excel)string -> (Mongo)list >（以","分割）
     11.依赖字段名：depend_field_name                    < (Excel)string -> (Mongo)list >（以","分割）
-    12.依赖字段值：depend_field_value                   < (Excel)string -> (Mongo)list >（以","分割）
-    13.用例状态：case_status                            < (Excel)int|string -> (Mongo)bool >
+    12.用例状态：case_status                            < (Excel)int|string -> (Mongo)bool >
 
     < 以下字段不显示在导入Excel中>
-    14.响应信息：response_info
+    13.响应信息：response_info
+    14.依赖字段值：depend_field_value              < (Mongo)list -> (Excel)string >
     15.实际的关键字段值：actual_core_field_value    < (Mongo)list -> (Excel)string >
     16.关键字段值比较结果：result_core_field_value
     17.响应字段列表比较结果：result_field_name_list
@@ -32,7 +32,7 @@ def get_case_special_field_list():
     """
     special_list = ["interface_name", "interface_url", "request_method", "request_header", "request_params",
                     "verify_mode", "compare_core_field_name", "expect_core_field_value", "expect_field_name_list",
-                    "depend_interface", "depend_field_name", "depend_field_value", "case_status"]
+                    "depend_interface", "depend_field_name", "case_status"]
     return special_list
 
 
@@ -61,8 +61,9 @@ def get_list_field():
     04.依赖接口名称：depend_interface
     05.依赖字段名：depend_field_name
     06.依赖字段值：depend_field_value
+    07.实际的关键字段值：actual_core_field_value
     :return:
     """
     list_field = ["compare_core_field_name", "expect_core_field_value", "expect_field_name_list",
-                  "depend_interface", "depend_field_name", "depend_field_value"]
+                  "depend_interface", "depend_field_name", "depend_field_value", "actual_core_field_value"]
     return list_field

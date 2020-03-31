@@ -7,7 +7,6 @@ from Api.api_services.api_calculate import *
 from Common.com_func import is_null, log
 from Tools.mongodb import MongoGridFS
 from Config import config as cfg
-from Config import global_var as gv
 
 """
 api 服务接口

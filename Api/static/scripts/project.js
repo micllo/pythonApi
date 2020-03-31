@@ -135,14 +135,13 @@ function add_case(pro_name, nginx_api_proxy) {
     var expect_field_name_list = $("#expect_field_name_list_add").val().trim();
     var depend_interface = $("#depend_interface_add").val().trim();
     var depend_field_name = $("#depend_field_name_add").val().trim();
-    var depend_field_value = $("#depend_field_value_add").val().trim();
     var case_status = $("#case_status_add").val().trim();
 
     var add_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
         "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
         "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
-        "depend_field_name": depend_field_name, "depend_field_value": depend_field_value, "case_status": case_status};
+        "depend_field_name": depend_field_name, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/add/" + pro_name
     var response_info = request_interface_url_v2(url=request_url, method="POST", data=add_dict, async=false);
@@ -220,7 +219,6 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
         $("#expect_field_name_list_edit").val(test_case.expect_field_name_list);
         $("#depend_interface_edit").val(test_case.depend_interface);
         $("#depend_field_name_edit").val(test_case.depend_field_name);
-        $("#depend_field_value_edit").val(test_case.depend_field_value);
         $("#case_status_edit").val(test_case.case_status);
     }
 }
@@ -246,14 +244,13 @@ function edit_case(pro_name, nginx_api_proxy) {
     var expect_field_name_list = $("#expect_field_name_list_edit").val().trim();
     var depend_interface = $("#depend_interface_edit").val().trim();
     var depend_field_name = $("#depend_field_name_edit").val().trim();
-    var depend_field_value = $("#depend_field_value_edit").val().trim();
     var case_status = $("#case_status_edit").val().trim();
 
     var edit_dict = {"_id": _id, "interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
         "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
         "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
-        "depend_field_name": depend_field_name, "depend_field_value": depend_field_value, "case_status": case_status};
+        "depend_field_name": depend_field_name, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/edit/" + pro_name
     var response_info = request_interface_url_v2(url=request_url, method="POST", data=edit_dict, async=false);
