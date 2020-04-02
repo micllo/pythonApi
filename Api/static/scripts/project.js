@@ -84,8 +84,8 @@ function search_case(pro_name, nginx_api_proxy) {
             var interface_url = test_case_list[i]["interface_url"];
             var request_method = test_case_list[i]["request_method"];
             var request_params = test_case_list[i]["request_params"];
-            var compare_core_field_name = test_case_list[i]["compare_core_field_name"];
-            var expect_core_field_value = test_case_list[i]["expect_core_field_value"];
+            var compare_core_field_name_list = test_case_list[i]["compare_core_field_name_list"];
+            var expect_core_field_value_list = test_case_list[i]["expect_core_field_value_list"];
             var expect_field_name_list = test_case_list[i]["expect_field_name_list"];
             var verify_mode = test_case_list[i]["verify_mode"];
             var case_status = test_case_list[i]["case_status"];
@@ -95,7 +95,7 @@ function search_case(pro_name, nginx_api_proxy) {
                 "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "</td>" +
                 "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" + request_method + "</td>" +
                 "<td style=\"width: 250px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>" +
-                "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value + "\">" + compare_core_field_name + "</td>" +
+                "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>" +
                 "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">" + verify_mode + "</td>";
             if(case_status){
                 tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\"><font color=\"#00A600\">上线</font></td>";
@@ -130,18 +130,18 @@ function add_case(pro_name, nginx_api_proxy) {
     var request_header = $("#request_header_add").val().trim();
     var request_params = $("#request_params_add").val().trim();
     var verify_mode = $("#verify_mode_add").val().trim();
-    var compare_core_field_name = $("#compare_core_field_name_add").val().trim();
-    var expect_core_field_value = $("#expect_core_field_value_add").val().trim();
+    var compare_core_field_name_list = $("#compare_core_field_name_list_add").val().trim();
+    var expect_core_field_value_list = $("#expect_core_field_value_list_add").val().trim();
     var expect_field_name_list = $("#expect_field_name_list_add").val().trim();
-    var depend_interface = $("#depend_interface_add").val().trim();
-    var depend_field_name = $("#depend_field_name_add").val().trim();
+    var depend_interface_list = $("#depend_interface_list_add").val().trim();
+    var depend_field_name_list = $("#depend_field_name_list_add").val().trim();
     var case_status = $("#case_status_add").val().trim();
 
     var add_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
-        "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
-        "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
-        "depend_field_name": depend_field_name, "case_status": case_status};
+        "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
+        "expect_field_name_list": expect_field_name_list, "depend_interface_list": depend_interface_list,
+        "depend_field_name_list": depend_field_name_list, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/add/" + pro_name
     var response_info = request_interface_url_v2(url=request_url, method="POST", data=add_dict, async=false);
@@ -214,11 +214,11 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
         $("#request_header_edit").val(test_case.request_header);
         $("#request_params_edit").val(test_case.request_params);
         $("#verify_mode_edit").val(test_case.verify_mode);
-        $("#compare_core_field_name_edit").val(test_case.compare_core_field_name);
-        $("#expect_core_field_value_edit").val(test_case.expect_core_field_value);
+        $("#compare_core_field_name_list_edit").val(test_case.compare_core_field_name_list);
+        $("#expect_core_field_value_list_edit").val(test_case.expect_core_field_value_list);
         $("#expect_field_name_list_edit").val(test_case.expect_field_name_list);
-        $("#depend_interface_edit").val(test_case.depend_interface);
-        $("#depend_field_name_edit").val(test_case.depend_field_name);
+        $("#depend_interface_list_edit").val(test_case.depend_interface_list);
+        $("#depend_field_name_list_edit").val(test_case.depend_field_name_list);
         $("#case_status_edit").val(test_case.case_status);
     }
 }
@@ -239,18 +239,18 @@ function edit_case(pro_name, nginx_api_proxy) {
     var request_header = $("#request_header_edit").val().trim();
     var request_params = $("#request_params_edit").val().trim();
     var verify_mode = $("#verify_mode_edit").val().trim();
-    var compare_core_field_name = $("#compare_core_field_name_edit").val().trim();
-    var expect_core_field_value = $("#expect_core_field_value_edit").val().trim();
+    var compare_core_field_name_list = $("#compare_core_field_name_list_edit").val().trim();
+    var expect_core_field_value_list = $("#expect_core_field_value_list_edit").val().trim();
     var expect_field_name_list = $("#expect_field_name_list_edit").val().trim();
-    var depend_interface = $("#depend_interface_edit").val().trim();
-    var depend_field_name = $("#depend_field_name_edit").val().trim();
+    var depend_interface_list = $("#depend_interface_list_edit").val().trim();
+    var depend_field_name_list = $("#depend_field_name_list_edit").val().trim();
     var case_status = $("#case_status_edit").val().trim();
 
     var edit_dict = {"_id": _id, "interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
-        "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
-        "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
-        "depend_field_name": depend_field_name, "case_status": case_status};
+        "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
+        "expect_field_name_list": expect_field_name_list, "depend_interface_list": depend_interface_list,
+        "depend_field_name_list": depend_field_name_list, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/edit/" + pro_name
     var response_info = request_interface_url_v2(url=request_url, method="POST", data=edit_dict, async=false);

@@ -123,8 +123,8 @@ def filled_other_field(excel_list):
     current_iso_date = get_current_iso_date()
     for index, line_dict in enumerate(excel_list):
         line_dict["response_info"] = ""
-        line_dict["depend_field_value"] = []
-        line_dict["actual_core_field_value"] = []
+        line_dict["depend_field_value_list"] = []
+        line_dict["actual_core_field_value_list"] = []
         line_dict["result_core_field_value"] = ""
         line_dict["result_field_name_list"] = ""
         line_dict["test_result"] = ""
@@ -228,8 +228,8 @@ def verify_excel_and_transfer_format(excel_file):
 
     # 6.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
     for index, line_dict in enumerate(excel_list):
-        if len(line_dict["compare_core_field_name"]) != len(line_dict["expect_core_field_value"]):
-            return "第 " + str(index + 2) + " 行的 'compare_core_field_name' 与 'expect_core_field_value' 字段数量不一致", None
+        if len(line_dict["compare_core_field_name_list"]) != len(line_dict["expect_core_field_value_list"]):
+            return "第 " + str(index + 2) + " 行的 'compare_core_field_name_list' 与 'expect_core_field_value_list' 字段数量不一致", None
 
     # show_excel_list(excel_list)
     return "验证通过", excel_list
@@ -262,8 +262,8 @@ def get_test_case(pro_name):
                 test_case_dict["interface_url"] = res.get("interface_url")
                 test_case_dict["request_method"] = res.get("request_method")
                 test_case_dict["request_params"] = res.get("request_params")
-                test_case_dict["compare_core_field_name"] = res.get("compare_core_field_name")
-                test_case_dict["expect_core_field_value"] = res.get("expect_core_field_value")
+                test_case_dict["compare_core_field_name_list"] = res.get("compare_core_field_name_list")
+                test_case_dict["expect_core_field_value_list"] = res.get("expect_core_field_value_list")
                 test_case_dict["expect_field_name_list"] = res.get("expect_field_name_list")
                 test_case_dict["verify_mode"] = res.get("verify_mode")
                 test_case_dict["case_status"] = res.get("case_status")
@@ -328,8 +328,8 @@ def get_case_search_result(request_args, pro_name):
             test_case_dict["interface_url"] = res.get("interface_url")
             test_case_dict["request_method"] = res.get("request_method")
             test_case_dict["request_params"] = str(res.get("request_params")).replace('"', "'")
-            test_case_dict["compare_core_field_name"] = str(res.get("compare_core_field_name"))
-            test_case_dict["expect_core_field_value"] = str(res.get("expect_core_field_value"))
+            test_case_dict["compare_core_field_name_list"] = str(res.get("compare_core_field_name_list"))
+            test_case_dict["expect_core_field_value_list"] = str(res.get("expect_core_field_value_list"))
             test_case_dict["expect_field_name_list"] = str(res.get("expect_field_name_list"))
             test_case_dict["verify_mode"] = res.get("verify_mode")
             test_case_dict["case_status"] = res.get("case_status")
@@ -368,13 +368,13 @@ def get_case_operation_result(request_json, pro_name, mode):
     03.请求方式：request_method（ 必填 ）
     04.请求头文件：request_header
     05.请求参数：request_params
-    06.验证模式：verify_mode（ 必填 ）                   < (表单)string -> (Mongo)int >
-    07.待比较关键字段名：compare_core_field_name（ 必填 ）< (表单)string -> (Mongo)list >（以","分割）
-    08.期望的关键字段值：expect_core_field_value（ 必填 ）< (表单)string -> (Mongo)list >（以","分割）
-    09.期望的响应字段列表：expect_field_name_list        < (表单)string -> (Mongo)list >（以","分割）
-    10.依赖接口名称：depend_interface                   < (表单)string -> (Mongo)list >（以","分割）
-    11.依赖字段名：depend_field_name                    < (表单)string -> (Mongo)list >（以","分割）
-    13.用例状态：case_status                            < (表单)string -> (Mongo)bool >
+    06.验证模式：verify_mode（ 必填 ）                            < (表单)string -> (Mongo)int >
+    07.待比较关键字段名列表：compare_core_field_name_list（ 必填 ） < (表单)string -> (Mongo)list >（以","分割）
+    08.期望的关键字段值列表：expect_core_field_value_list（ 必填 ） < (表单)string -> (Mongo)list >（以","分割）
+    09.期望的响应字段列表：expect_field_name_list                 < (表单)string -> (Mongo)list >（以","分割）
+    10.依赖接口名称列表：depend_interface_list                    < (表单)string -> (Mongo)list >（以","分割）
+    11.依赖字段名列表：depend_field_name_list                     < (表单)string -> (Mongo)list >（以","分割）
+    12.用例状态：case_status                                     < (表单)string -> (Mongo)bool >
     """
     # 获取请求中的参数
     _id = request_json.get("_id", "").strip()
@@ -384,21 +384,21 @@ def get_case_operation_result(request_json, pro_name, mode):
     request_header = request_json.get("request_header", "").strip()
     request_params = request_json.get("request_params", "").strip()
     verify_mode = request_json.get("verify_mode", "").strip()
-    compare_core_field_name = request_json.get("compare_core_field_name", "").strip()
-    expect_core_field_value = request_json.get("expect_core_field_value", "").strip()
+    compare_core_field_name_list = request_json.get("compare_core_field_name_list", "").strip()
+    expect_core_field_value_list = request_json.get("expect_core_field_value_list", "").strip()
     expect_field_name_list = request_json.get("expect_field_name_list", "").strip()
-    depend_interface = request_json.get("depend_interface", "").strip()
-    depend_field_name = request_json.get("depend_field_name", "").strip()
+    depend_interface_list = request_json.get("depend_interface_list", "").strip()
+    depend_field_name_list = request_json.get("depend_field_name_list", "").strip()
     case_status = request_json.get("case_status", "").strip()
 
     # 1.验证必填项不能为空
     if is_null(interface_name) or is_null(interface_url) or is_null(request_method) or is_null(verify_mode) \
-            or is_null(compare_core_field_name) or is_null(expect_core_field_value):
+            or is_null(compare_core_field_name_list) or is_null(expect_core_field_value_list):
         return "必填项不能为空"
 
     # 2.检查需要转list的字段中是否存在中文的逗号
-    for each in [compare_core_field_name, expect_core_field_value, expect_field_name_list, depend_interface,
-               depend_field_name]:
+    for each in [compare_core_field_name_list, expect_core_field_value_list, expect_field_name_list,
+                 depend_interface_list, depend_field_name_list]:
         if "，" in each:
             return "相关列表字段中 存在中文逗号 ！"
 
@@ -410,24 +410,24 @@ def get_case_operation_result(request_json, pro_name, mode):
     # 4.相关字段的格式转换
     case_status = case_status in ["true", "TRUE", "True"]
     verify_mode = int(verify_mode)
-    compare_core_field_name = str(compare_core_field_name.strip()).split(",")
-    expect_core_field_value = str(expect_core_field_value.strip()).split(",")
+    compare_core_field_name_list = str(compare_core_field_name_list.strip()).split(",")
+    expect_core_field_value_list = str(expect_core_field_value_list.strip()).split(",")
     # 若为空则赋值[],否则赋值['aa','bb']
     expect_field_name_list = expect_field_name_list != "" and str(expect_field_name_list.strip()).split(",") or []
-    depend_interface = depend_interface != "" and str(depend_interface.strip()).split(",") or []
-    depend_field_name = depend_field_name != "" and str(depend_field_name.strip()).split(",") or []
+    depend_interface_list = depend_interface_list != "" and str(depend_interface_list.strip()).split(",") or []
+    depend_field_name_list = depend_field_name_list != "" and str(depend_field_name_list.strip()).split(",") or []
 
     # 5.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
-    if len(compare_core_field_name) != len(expect_core_field_value):
+    if len(compare_core_field_name_list) != len(expect_core_field_value_list):
         return "<待比较的关键字段名> 与 <期望的关键字段值> 数量不一致"
 
     # 6.整合公共的用例字段
     current_iso_date = get_current_iso_date()
     test_case_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
                       "request_header": request_header, "request_params": request_params, "verify_mode": verify_mode,
-                      "compare_core_field_name": compare_core_field_name, "expect_core_field_value": expect_core_field_value,
-                      "expect_field_name_list": expect_field_name_list, "depend_interface": depend_interface,
-                      "depend_field_name": depend_field_name, "case_status": case_status, "update_time": current_iso_date}
+                      "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
+                      "expect_field_name_list": expect_field_name_list, "depend_interface_list": depend_interface_list,
+                      "depend_field_name_list": depend_field_name_list, "case_status": case_status, "update_time": current_iso_date}
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -456,8 +456,8 @@ def get_case_operation_result(request_json, pro_name, mode):
                     return "请求方式 + 接口地址 已存在 ！"
                 # 新增用例
                 test_case_dict["response_info"] = ""
-                test_case_dict["depend_field_value"] = []
-                test_case_dict["actual_core_field_value"] = []
+                test_case_dict["depend_field_value_list"] = []
+                test_case_dict["actual_core_field_value_list"] = []
                 test_case_dict["result_core_field_value"] = ""
                 test_case_dict["result_field_name_list"] = ""
                 test_case_dict["test_result"] = ""
@@ -467,7 +467,6 @@ def get_case_operation_result(request_json, pro_name, mode):
             log.error(e)
             mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目'" + mode + "'测试用例")
             return "mongo error"
-
     return "add" and "新增成功 ！" or "编辑成功 ！"
 
 
@@ -507,18 +506,18 @@ def get_case_by_id(request_args, pro_name):
       03.请求方式：request_method（ 必填 ）
       04.请求头文件：request_header
       05.请求参数：request_params
-      06.验证模式：verify_mode（ 必填 ）                   < (Mongo)int -> (表单)string >
-      07.待比较关键字段名：compare_core_field_name（ 必填 ）< (Mongo)list -> (表单)string >（以","分割）
-      08.期望的关键字段值：expect_core_field_value（ 必填 ）< (Mongo)list -> (表单)string >（以","分割）
-      09.期望的响应字段列表：expect_field_name_list        < (Mongo)list -> (表单)string >（以","分割）
-      10.依赖接口名称：depend_interface                   < (Mongo)list -> (表单)string >（以","分割）
-      11.依赖字段名：depend_field_name                    < (Mongo)list -> (表单)string >（以","分割）
-      12.用例状态：case_status                            < (Mongo)bool -> (表单)string >
+      06.验证模式：verify_mode（ 必填 ）                            < (Mongo)int -> (表单)string >
+      07.待比较关键字段名列表：compare_core_field_name_list（ 必填 ）< (Mongo)list -> (表单)string >（以","分割）
+      08.期望的关键字段值列表：expect_core_field_value_list（ 必填 ）< (Mongo)list -> (表单)string >（以","分割）
+      09.期望的响应字段列表：expect_field_name_list                 < (Mongo)list -> (表单)string >（以","分割）
+      10.依赖接口名称列表：depend_interface_list                   < (Mongo)list -> (表单)string >（以","分割）
+      11.依赖字段名列表：depend_field_name_list                    < (Mongo)list -> (表单)string >（以","分割）
+      12.用例状态：case_status                                     < (Mongo)bool -> (表单)string >
 
       < 以下字段不显示在导入表单中>
       13.响应信息：response_info
-      14.依赖字段值：depend_field_value              < (Mongo)list -> (表单)string >（以","分割）
-      15.实际的关键字段值：actual_core_field_value    < (Mongo)list -> (表单)string >（以","分割）
+      14.依赖字段值列表：depend_field_value_list              < (Mongo)list -> (表单)string >（以","分割）
+      15.实际的关键字段值列表：actual_core_field_value_list    < (Mongo)list -> (表单)string >（以","分割）
       16.关键字段值比较结果：result_core_field_value
       17.响应字段列表比较结果：result_field_name_list
       18.测试结果：test_result
@@ -545,6 +544,7 @@ def get_case_by_id(request_args, pro_name):
 
 if __name__ == "__main__":
     pass
+
     # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
     # if verify_result == "验证通过":
     #     import_mongodb("pro_demo_1", excel_list, "batch_insert_and_replace")  # batch_insert、all_replace、batch_insert_and_replace

@@ -152,8 +152,8 @@
                                                     {% set request_method = test_case["request_method"] %}
                                                     {% set interface_url = test_case["interface_url"] %}
                                                     {% set request_params = test_case["request_params"] %}
-                                                    {% set compare_core_field_name = test_case["compare_core_field_name"] %}
-                                                    {% set expect_core_field_value = test_case["expect_core_field_value"] %}
+                                                    {% set compare_core_field_name_list = test_case["compare_core_field_name_list"] %}
+                                                    {% set expect_core_field_value_list = test_case["expect_core_field_value_list"] %}
                                                     {% set expect_field_name_list = test_case["expect_field_name_list"] %}
                                                     {% set verify_mode = test_case["verify_mode"] %}
                                                     {% set case_status = test_case["case_status"] %}
@@ -162,7 +162,7 @@
                                                         <td style="width: 150px; display:table-cell; vertical-align:middle;">{{ interface_name }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">{{ request_method }}</td>
                                                         <td style="width: 250px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
-                                                        <td  class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value }}">{{ compare_core_field_name }}</td>
+                                                        <td  class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value_list }}">{{ compare_core_field_name_list }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的响应字段列表" data-content="{{ expect_field_name_list }}">{{ verify_mode }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;"> {% if case_status %} <font color="#00A600">上线</font> {% else %} <font color="#DC143C">下线</font> {% endif %} </td>
                                                         <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ update_time }}</td>
@@ -250,12 +250,12 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>待比较关键字段名：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
-                            <input class="form-control" type="text" id="compare_core_field_name_add" placeholder="待比较关键字段名">
+                            <label>待比较关键字段名列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <input class="form-control" type="text" id="compare_core_field_name_list_add" placeholder="待比较关键字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>期望的关键字段值：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
-                            <input class="form-control" type="text" id="expect_core_field_value_add" placeholder="期望的关键字段值">
+                            <label>期望的关键字段值列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <input class="form-control" type="text" id="expect_core_field_value_list_add" placeholder="期望的关键字段值列表">
                         </div>
 
                         <div class="form-group">
@@ -264,11 +264,11 @@
                         </div>
                         <div class="form-group">
                             <label>依赖接口名称：</font><font color="#B8860B">eg: &nbsp;登录接口,获取验证码接口</font></label>
-                            <input class="form-control" type="text" id="depend_interface_add" placeholder="依赖接口名称">
+                            <input class="form-control" type="text" id="depend_interface_list_add" placeholder="依赖接口名列表">
                         </div>
                         <div class="form-group">
                             <label>依赖字段名：</font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
-                            <input class="form-control" type="text" id="depend_field_name_add" placeholder="依赖字段名">
+                            <input class="form-control" type="text" id="depend_field_name_list_add" placeholder="依赖字段名列表">
                         </div>
                         <div class="form-group">
                             <label>用例状态：</label>
@@ -348,12 +348,12 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>待比较关键字段名：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
-                            <input class="form-control" type="text" id="compare_core_field_name_edit" placeholder="待比较关键字段名">
+                            <label>待比较关键字段名列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <input class="form-control" type="text" id="compare_core_field_name_list_edit" placeholder="待比较关键字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>期望的关键字段值：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
-                            <input class="form-control" type="text" id="expect_core_field_value_edit" placeholder="期望的关键字段值">
+                            <label>期望的关键字段值列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <input class="form-control" type="text" id="expect_core_field_value_list_edit" placeholder="期望的关键字段值列表">
                         </div>
 
                         <div class="form-group">
@@ -362,11 +362,11 @@
                         </div>
                         <div class="form-group">
                             <label>依赖接口名称：</font><font color="#B8860B">eg: &nbsp;登录接口,获取验证码接口</font></label>
-                            <input class="form-control" type="text" id="depend_interface_edit" placeholder="依赖接口名称">
+                            <input class="form-control" type="text" id="depend_interface_list_edit" placeholder="依赖接口名列表">
                         </div>
                         <div class="form-group">
                             <label>依赖字段名：</font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
-                            <input class="form-control" type="text" id="depend_field_name_edit" placeholder="依赖字段名">
+                            <input class="form-control" type="text" id="depend_field_name_list_edit" placeholder="依赖字段名列表">
                         </div>
                         <div class="form-group">
                             <label>用例状态：</label>
