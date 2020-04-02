@@ -53,6 +53,92 @@ def test_post_request():
 
 
 """
+    【 依 赖 接 口 逻 辑 】
+    1.获取图片：  依赖接口 < 登录 >          依赖字段 < token >
+    2.依赖get：  依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id >
+    3.依赖post： 依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id,Content_Type >
+"""
+
+
+# http://127.0.0.1:7060/api_local/test/login
+@flask_app.route("/test/login", methods=["POST"])
+def test_login():
+    """
+    登录接口
+     返回依赖参数
+      1.token
+      2.Content_Type
+    :return:
+    """
+    params = request.json
+    name = params.get("name")  # str
+    passwd = params.get("passwd")   # int
+    result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "Content_Type": "application/json"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/get_image?token=123456
+@flask_app.route("/test/get_image", methods=["GET"])
+def test_get_image():
+    """
+    获取图片接口
+     需要的依赖参数
+      1.token
+     返回的依赖参数
+      1.image_id
+    :return:
+    """
+    params = request.args
+    image_id = params.get("image_id", "1234567890")
+    token = params.get("token", "")
+    result_dict = {"image_id": image_id, "token": token}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/depend_get?image_id=xxxx&token=xxxx
+@flask_app.route("/test/depend_get", methods=["GET"])
+def test_depend_get():
+    """
+    依赖get接口
+     需要的依赖参数
+      1.token
+      2.image_id
+    :return:
+    """
+    params = request.args
+    image_id = params.get("image_id", "")
+    token = params.get("token", "")
+    result_dict = {"image_id": image_id, "token": token, "info": "messi_get"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/depend_post
+@flask_app.route("/test/depend_post", methods=["POST"])
+def test_depend_post():
+    """
+    依赖post接口
+     需要的依赖参数
+      1.token
+      2.image_id
+      3.Content_Type
+    :return:
+    """
+    params = request.json
+    image_id = params.get("image_id", "")
+    token = params.get("token", "")
+    result_dict = {"image_id": image_id, "token": token, "info": "messi_post"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+"""
 ####################################################################################
 """
 

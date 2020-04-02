@@ -12,14 +12,26 @@ import re
 
 class VerifyInterface(object):
     """
-     【 验 证 接 口 步 骤 】
-        0.若存在 '依赖接口名称：depend_interface'
-         （1）无响应：记录 '测试结果：test_result' 字段值 < fail:依赖接口无响应 >
-         （2）有相应（ http != 200 ）：记录 '测试结果：test_result' 字段值 < fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)" >
-         （3）有响应（ http == 200 ）：继续
-              1）捕获成功，则 记录 '依赖字段值：depend_field_value' 字段值，并修改 '请求参数：request_params' 字段值
-              2）捕获失败，则 记录 '测试结果：test_result' 字段值 < fail:依赖字段捕获失败 >
+     【 依 赖 接 口 验 证 步 骤 】
+         1.检查'依赖接口名列表'是否都存在
+            若不存在，则 记录 '测试结果：test_result' 字段值 < error:依赖接口不存在 >
+         2.检查 测试接口的'request_params、request_header'中是否存在相应的'大写依赖字段名'
+            比如：检查 测试接口的'request_params'中是否存在'TOKEN'字符串
+            比如：检查 测试接口的'request_header'中是否存在'CONTENT_TYPE'字符串
+            若不存在，则 记录 '测试结果：test_result' 字段值 < error:依赖字段名配置有误 >
+         3.发送'依赖接口'请求
+           （1）无响应：记录 '测试结果：test_result' 字段值 < fail:依赖接口无响应 >
+           （2）有相应（ http != 200 ）：记录 '测试结果：test_result' 字段值 < fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)" >
+           （3）有响应（ http == 200 ）：继续
+         4.捕获 对应的'依赖接口请求'的响应参数中 对应的'小写的依赖字段名'的值
+            比如：1-param-TOKEN -> 捕获第'1'个依赖接口响应参数中的'token'值
+            比如：2-header-CONTENT_TYPE-> 捕获第'2'个依赖接口响应参数中的'content_type'值
+            若获取不到，则记录 '测试结果：test_result' 字段值 < error:依赖字段值获取失败 >
+         5.记录 '依赖字段值列表：depend_field_value_list' 字段值
+         6.替换 测试接口的'request_params、request_header'中对应的'大写依赖字段名'
 
+     【 测 试 接 口 验 证 步 骤 】
+        0.判断是否需要执行依赖接口：若需要 则参考上面的 "依赖接口验证步骤"
         1.发送请求，验证response响应
          （1）无响应：记录 '测试结果：test_result' 字段值 < fail:测试接口无响应 >
          （2）有相应（ http != 200 ）：记录 '测试结果：test_result' 字段值 < fail:测试接口错误,http_code<500>,原因解析(Internal Server Error)" >
@@ -42,13 +54,18 @@ class VerifyInterface(object):
            retrun 待更新字典
 
         【 测试结果 test_result 包含内容 】
-        1.success
-        2.fail:关键字段验证失败
-        3.fail:关键字段验证失败,响应字段列表验证失败
-        4.fail:关键字段验证通过,响应字段列表验证失败
-        5.fail:关键字段验证失败,响应字段列表验证通过
-        6.fail:测试接口错误,http_code<500>,原因解析(Internal Server Error)
-        7.fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
+        01.success
+        02.fail:关键字段验证失败
+        03.fail:关键字段验证失败,响应字段列表验证失败
+        04.fail:关键字段验证通过,响应字段列表验证失败
+        05.fail:关键字段验证失败,响应字段列表验证通过
+        06.fail:测试接口错误,http_code<500>,原因解析(Internal Server Error)
+        07.fail:依赖接口无响应
+        08.fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
+        09.error:依赖字段值获取失败
+        10.error:依赖字段名配置有误
+        11.error:依赖接口不存在
+
     """
 
     def __init__(self, interface_name, interface_url, request_method, request_header, request_params, verify_mode,
@@ -91,6 +108,7 @@ class VerifyInterface(object):
         self.update_result_dict = {}
 
     def verify(self):
+
         # 1.发送请求，验证response响应
         try:
             response = self.send_request()
@@ -275,12 +293,6 @@ if __name__ == "__main__":
         host = get_host_by_pro(pro_name)
         for index, test_case_dict in enumerate(test_case_dict_list):
             # for field, value in test_case_dict.items():
-
-            # print(test_case_dict.get("interface_name"))
-            # print(host+test_case_dict.get("interface_url"))
-            # print(test_case_dict.get("request_method"))
-            # print(test_case_dict.get("request_header"))
-            # print(test_case_dict.get("request_params"))
 
             result_dict = VerifyInterface(interface_name=test_case_dict.get("interface_name"),
                                           interface_url=host+test_case_dict.get("interface_url"),

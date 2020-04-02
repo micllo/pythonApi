@@ -11,7 +11,7 @@ def get_case_special_field_list():
     07.待比较关键字段名列表：compare_core_field_name_list（ 必填 ）< (Excel)string -> (Mongo)list >（以","分割）
     08.期望的关键字段值列表：expect_core_field_value_list（ 必填 ）< (Excel)string -> (Mongo)list >（以","分割）
     09.期望的响应字段列表：expect_field_name_list                 < (Excel)string -> (Mongo)list >（以","分割）
-    10.依赖接口名称列表：depend_interface_list                    < (Excel)string -> (Mongo)list >（以","分割）
+    10.依赖接口名列表：depend_interface_list                    < (Excel)string -> (Mongo)list >（以","分割）
     11.依赖字段名列表：depend_field_name_list                     < (Excel)string -> (Mongo)list >（以","分割）
     12.用例状态：case_status          < (Excel)int|string -> (Mongo)bool >
 

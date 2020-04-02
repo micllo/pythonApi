@@ -157,6 +157,7 @@ def verify_excel_and_transfer_format(excel_file):
         - < 里面的每一个元素的类型都是'str'（eg: "5"、"True") >
     （4）若存在'请求参数'，则需要检查是否以'?'或'{'开头
     6.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
+    7.检查'依赖接口名列表'与'依赖字段名列表'是否都有内容或都无内容
     """
     # 读取Excel用例文件
     excel_list = read_excel(excel_file, 0)
@@ -227,9 +228,13 @@ def verify_excel_and_transfer_format(excel_file):
                         return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段值 必须以 ? 或 { 开头 ！", None
 
     # 6.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
+    # 7.检查'依赖接口名列表'与'依赖字段名列表'是否都有内容或都无内容
     for index, line_dict in enumerate(excel_list):
         if len(line_dict["compare_core_field_name_list"]) != len(line_dict["expect_core_field_value_list"]):
             return "第 " + str(index + 2) + " 行的 'compare_core_field_name_list' 与 'expect_core_field_value_list' 字段数量不一致", None
+        if (len(line_dict["depend_interface_list"]) != 0 and len(line_dict["depend_field_name_list"]) == 0) or \
+           (len(line_dict["depend_interface_list"]) == 0 and len(line_dict["depend_field_name_list"]) != 0):
+            return "第 " + str(index + 2) + " 行的 'depend_interface_list' 与 'depend_field_name_list' 字段必须同时有内容", None
 
     # show_excel_list(excel_list)
     return "验证通过", excel_list
@@ -355,12 +360,13 @@ def get_case_operation_result(request_json, pro_name, mode):
     3.若存在'请求参数'，则需要检查是否以'?'或'{'开头
     4.相关字段的格式转换
     5.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
-    6.整合公共的用例字段
-    7.验证数据库中是否已存在
+    6.检查'依赖接口名列表'与'依赖字段名列表'是否都有内容或都无内容
+    7.整合公共的用例字段
+    8.验证数据库中是否已存在
     （1）'接口名称'
     （2）'请求方式+接口地址'
         （ 注意：若为'编辑'模式，则先排除编辑自身后，在进行上述判断 ）
-    8.'新增'或'更新'用例数据
+    9.'新增'或'更新'用例数据
 
     【 字 段 格 式 】
     01.接口名称：interface_name（ 必填 ）
@@ -421,7 +427,14 @@ def get_case_operation_result(request_json, pro_name, mode):
     if len(compare_core_field_name_list) != len(expect_core_field_value_list):
         return "<待比较的关键字段名> 与 <期望的关键字段值> 数量不一致"
 
-    # 6.整合公共的用例字段
+    log.info(len(depend_interface_list))
+    log.info(len(depend_field_name_list))
+    # 6.检查'依赖接口名列表'与'依赖字段名列表'是否都有内容或都无内容
+    if (len(depend_interface_list) != 0 and len(depend_field_name_list) == 0) or \
+       (len(depend_interface_list) == 0 and len(depend_field_name_list) != 0):
+        return "<依赖接口名列表> 与 <依赖字段名列表> 必须同时有内容"
+
+    # 7.整合公共的用例字段
     current_iso_date = get_current_iso_date()
     test_case_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
                       "request_header": request_header, "request_params": request_params, "verify_mode": verify_mode,
@@ -544,7 +557,6 @@ def get_case_by_id(request_args, pro_name):
 
 if __name__ == "__main__":
     pass
-
     # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
     # if verify_result == "验证通过":
     #     import_mongodb("pro_demo_1", excel_list, "batch_insert_and_replace")  # batch_insert、all_replace、batch_insert_and_replace
