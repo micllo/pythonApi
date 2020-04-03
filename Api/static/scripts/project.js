@@ -133,14 +133,15 @@ function add_case(pro_name, nginx_api_proxy) {
     var compare_core_field_name_list = $("#compare_core_field_name_list_add").val().trim();
     var expect_core_field_value_list = $("#expect_core_field_value_list_add").val().trim();
     var expect_field_name_list = $("#expect_field_name_list_add").val().trim();
-    var depend_interface_list = $("#depend_interface_list_add").val().trim();
+    var is_depend = $("#is_depend_add").val().trim();
     var depend_field_name_list = $("#depend_field_name_list_add").val().trim();
+    var depend_level = $("#depend_level_add").val().trim();
     var case_status = $("#case_status_add").val().trim();
 
     var add_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
         "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
-        "expect_field_name_list": expect_field_name_list, "depend_interface_list": depend_interface_list,
+        "expect_field_name_list": expect_field_name_list, "is_depend": is_depend, "depend_level": depend_level,
         "depend_field_name_list": depend_field_name_list, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/add/" + pro_name
@@ -207,6 +208,16 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
         // 填充编辑框
         // var label = document.getElementById("case_id_edit");
         // label.innerText = _id;
+
+        // 取消所有禁灰样式
+        $("#verify_mode_edit").attr('disabled', false);
+        $("#compare_core_field_name_list_edit").attr('disabled', false);
+        $("#expect_core_field_value_list_edit").attr('disabled', false);
+        $("#expect_field_name_list_edit").attr('disabled', false);
+        $("#depend_field_name_list_edit").attr('disabled', false);
+        $("#depend_level_edit").attr('disabled', false);
+
+        // 填充内容
         $("#case_id_edit").text(_id)
         $("#interface_name_edit").val(test_case.interface_name);
         $("#interface_url_edit").val(test_case.interface_url);
@@ -217,9 +228,24 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
         $("#compare_core_field_name_list_edit").val(test_case.compare_core_field_name_list);
         $("#expect_core_field_value_list_edit").val(test_case.expect_core_field_value_list);
         $("#expect_field_name_list_edit").val(test_case.expect_field_name_list);
-        $("#depend_interface_list_edit").val(test_case.depend_interface_list);
         $("#depend_field_name_list_edit").val(test_case.depend_field_name_list);
+        $("#depend_level_edit").val(test_case.depend_level);
         $("#case_status_edit").val(test_case.case_status);
+        console.log(test_case.is_depend)
+        console.log(typeof test_case.is_depend)
+
+        // 禁灰相应的样式
+        if(test_case.is_depend){
+            $("#is_depend_edit").text("是")
+            $("#verify_mode_edit").attr('disabled', true);
+            $("#compare_core_field_name_list_edit").attr('disabled', true);
+            $("#expect_core_field_value_list_edit").attr('disabled', true);
+            $("#expect_field_name_list_edit").attr('disabled', true);
+        }else {
+            $("#is_depend_edit").text("不是")
+            $("#depend_field_name_list_edit").attr('disabled', true);
+            $("#depend_level_edit").attr('disabled', true);
+        }
     }
 }
 
@@ -242,14 +268,14 @@ function edit_case(pro_name, nginx_api_proxy) {
     var compare_core_field_name_list = $("#compare_core_field_name_list_edit").val().trim();
     var expect_core_field_value_list = $("#expect_core_field_value_list_edit").val().trim();
     var expect_field_name_list = $("#expect_field_name_list_edit").val().trim();
-    var depend_interface_list = $("#depend_interface_list_edit").val().trim();
     var depend_field_name_list = $("#depend_field_name_list_edit").val().trim();
+    var depend_level = $("#depend_level_edit").val().trim();
     var case_status = $("#case_status_edit").val().trim();
 
     var edit_dict = {"_id": _id, "interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
         "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
-        "expect_field_name_list": expect_field_name_list, "depend_interface_list": depend_interface_list,
+        "expect_field_name_list": expect_field_name_list, "depend_level": depend_level,
         "depend_field_name_list": depend_field_name_list, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/edit/" + pro_name

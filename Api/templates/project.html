@@ -236,11 +236,11 @@
                             <input class="form-control" type="text" id="request_header_add" placeholder="请求头文件">
                         </div>
                         <div class="form-group">
-                            <label>请求参数：<font color="#B8860B">eg: &nbsp;?name=测试&age=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
+                            <label>请求参数：<font color="#B8860B">eg: &nbsp;?name=测试&token=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
                             <input class="form-control" type="text" id="request_params_add" placeholder="请求参数">
                         </div>
                         <div class="form-group">
-                            <label>验证模式：<font color="#DC143C">(必选)</font></label>
+                            <label>验证模式：<font color="#DC143C">(次必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="verify_mode_add">
                                     <option value=""></option>
@@ -250,11 +250,11 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>待比较关键字段名列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <label>待比较关键字段名列表：<font color="#DC143C">(次必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
                             <input class="form-control" type="text" id="compare_core_field_name_list_add" placeholder="待比较关键字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>期望的关键字段值列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <label>期望的关键字段值列表：<font color="#DC143C">(次必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
                             <input class="form-control" type="text" id="expect_core_field_value_list_add" placeholder="期望的关键字段值列表">
                         </div>
 
@@ -263,12 +263,31 @@
                             <input class="form-control" type="text" id="expect_field_name_list_add" placeholder="期望的响应字段列表">
                         </div>
                         <div class="form-group">
-                            <label>依赖接口名称：</font><font color="#B8860B">eg: &nbsp;登录接口,获取验证码接口</font></label>
-                            <input class="form-control" type="text" id="depend_interface_list_add" placeholder="依赖接口名列表">
+                            <label>是否为依赖接口：<font color="#DC143C">(必选)</font></label>
+                            <div class="fg-line">
+                                <select class="form-control" id="is_depend_add">
+                                    <option value=""></option>
+                                    <option value="False">否</option>
+                                    <option value="True">是</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label>依赖字段名：</font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
+                            <label>依赖字段名列表：<font color="#DC143C">(次必填)&nbsp;&nbsp;</font></font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
                             <input class="form-control" type="text" id="depend_field_name_list_add" placeholder="依赖字段名列表">
+                        </div>
+                        <div class="form-group">
+                            <label>依赖等级：<font color="#DC143C">(次必选)</font></label>
+                            <div class="fg-line">
+                                <select class="form-control" id="depend_level_add">
+                                    <option value=""></option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>用例状态：</label>
@@ -338,7 +357,7 @@
                             <input class="form-control" type="text" id="request_params_edit" placeholder="请求参数">
                         </div>
                         <div class="form-group">
-                            <label>验证模式：<font color="#DC143C">(必选)</font></label>
+                            <label>验证模式：<font color="#DC143C">(次必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="verify_mode_edit">
                                     <option value=""></option>
@@ -348,11 +367,11 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>待比较关键字段名列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <label>待比较关键字段名列表：<font color="#DC143C">(次必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
                             <input class="form-control" type="text" id="compare_core_field_name_list_edit" placeholder="待比较关键字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>期望的关键字段值列表：<font color="#DC143C">(必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <label>期望的关键字段值列表：<font color="#DC143C">(次必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
                             <input class="form-control" type="text" id="expect_core_field_value_list_edit" placeholder="期望的关键字段值列表">
                         </div>
 
@@ -361,12 +380,26 @@
                             <input class="form-control" type="text" id="expect_field_name_list_edit" placeholder="期望的响应字段列表">
                         </div>
                         <div class="form-group">
-                            <label>依赖接口名称：</font><font color="#B8860B">eg: &nbsp;登录接口,获取验证码接口</font></label>
-                            <input class="form-control" type="text" id="depend_interface_list_edit" placeholder="依赖接口名列表">
+                            <label style="color: #B8860B; font-weight: bold;">当 前 接 口 </label>
+                            <label id="is_depend_edit" style="color: #DC143C; font-weight: bold;"></label>
+                            <label style="color: #B8860B; font-weight: bold;"> 依 赖 接 口 </label>
                         </div>
                         <div class="form-group">
-                            <label>依赖字段名：</font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
+                            <label>依赖字段名列表：<font color="#DC143C">(次必填)&nbsp;&nbsp;</font></font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
                             <input class="form-control" type="text" id="depend_field_name_list_edit" placeholder="依赖字段名列表">
+                        </div>
+                        <div class="form-group">
+                            <label>依赖等级：<font color="#DC143C">(次必选)</font></label>
+                            <div class="fg-line">
+                                <select class="form-control" id="depend_level_edit">
+                                    <option value=""></option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>用例状态：</label>

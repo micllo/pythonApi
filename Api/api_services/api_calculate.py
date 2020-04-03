@@ -2,7 +2,8 @@
 from Config import config as cfg
 import sys, os, time
 from Tools.excel_data import read_excel
-from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field
+from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
+    get_not_null_field_list_with_depend
 from Tools.mongodb import MongodbUtils
 from Common.test_func import mongo_exception_send_DD
 from Common.com_func import is_null, log
@@ -141,23 +142,35 @@ def verify_excel_and_transfer_format(excel_file):
     2.判断用例字段名是否正确 -> get_case_special_field_list()
     （1）是否有多余的字段
     （2）是否有缺失的字段
-    3.检查必填项 -> get_not_null_field_list()
-    4.检查是否存在重复的用例
+    3.转换'is_depend'字段格式
+    （1）是否为依赖接口：is_depend
+        问题：<Excel> 显示 FALSE、TRUE  <python> 显示 0、1 （ int类型 )
+        解决：将 int 或 '其他形式字符串' 转换成 bool 类型（ 其他形式字符串：空、"false"、"true"、"False"、"True"等)
+    4.根据'is_depend'字段 检查必填项
+    （1）若'is_depend=True：是依赖接口'
+         1）验证依赖接口的必填项  get_not_null_field_list_with_depend()
+         2）验证'depend_level'字段必须是 float 类型
+    （2）若'is_depend=False：不是依赖接口'
+         1）验证测试接口的必填项 get_not_null_field_list()
+         2）验证'verify_mode'字段必须是 float 类型
+        （ 备注：<Excel> 显示 1、2  <python> 显示 1.0、2.0 （ float类型 ) ）
+    5.检查是否存在重复的用例
     （1）'接口名称'是否存在重复
     （2）'请求方式+接口地址'是否存在重复
-    5.转换相关字段值的类型与格式
-    （1）验证模式：verify_mode
+    （3）'依赖等级'是否重复
+    6.转换相关字段值的类型与格式
+    （1）验证模式：verify_mode、depend_level
         问题：<Excel> 显示 1、2  <python> 显示 1.0、2.0 （ float类型 )
-        解决：将 float 转换成 int 类型
+        解决：将 float 转换成 int 类型（ 若未填，赋值 0  ）
     （2）用例状态：case_status
         问题：<Excel> 显示 FALSE、TRUE  <python> 显示 0、1 （ int类型 )
         解决：将 int 或 '其他形式字符串' 转换成 bool 类型（ 其他形式字符串：空、"false"、"true"、"False"、"True"等)
-    （3）将(以","分割)的相关字段值转换成list -> get_list_field()
+    （3）检查'请求头文件'和'请求参数'中是否存在中文逗号
+    （4）将(以","分割)的相关字段值转换成list -> get_list_field()
         - 检查这些字段中是否存在中文逗号
         - < 里面的每一个元素的类型都是'str'（eg: "5"、"True") >
-    （4）若存在'请求参数'，则需要检查是否以'?'或'{'开头
-    6.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
-    7.检查'依赖接口名列表'与'依赖字段名列表'是否都有内容或都无内容
+    （5）若存在'请求参数'，则需要检查是否以'?'或'{'开头
+    7.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
     """
     # 读取Excel用例文件
     excel_list = read_excel(excel_file, 0)
@@ -177,18 +190,39 @@ def verify_excel_and_transfer_format(excel_file):
         if each not in case_special_field_list:
             return "存在多余的列", None
 
-    # 3.检查必填项
+    # 3.转换'is_depend'字段格式
     for index, line_dict in enumerate(excel_list):
         for key, value in line_dict.items():
-            if key.strip() in get_not_null_field_list() and str(value).strip() == "":
-                return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段不能为空", None
+            if key.strip() == "is_depend":
+                if type(value) is int:
+                    line_dict[key] = value == 1 or False
+                else:
+                    line_dict[key] = value.strip() in ["true", "True", "TRUE"] or False
 
-    # 4.检查是否存在重复的用例(接口名称、请求方式+接口地址)
+    # 4.根据'is_depend'字段 检查必填项
+    for index, line_dict in enumerate(excel_list):
+        if line_dict["is_depend"]:
+            for key, value in line_dict.items():
+                if key.strip() in get_not_null_field_list_with_depend() and str(value).strip() == "":
+                    return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段不能为空", None
+                if key.strip() == "depend_level" and not type(value) is float:
+                        return "第 " + str(index + 2) + " 行的 < depend_level > 字段格式不正确", None
+        else:
+            for key, value in line_dict.items():
+                if key.strip() in get_not_null_field_list() and str(value).strip() == "":
+                    return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段不能为空", None
+                if key.strip() == "verify_mode" and not type(value) is float:
+                        return "第 " + str(index + 2) + " 行的 < verify_mode > 字段格式不正确", None
+
+    # 5.检查是否存在重复的用例(接口名称、请求方式+接口地址)
     interface_name_list = []  # '接口名称'列表
     method_and_url_list = []  # '请求方式+接口地址'列表
+    depend_level_list = []    # '依赖等级'列表
     for index, line_dict in enumerate(excel_list):
         interface_name_list.append(str(line_dict["interface_name"]).strip())
         method_and_url_list.append(str(line_dict["request_method"]).strip() + str(line_dict["interface_url"]).strip())
+        if line_dict["is_depend"]:
+            depend_level_list.append(str(int(line_dict["depend_level"])))
 
     interface_num_dict = {}  # 记录'接口名称'出现的次数 { "test_01": 1, "test_02": 2 }
     for interface_name in set(interface_name_list):
@@ -204,16 +238,30 @@ def verify_excel_and_transfer_format(excel_file):
         if num > 1:
             return "request_method + interface_url = " + method_and_url + " 的组合重复出现了 " + str(num) + " 次", None
 
-    # 5.转换字段值的类型与格式
+    if depend_level_list:
+        depend_level_num_dict = {}  # 记录'依赖等级'出现的次数 { "1": 1, "2": 2 }
+        for depend_level in set(depend_level_list):
+            depend_level_num_dict[depend_level] = depend_level_list.count(depend_level)
+        for depend_level, num in depend_level_num_dict.items():
+            if num > 1:
+                return "depend_level = " + depend_level + " 字段重复出现了 " + str(num) + " 次", None
+
+    # 6.转换字段值的类型与格式
     for index, line_dict in enumerate(excel_list):
         for key, value in line_dict.items():
-            if key.strip() == "verify_mode":
-                line_dict[key] = int(value)
+            if key.strip() in ["verify_mode", "depend_level"]:
+                if type(value) is float:
+                    line_dict[key] = int(value)
+                else:
+                    line_dict[key] = 0
             if key.strip() == "case_status":
                 if type(value) is int:
                     line_dict[key] = value == 1 or False
                 else:
                     line_dict[key] = value.strip() in ["true", "True", "TRUE"] or False
+            if key.strip() in ["request_header", "request_params"]:
+                if "，" in value.strip():
+                    return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
             if key.strip() in get_list_field():
                 if value.strip() == "":
                     line_dict[key] = []
@@ -227,14 +275,10 @@ def verify_excel_and_transfer_format(excel_file):
                     if not value.startswith("?") and not value.startswith("{"):
                         return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段值 必须以 ? 或 { 开头 ！", None
 
-    # 6.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
-    # 7.检查'依赖接口名列表'与'依赖字段名列表'是否都有内容或都无内容
+    # 7.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
     for index, line_dict in enumerate(excel_list):
         if len(line_dict["compare_core_field_name_list"]) != len(line_dict["expect_core_field_value_list"]):
             return "第 " + str(index + 2) + " 行的 'compare_core_field_name_list' 与 'expect_core_field_value_list' 字段数量不一致", None
-        if (len(line_dict["depend_interface_list"]) != 0 and len(line_dict["depend_field_name_list"]) == 0) or \
-           (len(line_dict["depend_interface_list"]) == 0 and len(line_dict["depend_field_name_list"]) != 0):
-            return "第 " + str(index + 2) + " 行的 'depend_interface_list' 与 'depend_field_name_list' 字段必须同时有内容", None
 
     # show_excel_list(excel_list)
     return "验证通过", excel_list
@@ -242,10 +286,12 @@ def verify_excel_and_transfer_format(excel_file):
 
 def show_excel_list(excel_list):
     for index, line_dict in enumerate(excel_list):
-        print("\n======= " + str(index) + " =========\n")
+        print("\n============== " + str(index) + " ================\n")
         for key, value in line_dict.items():
+            print(key)
             print(value)
             print(type(value))
+            print("--------")
 
 
 def get_test_case(pro_name):
@@ -559,6 +605,6 @@ if __name__ == "__main__":
     pass
     # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
     # if verify_result == "验证通过":
-    #     import_mongodb("pro_demo_1", excel_list, "batch_insert_and_replace")  # batch_insert、all_replace、batch_insert_and_replace
+    #     import_mongodb("pro_demo_1", excel_list, "all_replace")  # batch_insert、all_replace、batch_insert_and_replace
     # else:
     #     print(verify_result)
