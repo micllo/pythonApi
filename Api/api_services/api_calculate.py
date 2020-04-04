@@ -296,12 +296,13 @@ def show_excel_list(excel_list):
 
 def get_test_case(pro_name):
     """
-    根据项目获取测试用例列表（上线的排在前面）
+    根据项目获取测试用例列表（上线的依赖接口排在前面）
     :param pro_name:
     :return: 返回值
     """
     test_case_list = []
-    on_line_list = []
+    on_line_list_with_depend = []
+    on_line_list_with_test = []
     off_line_list = []
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -319,12 +320,21 @@ def get_test_case(pro_name):
                 test_case_dict["expect_field_name_list"] = res.get("expect_field_name_list")
                 test_case_dict["verify_mode"] = res.get("verify_mode")
                 test_case_dict["case_status"] = res.get("case_status")
+                test_case_dict["is_depend"] = res.get("is_depend")
+                test_case_dict["depend_level"] = res.get("depend_level")
+                test_case_dict["depend_field_name_list"] = res.get("depend_field_name_list")
+                test_case_dict["depend_field_value_list"] = res.get("depend_field_value_list")
                 test_case_dict["update_time"] = res.get("update_time")
+                test_case_dict["test_result"] = res.get("test_result")
                 if res.get("case_status"):
-                    on_line_list.append(test_case_dict)
+                    if res.get("is_depend"):
+                        on_line_list_with_depend.append(test_case_dict)
+                    else:
+                        on_line_list_with_test.append(test_case_dict)
                 else:
                     off_line_list.append(test_case_dict)
-            test_case_list = on_line_list + off_line_list
+            on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
+            test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试用例列表")
             return []
@@ -338,8 +348,10 @@ def get_case_search_result(request_args, pro_name):
     :param request_args: GET请求参数
     :param pro_name:
     :return:
-    【 搜索逻辑 】
-    1.若有搜索内容且用例状态为全部，则将上线的用例排在前面
+    【 搜 索 用 例 的 排 序 】
+    1.上线的排在前面
+    2.依赖接口排在前面
+    3.依赖等级小的排在前面
     """
     search_pattern = {}
     if request_args:
@@ -347,6 +359,7 @@ def get_case_search_result(request_args, pro_name):
         interface_url = request_args.get("interface_url", "").strip()
         request_method = request_args.get("request_method", "").strip()
         case_status = request_args.get("case_status", "").strip()
+        is_depend = request_args.get("is_depend", "").strip()
         if interface_name:
             search_pattern["interface_name"] = re.compile(interface_name)
         if interface_url:
@@ -358,6 +371,11 @@ def get_case_search_result(request_args, pro_name):
                 search_pattern["case_status"] = True
             else:
                 search_pattern["case_status"] = False
+        if is_depend:
+            if is_depend in ["true", "TRUE", "True"]:
+                search_pattern["is_depend"] = True
+            else:
+                search_pattern["is_depend"] = False
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -370,7 +388,8 @@ def get_case_search_result(request_args, pro_name):
             return []
 
     test_case_list = []
-    on_line_list = []
+    on_line_list_with_depend = []
+    on_line_list_with_test = []
     off_line_list = []
     if results:
         for res in results:
@@ -385,13 +404,22 @@ def get_case_search_result(request_args, pro_name):
             test_case_dict["expect_core_field_value_list"] = str(res.get("expect_core_field_value_list"))
             test_case_dict["expect_field_name_list"] = str(res.get("expect_field_name_list"))
             test_case_dict["verify_mode"] = res.get("verify_mode")
+            test_case_dict["is_depend"] = res.get("is_depend")
+            test_case_dict["depend_level"] = res.get("depend_level")
+            test_case_dict["depend_field_name_list"] = str(res.get("depend_field_name_list"))
+            test_case_dict["depend_field_value_list"] = str(res.get("depend_field_value_list"))
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["update_time"] = str(res.get("update_time"))
+            test_case_dict["test_result"] = res.get("test_result")
             if res.get("case_status"):
-                on_line_list.append(test_case_dict)
+                if res.get("is_depend"):
+                    on_line_list_with_depend.append(test_case_dict)
+                else:
+                    on_line_list_with_test.append(test_case_dict)
             else:
                 off_line_list.append(test_case_dict)
-        test_case_list = on_line_list + off_line_list
+        on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
+        test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
     return test_case_list
 
 
@@ -635,3 +663,36 @@ if __name__ == "__main__":
     #     import_mongodb("pro_demo_1", excel_list, "all_replace")  # batch_insert、all_replace、batch_insert_and_replace
     # else:
     #     print(verify_result)
+
+
+
+
+# # param = "{'image_id':'{{image_id}}', 'token':'{{token}}'}"
+#     # param = "?token={{token}}"
+#     # param = "?token={{token}}&test={{test}}"
+#     param = "/test/add/{{token}}"
+#
+#     depend_dict = {"token": "2222222", "image_id": "11111"}
+#
+#     # 获取参数中的依赖字段列表
+#     params_depend_field_list = []
+#     num = param.count('{{')  # 统计参数的依赖字段数量
+#     pattern = r'.*{{(.*)}}' * num  # 整理匹配模式（捕获数量）
+#     if pattern:  # 若存在 则进行捕获
+#         match_obj = re.match(pattern, param)
+#         for i in range(num):
+#             params_depend_field_list.append(match_obj.group(i + 1))
+#     print(params_depend_field_list)
+#
+#     # 判断参数中的依赖字段值是否都已获取
+#     #（ 判断'params_depend_field_list'列表中的每个字段是否都包含在'depend_dict'的'key'列表中）
+#     no_contain_depend_field_list = [field for field in params_depend_field_list if field not in list(depend_dict.keys())]
+#     print(no_contain_depend_field_list)
+#     if no_contain_depend_field_list:
+#         print("依赖字段没有全部获取到")
+#     else:
+#         # 替换依赖字段
+#         for field in params_depend_field_list:
+#             param = param.replace("{{" + field + "}}", depend_dict[field])
+#
+#     print(param)

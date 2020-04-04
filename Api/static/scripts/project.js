@@ -66,9 +66,10 @@ function search_case(pro_name, nginx_api_proxy) {
     var request_method = $("#request_method").val().trim();
     var interface_url = $("#interface_url").val().trim();
     var case_status = $("#case_status").val().trim();
+    var is_depend = $("#is_depend").val().trim();
 
     var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
-        interface_url + "&case_status=" + case_status
+        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend
 
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "?" + get_pramas
@@ -89,21 +90,41 @@ function search_case(pro_name, nginx_api_proxy) {
             var expect_core_field_value_list = test_case_list[i]["expect_core_field_value_list"];
             var expect_field_name_list = test_case_list[i]["expect_field_name_list"];
             var verify_mode = test_case_list[i]["verify_mode"];
+            var is_depend = test_case_list[i]["is_depend"];
+            var depend_level = test_case_list[i]["depend_level"];
+            var depend_field_name_list = test_case_list[i]["depend_field_name_list"];
+            var depend_field_value_list = test_case_list[i]["depend_field_value_list"];
             var case_status = test_case_list[i]["case_status"];
+            var test_result = test_case_list[i]["test_result"];
             var update_time = test_case_list[i]["update_time"];
 
-            var tr_html = "<tr>" +
-                "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "</td>" +
-                "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>" +
-                "<td style=\"width: 250px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>" +
-                "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>" +
-                "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">" + verify_mode + "</td>";
+            var tr_html = "<tr>";
+            if(is_depend){
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "<font color=\"#DC143C\"> (依赖) </font></td>";
+            }else{
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "</td>";
+            }
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>";
+            tr_html += "<td style=\"width: 200px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>";
+
+            if(is_depend){
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"依赖的字段值\" data-content=\"" + depend_field_value_list + "\">" + depend_field_name_list + "</td>";
+                tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\">依赖等级：" + depend_level + "</td>";
+            }else{
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>";
+                if(verify_mode == 1){
+                    tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">仅关键字</td>";
+                }else{
+                    tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">关键字+响应字段</td>";
+                }
+            }
             if(case_status){
                 tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\"><font color=\"#00A600\">上线</font></td>";
             }else{
                 tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\"><font color=\"#DC143C\">下线</font></td>";
             }
-            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>" +
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" + test_result + "</td>" +
+                "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>" +
                 "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>" +

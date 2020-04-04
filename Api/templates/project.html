@@ -87,7 +87,7 @@
                                                     <input id="interface_name" name="interface_name" type="text" class="form-control" placeholder="接口名称">
                                                 </div>
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-2">
                                                 <div class="fg-line">
                                                     <input id="interface_url" name="interface_url" type="text" class="form-control" placeholder="接口地址">
                                                 </div>
@@ -118,6 +118,18 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="col-sm-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">用例类型：</span>
+                                                    <div class="fg-line">
+                                                        <select class="form-control" id="is_depend" name="is_depend">
+                                                            <option value="">全部</option>
+                                                            <option value="True">依赖</option>
+                                                            <option value="False">测试</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="col-sm-1">
                                                 <div class="input-group" id="search_btn">
                                                     <button class="btn btn-success btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>
@@ -138,9 +150,10 @@
                                                     <th>接口名称</th>
                                                     <th class="text-center">请求方式</th>
                                                     <th>接口地址</th>
-                                                    <th class="text-center">验证关键字段</th>
+                                                    <th>验证关键字段</th>
                                                     <th class="text-center">验证模式</th>
                                                     <th class="text-center">用例状态</th>
+                                                    <th class="text-center">测试结果</th>
                                                     <th class="text-center">更新时间</th>
                                                     <th class="text-center">操作</th>
                                                 </tr>
@@ -157,15 +170,30 @@
                                                     {% set expect_core_field_value_list = test_case["expect_core_field_value_list"] %}
                                                     {% set expect_field_name_list = test_case["expect_field_name_list"] %}
                                                     {% set verify_mode = test_case["verify_mode"] %}
+                                                    {% set is_depend = test_case["is_depend"] %}
+                                                    {% set depend_level = test_case["depend_level"] %}
+                                                    {% set depend_field_name_list = test_case["depend_field_name_list"] %}
+                                                    {% set depend_field_value_list = test_case["depend_field_value_list"] %}
                                                     {% set case_status = test_case["case_status"] %}
                                                     {% set update_time = test_case["update_time"] %}
+                                                    {% set test_result = test_case["test_result"] %}
                                                     <tr>
-                                                        <td style="width: 150px; display:table-cell; vertical-align:middle;">{{ interface_name }}</td>
+                                                        <td style="width: 150px; display:table-cell; vertical-align:middle;">{{ interface_name }} {% if is_depend %} <font color="#DC143C">(依赖)</font> {% endif %} </td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求头文件" data-content="{{ request_header }}">{{ request_method }}</td>
-                                                        <td style="width: 250px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
-                                                        <td  class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value_list }}">{{ compare_core_field_name_list }}</td>
-                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的响应字段列表" data-content="{{ expect_field_name_list }}">{{ verify_mode }}</td>
+                                                        <td style="width: 200px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
+
+                                                        {% if is_depend %}
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="依赖的字段值" data-content="{{ depend_field_value_list }}">{{ depend_field_name_list }}</td>
+                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">依赖等级：{{ depend_level }}</td>
+                                                        {% else %}
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value_list }}">{{ compare_core_field_name_list }}</td>
+                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的响应字段列表" data-content="{{ expect_field_name_list }}">
+                                                                {% if verify_mode == 1 %} 仅关键字 {% else %} 关键字+响应字段 {% endif %}
+                                                            </td>
+                                                        {% endif %}
+
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;"> {% if case_status %} <font color="#00A600">上线</font> {% else %} <font color="#DC143C">下线</font> {% endif %} </td>
+                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">{{ test_result }}</td>
                                                         <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ update_time }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
                                                             <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#edit_case_form"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
