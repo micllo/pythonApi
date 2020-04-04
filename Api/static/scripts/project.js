@@ -83,6 +83,7 @@ function search_case(pro_name, nginx_api_proxy) {
             var interface_name = test_case_list[i]["interface_name"];
             var interface_url = test_case_list[i]["interface_url"];
             var request_method = test_case_list[i]["request_method"];
+            var request_header = test_case_list[i]["request_header"];
             var request_params = test_case_list[i]["request_params"];
             var compare_core_field_name_list = test_case_list[i]["compare_core_field_name_list"];
             var expect_core_field_value_list = test_case_list[i]["expect_core_field_value_list"];
@@ -93,7 +94,7 @@ function search_case(pro_name, nginx_api_proxy) {
 
             var tr_html = "<tr>" +
                 "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "</td>" +
-                "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" + request_method + "</td>" +
+                "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>" +
                 "<td style=\"width: 250px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>" +
                 "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>" +
                 "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">" + verify_mode + "</td>";
@@ -231,11 +232,16 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
         $("#depend_field_name_list_edit").val(test_case.depend_field_name_list);
         $("#depend_level_edit").val(test_case.depend_level);
         $("#case_status_edit").val(test_case.case_status);
-        console.log(test_case.is_depend)
-        console.log(typeof test_case.is_depend)
+
+        // // 禁灰相应的样式
+        // if(test_case.is_depend == "True"){
+        //     $("#is_depend_edit").text("是")
+        // }else {
+        //     $("#is_depend_edit").text("不是")
+        // }
 
         // 禁灰相应的样式
-        if(test_case.is_depend){
+        if(test_case.is_depend == "True"){
             $("#is_depend_edit").text("是")
             $("#verify_mode_edit").attr('disabled', true);
             $("#compare_core_field_name_list_edit").attr('disabled', true);
@@ -252,10 +258,9 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
 
 
 /**
- *  编辑用例
+ *  更新用例
  */
 function edit_case(pro_name, nginx_api_proxy) {
-
 
     // 获取相应的添加内容
     var _id = $("#case_id_edit").html().trim();
@@ -269,13 +274,20 @@ function edit_case(pro_name, nginx_api_proxy) {
     var expect_core_field_value_list = $("#expect_core_field_value_list_edit").val().trim();
     var expect_field_name_list = $("#expect_field_name_list_edit").val().trim();
     var depend_field_name_list = $("#depend_field_name_list_edit").val().trim();
+    var is_depend = $("#is_depend_edit").html().trim();
     var depend_level = $("#depend_level_edit").val().trim();
     var case_status = $("#case_status_edit").val().trim();
+
+    if(is_depend == "是"){
+        is_depend = "True"
+    }else {
+        is_depend = "False"
+    }
 
     var edit_dict = {"_id": _id, "interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
         "request_header": request_header, "request_params":request_params, "verify_mode": verify_mode,
         "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
-        "expect_field_name_list": expect_field_name_list, "depend_level": depend_level,
+        "expect_field_name_list": expect_field_name_list, "is_depend":is_depend, "depend_level": depend_level,
         "depend_field_name_list": depend_field_name_list, "case_status": case_status};
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/operation_case/edit/" + pro_name

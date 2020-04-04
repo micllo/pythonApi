@@ -7,13 +7,13 @@ def get_case_special_field_list():
     03.请求方式：request_method（ 必填 ）
     04.请求头文件：request_header
     05.请求参数：request_params
-    06.验证模式：verify_mode    （ 次必填 ）       < (Excel)float  -> (Mongo)int >
-    07.待比较关键字段名列表：compare_core_field_name_list （ 次必填 ）< (Excel)string -> (Mongo)list >（以","分割）
-    08.期望的关键字段值列表：expect_core_field_value_list （ 次必填 ）< (Excel)string -> (Mongo)list >（以","分割）
+    06.验证模式：verify_mode    （ 测试必填 ）       < (Excel)float  -> (Mongo)int >
+    07.待比较关键字段名列表：compare_core_field_name_list （ 测试必填 ）< (Excel)string -> (Mongo)list >（以","分割）
+    08.期望的关键字段值列表：expect_core_field_value_list （ 测试必填 ）< (Excel)string -> (Mongo)list >（以","分割）
     09.期望的响应字段列表：expect_field_name_list                   < (Excel)string -> (Mongo)list >（以","分割）
     10.是否为依赖接口：is_depend              （ 必填 ）    < (Excel)int|string -> (Mongo)bool >
-    11.依赖等级：depend_level                （ 次必填 ）  < (Excel)float  -> (Mongo)int >
-    12.依赖字段名列表：depend_field_name_list （ 次必填 ）  < (Excel)string -> (Mongo)list >（以","分割）
+    11.依赖等级：depend_level                （ 依赖必填 ）  < (Excel)float  -> (Mongo)int >
+    12.依赖字段名列表：depend_field_name_list （ 依赖必填 ）  < (Excel)string -> (Mongo)list >（以","分割）
     13.用例状态：case_status  （ 默认：FALSE ）            < (Excel)int|string -> (Mongo)bool >
 
     < 以下字段不显示在导入Excel中>
@@ -43,9 +43,9 @@ def get_not_null_field_list():
     01.接口名称：interface_name
     02.接口地址：interface_url
     03.请求方式：request_method
-    04.验证模式：verify_mode                            （ 次必填 ）
-    05.待比较关键字段名列表：compare_core_field_name_list （ 次必填 ）
-    06.期望的关键字段值列表：expect_core_field_value_list （ 次必填 ）
+    04.验证模式：verify_mode                            （ 测试必填 ）
+    05.待比较关键字段名列表：compare_core_field_name_list （ 测试必填 ）
+    06.期望的关键字段值列表：expect_core_field_value_list （ 测试必填 ）
     :return:
     """
     not_null_field_list = ["interface_name", "interface_url", "request_method", "verify_mode",
@@ -59,8 +59,8 @@ def get_not_null_field_list_with_depend():
     01.接口名称：interface_name
     02.接口地址：interface_url
     03.请求方式：request_method
-    04.依赖等级：depend_level                （ 次必填 ）
-    05.依赖字段名列表：depend_field_name_list （ 次必填 ）
+    04.依赖等级：depend_level                （ 依赖必填 ）
+    05.依赖字段名列表：depend_field_name_list （ 依赖必填 ）
     :return:
     """
     not_null_field_list_with_depend = ["interface_name", "interface_url", "request_method", "depend_level",
