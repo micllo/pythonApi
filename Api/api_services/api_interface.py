@@ -73,7 +73,7 @@ def test_login():
     params = request.json
     name = params.get("name")  # str
     passwd = params.get("passwd")   # int
-    result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "Content_Type": "application/json"}
+    result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "content-type": "application/json"}
     msg = REQUEST_SUCCESS
     re_dict = interface_template(msg, result_dict)
     return json.dumps(re_dict, ensure_ascii=False)

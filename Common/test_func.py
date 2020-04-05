@@ -5,7 +5,7 @@ from Tools.mongodb import MongodbUtils
 from Config import config as cfg
 from Tools.date_helper import get_current_iso_date
 from TestBase.verify_interface import AcquireDependField, VerifyInterface
-import re
+import re, json
 
 
 def mongo_exception_send_DD(e, msg):
@@ -31,9 +31,9 @@ def test_interface(pro_name):
     （1）上线的'依赖接口列表'
     （2）上线的'测试接口列表'
     2.[ 获 取 依 赖 字 段 值 ]
-    （1）< 判断 > 是否需要依赖
-    （2）若不需要，则 直接进入 [ 接 口 测 试 ]
-    （3）若需要，则
+      < 判断 > 是否需要依赖
+    （1）若不需要，则 直接进入 [ 接 口 测 试 ]
+    （2）若需要，则
         1）若'depend_interface_result_list'包含'success'，则 '依赖接口列表' 更新结果记录，并进入 [ 接 口 测 试 ]
         2）若'depend_interface_result_list'含有'error:依赖接口不存在'，则 '测试接口列表' 更新结果记录 -- STOP --
         3）若'depend_interface_result_list'其他情况，则 '依赖接口列表、测试接口列表' 更新结果记录 -- STOP --
@@ -53,14 +53,19 @@ def test_interface(pro_name):
             return
     depend_interface_list = list(depend_interface_list)
     test_interface_list = list(test_interface_list)
+    host = get_host_by_pro(pro_name)
 
-    # 2.[ 获 取 依 赖 字 段 值 ]
-    adf = AcquireDependField(depend_interface_list=depend_interface_list, test_interface_list=test_interface_list)
-    if adf.is_need_depend():
-        adf.acquire()
+    if test_interface_list:
+        # 2.[ 获 取 依 赖 字 段 值 ]
+        adf = AcquireDependField(host=host, depend_interface_list=depend_interface_list,
+                                 test_interface_list=test_interface_list)
+        if adf.is_need_depend():
+            adf.acquire()
+
+        else:
+            print("进入 [ 验 证 接 口 ]")
     else:
-        # 进入 [ 验 证 接 口 ]
-        pass
+        print("没有上线的用例")
 
 
      # 3.若不为空，则进入[ 获 取 依 赖 字 段 值 步 骤 ]
