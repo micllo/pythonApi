@@ -104,19 +104,29 @@ function search_case(pro_name, nginx_api_proxy) {
             var update_time = test_case_list[i]["update_time"];
 
             var tr_html = "<tr>";
+
+            // 接口名称
             if(is_depend){
                 tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "<font color=\"#DC143C\"> (依赖) </font></td>";
             }else{
                 tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "</td>";
             }
+
+            // 请求方式（请求头文件）
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>";
+
+            // 接口地址（请求参数）
             tr_html += "<td style=\"width: 200px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>";
 
             if(is_depend){
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"依赖的字段值\" data-content=\"" + depend_field_value_list + "\">" + depend_field_name_list + "</td>";
+                // 依赖字段值（依赖的字段名列表、依赖的字段值列表）
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"字段名：" + depend_field_name_list + "\" data-content=\"字段值：" + depend_field_value_list + "\"><span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-info\">依 赖 字 段 值</span></td>";
+                // 依赖等级
                 tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\">依赖等级：" + depend_level + "</td>";
             }else{
+                // 验证关键字段（期望的关键字段值）
                 tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>";
+                // 验证模式（期望的响应字段列表）
                 tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">";
                 if(verify_mode == 1){
                     tr_html += "仅关键字</td>";
@@ -124,14 +134,21 @@ function search_case(pro_name, nginx_api_proxy) {
                     tr_html += "关键字+响应字段</td>";
                 }
             }
-            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
+
+            // 用例状态（实际的关键字段值）
+            if(is_depend){
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
+            }else{
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
+            }
             if(case_status){
                 tr_html += "<font color=\"#00A600\">上线</font></td>";
             }else{
                 tr_html += "<font color=\"#DC143C\">下线</font></td>";
             }
-            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"测试结果信息\" data-content=\"" + test_result + "\">";
 
+            // 测试结果（测试结果信息）
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"测试结果信息\" data-content=\"" + test_result + "\">";
             if(is_depend){
                 if(test_result.search("success") != -1){
                     tr_html += "<font color=\"#00A600\"> 依赖通过 </font>";
@@ -140,23 +157,29 @@ function search_case(pro_name, nginx_api_proxy) {
                 }else if(test_result.search("error") != -1){
                     tr_html += "<font color=\"#C6A300\"> 配置错误 </font>";
                 }else{
-
                 }
             }else{
                 if(test_result.search("依赖") != -1){
-                tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-warning\"> 依赖错误 </span></td>";
+                tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-warning\"> 依赖错误 </span></td>";
                 }else if(test_result.search("success") != -1){
-                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-success\"> 测试通过 </span></td>";
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-success\"> 测试通过 </span></td>";
                 }else if(test_result.search("fail") != -1){
-                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-danger\"> 测试失败 </span></td>";
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-danger\"> 测试失败 </span></td>";
                 }else if(test_result.search("error") != -1){
-                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-warning\"> 配置错误 </span></td>";
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-warning\"> 配置错误 </span></td>";
                 }else{
-                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-info\"></span></td>";
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-info\"></span></td>";
                 }
             }
-            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + actual_field_name_list + "\">" + update_time + "</td>" +
-                "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" +
+            // 更新时间（实际的响应字段列表）
+            if(is_depend){
+                tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>";
+            }else{
+                tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + actual_field_name_list + "\">" + update_time + "</td>";
+            }
+
+            // 操作
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>" +
                 "</td>" +

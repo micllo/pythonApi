@@ -180,27 +180,42 @@
                                                     {% set update_time = test_case["update_time"] %}
                                                     {% set test_result = test_case["test_result"] %}
                                                     <tr>
+                                                        {# 接口名称 #}
                                                         <td style="width: 150px; display:table-cell; vertical-align:middle;">{{ interface_name }} {% if is_depend %} <font color="#DC143C">(依赖)</font> {% endif %} </td>
+
+                                                        {# 请求方式（请求头文件）#}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求头文件" data-content="{{ request_header }}">{{ request_method }}</td>
+                                                        {# 接口地址（请求参数）#}
                                                         <td style="width: 200px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
 
                                                         {% if is_depend %}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="依赖的字段值" data-content="{{ depend_field_value_list }}">{{ depend_field_name_list }}</td>
+                                                            {# 依赖字段值（依赖的字段名列表、依赖的字段值列表）#}
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="字段名：{{ depend_field_name_list }}" data-content="字段值：{{ depend_field_value_list }}"><span id="exec_result" style="font-size:14px" class="label label-info">依 赖 字 段 值</span></td>
+                                                            {# 依赖等级 #}
                                                             <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">依赖等级：{{ depend_level }}</td>
                                                         {% else %}
+                                                            {# 验证关键字段（期望的关键字段值）#}
                                                             <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value_list }}">{{ compare_core_field_name_list }}</td>
+                                                            {# 验证模式（期望的响应字段列表）#}
                                                             <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的响应字段列表" data-content="{{ expect_field_name_list }}">
                                                                 {% if verify_mode == 1 %} 仅关键字 {% else %} 关键字+响应字段 {% endif %}
                                                             </td>
                                                         {% endif %}
 
-                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的关键字段值" data-content="{{ actual_core_field_value_list }}">
+                                                        {# 用例状态（实际的关键字段值） #}
+                                                        {% if is_depend %}
+                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
+                                                        {% else %}
+                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的关键字段值" data-content="{{ actual_core_field_value_list }}">
+                                                        {% endif %}
                                                             {% if case_status %}
                                                                 <font color="#00A600">上线</font>
                                                             {% else %}
                                                                 <font color="#DC143C">下线</font>
                                                             {% endif %}
-                                                        </td>
+                                                            </td>
+
+                                                        {# 测试结果（测试结果信息）#}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="测试结果信息" data-content="{{ test_result }}">
                                                             {% if is_depend %}
                                                                 {% if "success" in test_result %}
@@ -210,23 +225,30 @@
                                                                 {% elif "error" in test_result %}
                                                                     <font color="#C6A300"> 配置错误 </font>
                                                                 {% else %}
-
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% if "依赖" in test_result%}
-                                                                    <span id="exec_result" style="font-size:15px" class="label label-warning"> 依赖错误 </span>
+                                                                    <span id="exec_result" style="font-size:14px" class="label label-warning"> 依赖错误 </span>
                                                                 {% elif "success" in test_result %}
-                                                                    <span id="exec_result" style="font-size:15px" class="label label-success"> 测试通过 </span>
+                                                                    <span id="exec_result" style="font-size:14px" class="label label-success"> 测试通过 </span>
                                                                 {% elif "fail" in test_result %}
-                                                                    <span id="exec_result" style="font-size:15px" class="label label-danger"> 测试失败 </span>
+                                                                    <span id="exec_result" style="font-size:14px" class="label label-danger"> 测试失败 </span>
                                                                 {% elif "error" in test_result %}
-                                                                    <span id="exec_result" style="font-size:15px" class="label label-warning"> 配置错误 </span>
+                                                                    <span id="exec_result" style="font-size:14px" class="label label-warning"> 配置错误 </span>
                                                                 {% else %}
-                                                                    <span id="exec_result" style="font-size:15px" class="label label-info"></span>
+                                                                    <span id="exec_result" style="font-size:14px" class="label label-info"></span>
                                                                 {% endif %}
                                                             {% endif %}
                                                         </td>
-                                                        <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的响应字段列表" data-content="{{ actual_field_name_list }}">{{ update_time }}</td>
+
+                                                        {# 更新时间（实际的响应字段列表）#}
+                                                        {% if is_depend %}
+                                                            <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ update_time }}</td>
+                                                        {% else %}
+                                                            <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的响应字段列表" data-content="{{ actual_field_name_list }}">{{ update_time }}</td>
+                                                        {% endif %}
+
+                                                        {# 操作 #}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
                                                             <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#edit_case_form"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
                                                             <button class="btn btn-default" type="button" onclick="del_case('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')"><i class="fa fa-trash-o fa-lg" style="color: #ff0000"></i></button>
