@@ -93,7 +93,10 @@ def test_get_image():
     params = request.args
     image_id = params.get("image_id", "1234567890")
     token = params.get("token", "")
-    result_dict = {"image_id": image_id, "token": token}
+    if token == "tokenid_112233445566":
+        result_dict = {"image_id": image_id, "token": token}
+    else:
+        result_dict = {"token": token}
     msg = REQUEST_SUCCESS
     re_dict = interface_template(msg, result_dict)
     return json.dumps(re_dict, ensure_ascii=False)

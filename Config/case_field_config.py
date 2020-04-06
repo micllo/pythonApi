@@ -20,11 +20,12 @@ def get_case_special_field_list():
     14.响应信息：response_info
     15.依赖字段值列表：depend_field_value_list            < (Mongo)list -> (Excel)string >
     16.实际的关键字段值列表：actual_core_field_value_list  < (Mongo)list -> (Excel)string >
-    17.关键字段值比较结果：result_core_field_value
-    18.响应字段列表比较结果：result_field_name_list
-    19.测试结果：test_result
-    20.创建时间：create_time   < (Mongo)ISODate -> (Excel)string >
-    21.更新时间：update_time   < (Mongo)ISODate -> (Excel)string >
+    17.实际的响应字段列表：actual_field_name_list          < (Mongo)list -> (Excel)string >
+    18.关键字段值比较结果：result_core_field_value
+    19.响应字段列表比较结果：result_field_name_list
+    20.测试结果：test_result
+    21.创建时间：create_time   < (Mongo)ISODate -> (Excel)string >
+    22.更新时间：update_time   < (Mongo)ISODate -> (Excel)string >
 
     【 备 注 】
      验证模式：verify_mode
@@ -77,8 +78,10 @@ def get_list_field():
     04.依赖字段名列表：depend_field_name_list
     05.依赖字段值列表：depend_field_value_list
     06.实际的关键字段值列表：actual_core_field_value_list
+    07.实际的响应字段列表：actual_field_name_list
     :return:
     """
     list_field = ["compare_core_field_name_list", "expect_core_field_value_list", "expect_field_name_list",
-                  "depend_field_name_list", "depend_field_value_list", "actual_core_field_value_list"]
+                  "depend_field_name_list", "depend_field_value_list",
+                  "actual_core_field_value_list", "actual_core_field_value_list"]
     return list_field

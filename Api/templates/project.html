@@ -175,6 +175,7 @@
                                                     {% set depend_field_name_list = test_case["depend_field_name_list"] %}
                                                     {% set depend_field_value_list = test_case["depend_field_value_list"] %}
                                                     {% set actual_core_field_value_list = test_case["actual_core_field_value_list"] %}
+                                                    {% set actual_field_name_list = test_case["actual_field_name_list"] %}
                                                     {% set case_status = test_case["case_status"] %}
                                                     {% set update_time = test_case["update_time"] %}
                                                     {% set test_result = test_case["test_result"] %}
@@ -193,7 +194,7 @@
                                                             </td>
                                                         {% endif %}
 
-                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的关键字段值" data-content="{{ actual_core_field_value_list }}" id="case_status_popover">
+                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的关键字段值" data-content="{{ actual_core_field_value_list }}">
                                                             {% if case_status %}
                                                                 <font color="#00A600">上线</font>
                                                             {% else %}
@@ -201,17 +202,31 @@
                                                             {% endif %}
                                                         </td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="测试结果信息" data-content="{{ test_result }}">
-                                                            {% if "success" in test_result %}
-                                                                <span id="exec_result" style="font-size:15px" class="label label-success"> 测试通过 </span>
-                                                            {% elif "fail" in test_result %}
-                                                                <span id="exec_result" style="font-size:15px" class="label label-danger"> 测试失败 </span>
-                                                            {% elif "error" in test_result %}
-                                                                <span id="exec_result" style="font-size:15px" class="label label-warning"> 配置错误 </span>
+                                                            {% if is_depend %}
+                                                                {% if "success" in test_result %}
+                                                                    <font color="#00A600"> 依赖通过 </font>
+                                                                {% elif "fail" in test_result %}
+                                                                    <font color="#DC143C"> 依赖失败 </font>
+                                                                {% elif "error" in test_result %}
+                                                                    <font color="#C6A300"> 配置错误 </font>
+                                                                {% else %}
+
+                                                                {% endif %}
                                                             {% else %}
-                                                                <span id="exec_result" style="font-size:15px" class="label label-info"></span>
+                                                                {% if "依赖" in test_result%}
+                                                                    <span id="exec_result" style="font-size:15px" class="label label-warning"> 依赖错误 </span>
+                                                                {% elif "success" in test_result %}
+                                                                    <span id="exec_result" style="font-size:15px" class="label label-success"> 测试通过 </span>
+                                                                {% elif "fail" in test_result %}
+                                                                    <span id="exec_result" style="font-size:15px" class="label label-danger"> 测试失败 </span>
+                                                                {% elif "error" in test_result %}
+                                                                    <span id="exec_result" style="font-size:15px" class="label label-warning"> 配置错误 </span>
+                                                                {% else %}
+                                                                    <span id="exec_result" style="font-size:15px" class="label label-info"></span>
+                                                                {% endif %}
                                                             {% endif %}
                                                         </td>
-                                                        <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的响应字段列表" data-content="{{ expect_field_name_list }}" id="update_time_popover">{{ update_time }}</td>
+                                                        <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的响应字段列表" data-content="{{ actual_field_name_list }}">{{ update_time }}</td>
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
                                                             <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#edit_case_form"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
                                                             <button class="btn btn-default" type="button" onclick="del_case('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')"><i class="fa fa-trash-o fa-lg" style="color: #ff0000"></i></button>
@@ -473,6 +488,7 @@
         <script src="/{{nginx_api_proxy}}/static/scripts/sweetalert.min.js" type="text/javascript"></script>
         <script src="/{{nginx_api_proxy}}/static/scripts/jquery.dataTables.js" type="text/javascript"></script>
         <script src="/{{nginx_api_proxy}}/static/scripts/dataTables.bootstrap.js" type="text/javascript"></script>
+
 
         <script type="text/JavaScript">
             $(function (){

@@ -61,7 +61,8 @@ function exec_import(pro_name, nginx_api_proxy){
  */
 function search_case(pro_name, nginx_api_proxy) {
 
-    $('#case_status_popover').popover('hide');
+    // 隐藏之前已经弹出的气泡弹层
+    $("[data-toggle='popover']").popover('hide');
 
      // 获取相应的搜索内容
     var interface_name = $("#interface_name").val().trim();
@@ -95,8 +96,9 @@ function search_case(pro_name, nginx_api_proxy) {
             var is_depend = test_case_list[i]["is_depend"];
             var depend_level = test_case_list[i]["depend_level"];
             var depend_field_name_list = test_case_list[i]["depend_field_name_list"];
-            var depend_field_value_list = test_case_list[i]["depend_field_value_list"];actual_core_field_value_list
+            var depend_field_value_list = test_case_list[i]["depend_field_value_list"];
             var actual_core_field_value_list = test_case_list[i]["actual_core_field_value_list"];
+            var actual_field_name_list = test_case_list[i]["actual_field_name_list"];
             var case_status = test_case_list[i]["case_status"];
             var test_result = test_case_list[i]["test_result"];
             var update_time = test_case_list[i]["update_time"];
@@ -122,23 +124,38 @@ function search_case(pro_name, nginx_api_proxy) {
                     tr_html += "关键字+响应字段</td>";
                 }
             }
-            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\" id=\"case_status_popover\">";
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
             if(case_status){
                 tr_html += "<font color=\"#00A600\">上线</font></td>";
             }else{
                 tr_html += "<font color=\"#DC143C\">下线</font></td>";
             }
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"测试结果信息\" data-content=\"" + test_result + "\">";
-            if(test_result.search("success") != -1){
-                tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-success\"> 测试通过 </span></td>";
-            }else if(test_result.search("fail") != -1){
-                tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-danger\"> 测试失败 </span></td>";
-            }else if(test_result.search("error") != -1){
-                tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-warning\"> 配置错误 </span></td>";
+
+            if(is_depend){
+                if(test_result.search("success") != -1){
+                    tr_html += "<font color=\"#00A600\"> 依赖通过 </font>";
+                }else if(test_result.search("fail") != -1){
+                    tr_html += "<font color=\"#DC143C\"> 依赖失败 </font>";
+                }else if(test_result.search("error") != -1){
+                    tr_html += "<font color=\"#C6A300\"> 配置错误 </font>";
+                }else{
+
+                }
             }else{
-                tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-info\"></span></td>";
+                if(test_result.search("依赖") != -1){
+                tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-warning\"> 依赖错误 </span></td>";
+                }else if(test_result.search("success") != -1){
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-success\"> 测试通过 </span></td>";
+                }else if(test_result.search("fail") != -1){
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-danger\"> 测试失败 </span></td>";
+                }else if(test_result.search("error") != -1){
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-warning\"> 配置错误 </span></td>";
+                }else{
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:15px\" class=\"label label-info\"></span></td>";
+                }
             }
-            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + expect_field_name_list + "\" id=\"update_time_popover\">" + update_time + "</td>" +
+            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + actual_field_name_list + "\">" + update_time + "</td>" +
                 "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
                 "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>" +
@@ -148,7 +165,7 @@ function search_case(pro_name, nginx_api_proxy) {
         }
         $("#case_tbody").html(tbody_html);
 
-        // 需要重新触发气泡弹出层
+        // 重新触发气泡弹出层功能
         $("[data-toggle='popover']").popover();
     }
 }
@@ -333,7 +350,7 @@ function edit_case(pro_name, nginx_api_proxy) {
         var msg = response_info.msg;
         if (msg.search("成功") != -1){
             swal({text: response_info.msg, type: "success", confirmButtonText: "知道了"});
-            setTimeout(function(){location.reload();}, 2000);
+            setTimeout(function(){location.reload();}, 1000);
         }else {
             swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
         }

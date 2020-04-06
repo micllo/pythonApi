@@ -126,6 +126,7 @@ def filled_other_field(excel_list):
         line_dict["response_info"] = ""
         line_dict["depend_field_value_list"] = []
         line_dict["actual_core_field_value_list"] = []
+        line_dict["actual_field_name_list"] = []
         line_dict["result_core_field_value"] = ""
         line_dict["result_field_name_list"] = ""
         line_dict["test_result"] = ""
@@ -325,6 +326,7 @@ def get_test_case(pro_name):
                 test_case_dict["depend_field_name_list"] = res.get("depend_field_name_list")
                 test_case_dict["depend_field_value_list"] = res.get("depend_field_value_list")
                 test_case_dict["actual_core_field_value_list"] = res.get("actual_core_field_value_list")
+                test_case_dict["actual_field_name_list"] = res.get("actual_field_name_list")
                 test_case_dict["update_time"] = res.get("update_time")
                 test_case_dict["test_result"] = res.get("test_result")
                 if res.get("case_status"):
@@ -410,6 +412,7 @@ def get_case_search_result(request_args, pro_name):
             test_case_dict["depend_field_name_list"] = str(res.get("depend_field_name_list"))
             test_case_dict["depend_field_value_list"] = str(res.get("depend_field_value_list"))
             test_case_dict["actual_core_field_value_list"] = str(res.get("actual_core_field_value_list"))
+            test_case_dict["actual_field_name_list"] = str(res.get("actual_field_name_list"))
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["update_time"] = str(res.get("update_time"))
             test_case_dict["test_result"] = res.get("test_result")
@@ -566,6 +569,7 @@ def get_case_operation_result(request_json, pro_name, mode):
                 test_case_dict["response_info"] = ""
                 test_case_dict["depend_field_value_list"] = []
                 test_case_dict["actual_core_field_value_list"] = []
+                test_case_dict["actual_field_name_list"] = []
                 test_case_dict["result_core_field_value"] = ""
                 test_case_dict["result_field_name_list"] = ""
                 test_case_dict["test_result"] = ""
@@ -627,11 +631,12 @@ def get_case_by_id(request_args, pro_name):
       14.响应信息：response_info
       15.依赖字段值列表：depend_field_value_list              < (Mongo)list -> (表单)string >（以","分割）
       16.实际的关键字段值列表：actual_core_field_value_list    < (Mongo)list -> (表单)string >（以","分割）
-      17.关键字段值比较结果：result_core_field_value
-      18.响应字段列表比较结果：result_field_name_list
-      19.测试结果：test_result
-      20.创建时间：create_time   < (Mongo)ISODate -> (表单)string >
-      21.更新时间：update_time   < (Mongo)ISODate -> (表单)string >
+      17.实际的响应字段列表：actual_field_name_list
+      18.关键字段值比较结果：result_core_field_value
+      19.响应字段列表比较结果：result_field_name_list
+      20.测试结果：test_result
+      21.创建时间：create_time   < (Mongo)ISODate -> (表单)string >
+      22.更新时间：update_time   < (Mongo)ISODate -> (表单)string >
 
     """
     _id = request_args.get("_id", "").strip()
