@@ -34,7 +34,13 @@ class AcquireDependField(object):
       （2）若全部是'success'，则 < 判断 > '依赖字段值'是否全部都获取到
            1）是，则 替换'测试接口列表'中的'依赖字段变量'
            2）否，则 '整体记录' < error:依赖字段值没有全部获取到 >
-     7.return：depend_interface_result_list, depend_field_dict
+     7.将需要整体记录的'test_result'，按照依赖接口个数赋值给'depend_interface_result_list'
+     8.更新'依赖接口列表'、'测试接口列表'结果
+        < 判断 > '测试接口列表'
+       （1）若 全部是'success' 则 不更新
+       （2）若 存在'error'或'fail' 则 所有的测试接口结果 都更新（选择第一个结果进行保存），
+            同时改变'接口验证标记'（表示：不需要在验证测试接口）
+     RETURN：test_interface_list
 
        < 依 赖 接 口 test_result >
         01.success:依赖通过
@@ -52,10 +58,15 @@ class AcquireDependField(object):
         3.依赖接口列表 分开记录 的 'test_result':
         （1）success:依赖通过
         （2）fail:依赖接口无响应
-        （3）fail:依赖接口错误xxx
+        （3）fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
+
+        举例：
+        1.整体记录：["error:依赖接口不存在", "error:依赖接口不存在"]
+        2.分开记录：["success:依赖通过", "fail:依赖接口错误xxx"]
     """
 
-    def __init__(self, host, depend_interface_list, test_interface_list):
+    def __init__(self, pro_name, host, depend_interface_list, test_interface_list):
+        self.pro_name = pro_name
         self.host = host
         self.depend_interface_list = depend_interface_list  # 上线的'依赖接口列表'（按照依赖等级顺序排列）
         self.test_interface_list = test_interface_list      # 上线的'测试接口列表'
@@ -63,6 +74,7 @@ class AcquireDependField(object):
         self.depend_field_list = []                         # '依赖接口列表'中的'依赖字段值名列表'（依赖接口中设置的依赖字段）
         self.depend_interface_result_list = []              # '依赖接口列表'执行结果 ['fail:依赖接口无响应', 'success:依赖通过']
         self.capture_depend_field_dict = {}                 # 捕获的依赖字段键值对 {"token":"xxxxx", "image_id":"xxxxx"}
+        self.verify_flag = True                             # 接口测试标记 True：需要验证、False：不需要验证
 
     def get_params_depend_field_list(self):
         """
@@ -155,7 +167,7 @@ class AcquireDependField(object):
                         self.depend_interface_result_list.append("success:依赖通过")
 
                 # 6.获取'依赖接口'执行失败的结果列表 < 判断 >
-                fail_result_list = [result for result in self.depend_interface_result_list if "fail" in result]
+                fail_result_list = [result for result in self.depend_interface_result_list if "success" not in result]
                 # 若全部是'success'，则 < 判断 > '依赖字段值'是否全部都获取到
                 if not fail_result_list:
                     capture_depend_field_list = self.capture_depend_field_dict.keys()
@@ -169,12 +181,61 @@ class AcquireDependField(object):
         else:
             self.depend_interface_result_list = ["error:依赖接口不存在"]
 
+        # 7.将需要整体记录的'test_result'，按照依赖列表个数赋值给'depend_interface_result_list'
+        error_result = [result for result in self.depend_interface_result_list if "error" in result]
+        if error_result:
+            self.depend_interface_result_list = self.depend_interface_result_list * len(self.depend_interface_list)
+
+        # 8.更新'依赖接口列表'、'测试接口列表'结果
+        update_time = get_current_iso_date()
+        self.update_depend_interface_list_result(update_time)
+        self.update_test_interface_list_result(update_time)
+
+        # 显示相关变量字段（调试使用）
         self.debug_variable_field()
-        return self.depend_interface_result_list, self.test_interface_list
+        return self.test_interface_list
+
+    def update_depend_interface_list_result(self, update_time):
+        """
+        更新'依赖接口列表'结果
+        :return:
+        """
+        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=self.pro_name) as pro_db:
+            try:
+                for index, depend_interface_dict in enumerate(self.depend_interface_list):
+                    query_dict = {"_id": depend_interface_dict["_id"]}
+                    update_dict = {"update_time": update_time, "test_result": self.depend_interface_result_list[index]}
+                    pro_db.update(query_dict, {"$set": update_dict})
+            except Exception as e:
+                from Common.test_func import mongo_exception_send_DD
+                mongo_exception_send_DD(e=e, msg="更新'" + self.pro_name + "'项目依赖接口结果")
+                return "mongo error"
+
+    def update_test_interface_list_result(self, update_time):
+        """
+        更新'测试接口列表'结果
+        （1）若 全部是'success' 则 不更新
+        （2）若 存在'error'或'fail' 则 所有的测试接口结果 都更新（选择第一个结果进行保存），
+            同时改变'接口验证标记'（表示：不需要在验证测试接口）
+        :return:
+        """
+        wang_result = [result for result in self.depend_interface_result_list if "error" in result or "fail" in result]
+        if wang_result:
+            self.verify_flag = False
+            with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=self.pro_name) as pro_db:
+                try:
+                    for index, test_interface_dict in enumerate(self.test_interface_list):
+                        query_dict = {"_id": test_interface_dict["_id"]}
+                        update_dict = {"update_time": update_time, "test_result": wang_result[0]}
+                        pro_db.update(query_dict, {"$set": update_dict})
+                except Exception as e:
+                    from Common.test_func import mongo_exception_send_DD
+                    mongo_exception_send_DD(e=e, msg="更新'" + self.pro_name + "'项目测试接口结果")
+                    return "mongo error"
 
     def debug_variable_field(self):
         """
-        调 试 变 量 字 段
+        显 示 相 关 变 量 字 段
         :return:
         """
         print("依赖接口中设置的依赖字段 -> " + str(self.depend_field_list))
@@ -230,7 +291,7 @@ class VerifyInterface(object):
         06.fail:测试接口错误,http_code<500>,原因解析(Internal Server Error)
         07.fail:依赖接口无响应
         08.fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
-        09.error:依赖字段值获取失败
+        09.error:依赖字段值没有全部获取到
         10.error:依赖字段名配置有误
         11.error:依赖接口不存在
     """

@@ -6,6 +6,7 @@ from Config import config as cfg
 from Tools.date_helper import get_current_iso_date
 from TestBase.verify_interface import AcquireDependField, VerifyInterface
 import re, json
+from Common.com_func import is_null
 
 
 def mongo_exception_send_DD(e, msg):
@@ -32,11 +33,11 @@ def test_interface(pro_name):
     （2）上线的'测试接口列表'
     2.[ 获 取 依 赖 字 段 值 ]
       < 判断 > 是否需要依赖
-    （1）若不需要，则 直接进入 [ 接 口 测 试 ]
-    （2）若需要，则
-        1）若'depend_interface_result_list'包含'success'，则 '依赖接口列表' 更新结果记录，并进入 [ 接 口 测 试 ]
-        2）若'depend_interface_result_list'含有'error:依赖接口不存在'，则 '测试接口列表' 更新结果记录 -- STOP --
-        3）若'depend_interface_result_list'其他情况，则 '依赖接口列表、测试接口列表' 更新结果记录 -- STOP --
+    （1）若不需要，则 直接进入 [ 验 证 接 口  ]
+    （2）若需要，则执行捕获操作，获取'依赖接口结果列表' < 判断 >
+        1）若 错误列表为空 或者 'error:依赖接口不存在'不在错误列表中 -> 更新'依赖接口列表'结果记录
+        2）若 错误列表不为空 -> 更新'测试接口列表'结果记录、并停止接口测试标记 -- STOP --
+
     3.[ 验 证 接 口 ]
     （1）根据返回的'待更新字典'，更新 '测试接口列表' 中的数据
     """
@@ -50,52 +51,41 @@ def test_interface(pro_name):
             test_interface_list = pro_db.find({"case_status": True, "is_depend": False})
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目上线接口列表")
-            return
+            return "mongo error"
+
     depend_interface_list = list(depend_interface_list)
     test_interface_list = list(test_interface_list)
     host = get_host_by_pro(pro_name)
 
-    if test_interface_list:
-        # 2.[ 获 取 依 赖 字 段 值 ]
-        adf = AcquireDependField(host=host, depend_interface_list=depend_interface_list,
-                                 test_interface_list=test_interface_list)
-        if adf.is_need_depend():
-            adf.acquire()
+    if is_null(test_interface_list):
+        return "no online case"
 
-        else:
-            print("进入 [ 验 证 接 口 ]")
-    else:
-        print("没有上线的用例")
+    # 2.[ 获 取 依 赖 字 段 值 ]
+    adf = AcquireDependField(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
+                             test_interface_list=test_interface_list)
+    if adf.is_need_depend():
+        test_interface_list = adf.acquire()
 
+    # 3.[ 验 证 接 口 ]
+    if adf.verify_flag:
+        print("进入 [ 验 证 接 口 ]")
+        for test_interface in test_interface_list:
+            result_dict = VerifyInterface(interface_name=test_interface.get("interface_name"),
+                                          host=host, interface_url=test_interface.get("interface_url"),
+                                          request_method=test_interface.get("request_method"),
+                                          request_header=test_interface.get("request_header"),
+                                          request_params=test_interface.get("request_params"),
+                                          verify_mode=test_interface.get("verify_mode"),
+                                          compare_core_field_name_list=test_interface.get("compare_core_field_name_list"),
+                                          expect_core_field_value_list=test_interface.get("expect_core_field_value_list"),
+                                          expect_field_name_list=test_interface.get("expect_field_name_list"),
+                                          depend_interface_list=test_interface.get("depend_interface_list"),
+                                          depend_field_name_list=test_interface.get("depend_field_name_list")).verify()
+            # 更新用例测试结果
+            result_dict["update_time"] = get_current_iso_date()
+            pro_db.update({"_id": test_interface["_id"]}, {"$set": result_dict})
 
-     # 3.若不为空，则进入[ 获 取 依 赖 字 段 值 步 骤 ]
-     #  根据返回值'test_result'判断后续步骤：
-     # （1）若'test_result = error:依赖接口不存在'，则 '测试接口列表' 更新结果记录 -- STOP --
-     # （2）若'test_result'不包含'success'，则 '依赖接口列表、测试接口列表' 更新结果记录 -- STOP --
-     # （3）若'test_result'包含'success'，则 '依赖接口列表' 更新结果记录，并进入 [ 接 口 测 试 步 骤 ]
-
-
-    # host = get_host_by_pro(pro_name)
-    # depand_field_dict = {}  # 保存依赖字段的键值对
-    # for index, test_case_dict in enumerate(test_case_dict_list):
-    #     # for field, value in test_case_dict.items():
-    #
-    #     result_dict = VerifyInterface(interface_name=test_case_dict.get("interface_name"),
-    #                                   interface_url=host + test_case_dict.get("interface_url"),
-    #                                   request_method=test_case_dict.get("request_method"),
-    #                                   request_header=test_case_dict.get("request_header"),
-    #                                   request_params=test_case_dict.get("request_params"),
-    #                                   verify_mode=test_case_dict.get("verify_mode"),
-    #                                   compare_core_field_name_list=test_case_dict.get("compare_core_field_name_list"),
-    #                                   expect_core_field_value_list=test_case_dict.get("expect_core_field_value_list"),
-    #                                   expect_field_name_list=test_case_dict.get("expect_field_name_list"),
-    #                                   depend_interface_list=test_case_dict.get("depend_interface_list"),
-    #                                   depend_field_name_list=test_case_dict.get("depend_field_name_list")).verify()
-    #
-    #     # 更新用例
-    #     result_dict["update_time"] = get_current_iso_date()
-    #     pro_db.update({"_id": test_case_dict["_id"]}, {"$set": result_dict})
-
+    return "done"
 
 if __name__ == "__main__":
     test_interface("pro_demo_1")
