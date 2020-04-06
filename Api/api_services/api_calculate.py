@@ -324,6 +324,7 @@ def get_test_case(pro_name):
                 test_case_dict["depend_level"] = res.get("depend_level")
                 test_case_dict["depend_field_name_list"] = res.get("depend_field_name_list")
                 test_case_dict["depend_field_value_list"] = res.get("depend_field_value_list")
+                test_case_dict["actual_core_field_value_list"] = res.get("actual_core_field_value_list")
                 test_case_dict["update_time"] = res.get("update_time")
                 test_case_dict["test_result"] = res.get("test_result")
                 if res.get("case_status"):
@@ -408,6 +409,7 @@ def get_case_search_result(request_args, pro_name):
             test_case_dict["depend_level"] = res.get("depend_level")
             test_case_dict["depend_field_name_list"] = str(res.get("depend_field_name_list"))
             test_case_dict["depend_field_value_list"] = str(res.get("depend_field_value_list"))
+            test_case_dict["actual_core_field_value_list"] = str(res.get("actual_core_field_value_list"))
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["update_time"] = str(res.get("update_time"))
             test_case_dict["test_result"] = res.get("test_result")

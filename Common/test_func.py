@@ -31,20 +31,20 @@ def test_interface(pro_name):
     1.获取上线的接口列表
     （1）上线的'依赖接口列表'
     （2）上线的'测试接口列表'
-    2.[ 获 取 依 赖 字 段 值 ]
-      < 判断 > 是否需要依赖
-    （1）若不需要，则 直接进入 [ 验 证 接 口  ]
-    （2）若需要，则执行捕获操作，获取'依赖接口结果列表' < 判断 >
-        1）若 错误列表为空 或者 'error:依赖接口不存在'不在错误列表中 -> 更新'依赖接口列表'结果记录
-        2）若 错误列表不为空 -> 更新'测试接口列表'结果记录、并停止接口测试标记 -- STOP --
-
-    3.[ 验 证 接 口 ]
-    （1）根据返回的'待更新字典'，更新 '测试接口列表' 中的数据
+    2.判断是否存在 上线的'测试接口列表'
+    3.获取依赖字段值
+       < 判断 > 是否需要执行依赖：
+     （1）若不需要 则 直接进入'验证接口'步骤
+     （2）若需要 则获取依赖字段：
+          1）若获取成功，则替换接口中的相应变量、进入'验证接口'步骤
+          2）若获取失败，则不进行接口验证
+          （ 备注：通过 'verify_flag' 标记进行控制 ）
+    4.验证接口
+    （1）执行测试，获取测试结果列表
+    （2）更新测试结果
     """
 
     # 1.获取上线的接口列表
-    # （1）上线的'依赖接口列表'（按照依赖等级顺序排列）
-    # （2）上线的'测试接口列表'
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
             depend_interface_list = pro_db.find({"case_status": True, "is_depend": True})
@@ -60,15 +60,16 @@ def test_interface(pro_name):
     if is_null(test_interface_list):
         return "no online case"
 
-    # 2.[ 获 取 依 赖 字 段 值 ]
+    # 2.获取依赖字段值
     adf = AcquireDependField(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
                              test_interface_list=test_interface_list)
     if adf.is_need_depend():
         test_interface_list = adf.acquire()
 
-    # 3.[ 验 证 接 口 ]
+    # 3.验证接口
     if adf.verify_flag:
-        print("进入 [ 验 证 接 口 ]")
+        # 执行测试，获取测试结果列表
+        id_result_dict = {}   # {"_id":{"test_resuld":"success", "":""}, "_id":{}, }
         for test_interface in test_interface_list:
             result_dict = VerifyInterface(interface_name=test_interface.get("interface_name"),
                                           host=host, interface_url=test_interface.get("interface_url"),
@@ -81,11 +82,17 @@ def test_interface(pro_name):
                                           expect_field_name_list=test_interface.get("expect_field_name_list"),
                                           depend_interface_list=test_interface.get("depend_interface_list"),
                                           depend_field_name_list=test_interface.get("depend_field_name_list")).verify()
-            # 更新用例测试结果
-            result_dict["update_time"] = get_current_iso_date()
-            pro_db.update({"_id": test_interface["_id"]}, {"$set": result_dict})
+            id_result_dict[test_interface.get("_id")] = result_dict
+
+        # 更新测试结果
+        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+            update_time = get_current_iso_date()
+            for _id, test_result in id_result_dict.items():
+                test_result["update_time"] = update_time
+                pro_db.update({"_id": _id}, {"$set": test_result})
 
     return "done"
 
+
 if __name__ == "__main__":
-    test_interface("pro_demo_1")
+    print(test_interface("pro_demo_1"))
