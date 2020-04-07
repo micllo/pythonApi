@@ -139,7 +139,7 @@ function search_case(pro_name, nginx_api_proxy) {
             if(is_depend){
                 tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
             }else{
-                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
             }
             if(case_status){
                 tr_html += "<font color=\"#00A600\">上线</font></td>";
@@ -175,7 +175,7 @@ function search_case(pro_name, nginx_api_proxy) {
             if(is_depend){
                 tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>";
             }else{
-                tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"click\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + actual_field_name_list + "\">" + update_time + "</td>";
+                tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + actual_field_name_list + "\">" + update_time + "</td>";
             }
 
             // 操作
@@ -308,13 +308,6 @@ function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
         $("#depend_level_edit").val(test_case.depend_level);
         $("#case_status_edit").val(test_case.case_status);
 
-        // // 禁灰相应的样式
-        // if(test_case.is_depend == "True"){
-        //     $("#is_depend_edit").text("是")
-        // }else {
-        //     $("#is_depend_edit").text("不是")
-        // }
-
         // 禁灰相应的样式
         if(test_case.is_depend == "True"){
             $("#is_depend_edit").text("是")
@@ -377,5 +370,99 @@ function edit_case(pro_name, nginx_api_proxy) {
         }else {
             swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
         }
+    }
+}
+
+
+/**
+ *  显示接口响应信息
+
+    <font color="#00A600"> 依赖通过 </font>
+    {% elif "fail" in test_result %}
+        <font color="#DC143C"> 依赖失败 </font>
+    {% elif "error" in test_result %}
+        <font color="#C6A300"> 配置错误 </font>
+
+ depend_field_value_list
+ */
+function show_response_info(pro_name, nginx_api_proxy, _id) {
+
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "?_id=" + _id
+    var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+    if(response_info != "请求失败"){
+        var test_case = response_info.test_case
+
+        // 填充内容
+        if(test_case.is_depend == "True"){
+            $("#case_id_show_depend").text(_id)
+            $("#is_depend_show_depend").text(test_case.is_depend)
+            $("#interface_name_show_depend").text(test_case.interface_name);
+            $("#interface_url_show_depend").text(test_case.interface_url);
+            $("#request_method_show_depend").text(test_case.request_method);
+            $("#request_header_show_depend").text(test_case.request_header);
+            $("#request_params_show_depend").text(test_case.request_params);
+            $("#case_status_show_depend").text(test_case.case_status);
+            $("#response_info_show_depend").text(test_case.response_info)
+            $("#depend_level_show_depend").text(test_case.depend_level);
+            $("#depend_field_name_list_show_depend").text(test_case.depend_field_name_list);
+            $("#depend_field_value_list_show_depend").text(test_case.depend_field_value_list);
+            $("#depend_level_show_depend").text(test_case.depend_level);
+            $("#test_result_show_depend").text(test_case.test_result);
+            $("#create_time_show_depend").text(test_case.create_time);
+            $("#update_time_show_depend").text(test_case.update_time);
+
+            if(test_case.test_result.search("success") != -1){
+                $("#test_result_show_depend").attr('style', "color:#00A600");
+            }else if(test_case.test_result.search("fail") != -1){
+                $("#test_result_show_depend").attr('style', "color:#DC143C");
+            }else{  // error
+                $("#test_result_show_depend").attr('style', "color:#C6A300");
+            }
+
+        }else{
+            $("#case_id_show_test").text(_id)
+            $("#is_depend_show_test").text(test_case.is_depend)
+            $("#interface_name_show_test").text(test_case.interface_name);
+            $("#interface_url_show_test").text(test_case.interface_url);
+            $("#request_method_show_test").text(test_case.request_method);
+            $("#request_header_show_test").text(test_case.request_header);
+            $("#request_params_show_test").text(test_case.request_params);
+            $("#case_status_show_test").text(test_case.case_status);
+            $("#response_info_show_test").text(test_case.response_info);
+            $("#verify_mode_show_test").text(test_case.verify_mode);
+            $("#compare_core_field_name_list_show_test").text(test_case.compare_core_field_name_list);
+            $("#expect_core_field_value_list_show_test").text(test_case.expect_core_field_value_list);
+            $("#actual_core_field_value_list_show_test").text(test_case.actual_core_field_value_list);
+            $("#result_core_field_value_show_test").text(test_case.result_core_field_value);
+            $("#expect_field_name_list_show_test").text(test_case.expect_field_name_list);
+            $("#actual_field_name_list_show_test").text(test_case.actual_field_name_list);
+            $("#result_field_name_list_show_test").text(test_case.result_field_name_list);
+            $("#test_result_show_test").text(test_case.test_result)
+            $("#create_time_show_test").text(test_case.create_time);
+            $("#update_time_show_test").text(test_case.update_time);
+
+            if(test_case.result_core_field_value.search("pass") != -1){
+                $("#result_core_field_value_show_test").attr('style', "color:#00A600");
+            }else{  // fail
+                $("#result_core_field_value_show_test").attr('style', "color:#DC143C");
+            }
+
+            if(test_case.result_field_name_list.search("pass") != -1){
+                $("#result_field_name_list_show_test").attr('style', "color:#00A600");
+            }else{  // fail
+                $("#result_field_name_list_show_test").attr('style', "color:#DC143C");
+            }
+
+            if(test_case.test_result.search("success") != -1){
+                $("#test_result_show_test").attr('style', "color:#00A600");
+            }else if(test_case.test_result.search("fail") != -1){
+                $("#test_result_show_test").attr('style', "color:#DC143C");
+            }else{  // error
+                $("#test_result_show_test").attr('style', "color:#C6A300");
+            }
+
+        }
+
     }
 }

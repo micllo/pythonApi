@@ -5,8 +5,7 @@ from Tools.excel_data import read_excel
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
     get_not_null_field_list_with_depend
 from Tools.mongodb import MongodbUtils
-from Common.test_func import mongo_exception_send_DD
-from Common.com_func import is_null, log
+from Common.com_func import is_null, log, mongo_exception_send_DD
 from dateutil import parser
 from Tools.date_helper import get_current_iso_date
 import unittest
@@ -631,7 +630,7 @@ def get_case_by_id(request_args, pro_name):
       14.响应信息：response_info
       15.依赖字段值列表：depend_field_value_list              < (Mongo)list -> (表单)string >（以","分割）
       16.实际的关键字段值列表：actual_core_field_value_list    < (Mongo)list -> (表单)string >（以","分割）
-      17.实际的响应字段列表：actual_field_name_list
+      17.实际的响应字段列表：actual_field_name_list            < (Mongo)list -> (表单)string >（以","分割）
       18.关键字段值比较结果：result_core_field_value
       19.响应字段列表比较结果：result_field_name_list
       20.测试结果：test_result

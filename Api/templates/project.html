@@ -180,8 +180,12 @@
                                                     {% set update_time = test_case["update_time"] %}
                                                     {% set test_result = test_case["test_result"] %}
                                                     <tr>
-                                                        {# 接口名称 #}
-                                                        <td style="width: 150px; display:table-cell; vertical-align:middle;">{{ interface_name }} {% if is_depend %} <font color="#DC143C">(依赖)</font> {% endif %} </td>
+                                                        {# 接口名称（测试信息） #}
+                                                        {% if is_depend %}
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#DC143C">(依赖)</font></td>
+                                                        {% else %}
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_test_response_info">{{ interface_name }}</td>
+                                                        {% endif %}
 
                                                         {# 请求方式（请求头文件）#}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求头文件" data-content="{{ request_header }}">{{ request_method }}</td>
@@ -206,7 +210,7 @@
                                                         {% if is_depend %}
                                                             <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
                                                         {% else %}
-                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的关键字段值" data-content="{{ actual_core_field_value_list }}">
+                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="实际的关键字段值" data-content="{{ actual_core_field_value_list }}">
                                                         {% endif %}
                                                             {% if case_status %}
                                                                 <font color="#00A600">上线</font>
@@ -245,7 +249,7 @@
                                                         {% if is_depend %}
                                                             <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ update_time }}</td>
                                                         {% else %}
-                                                            <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="click" data-placement="bottom" data-container="body" title="实际的响应字段列表" data-content="{{ actual_field_name_list }}">{{ update_time }}</td>
+                                                            <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="实际的响应字段列表" data-content="{{ actual_field_name_list }}">{{ update_time }}</td>
                                                         {% endif %}
 
                                                         {# 操作 #}
@@ -498,6 +502,202 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
                         <button type="button" class="btn btn-primary" data-dismiss="modal" id="edit" onclick="edit_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><span class="glyphicon glyphicon-floppy-disk"></span>更新</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 显示测依赖口响应信息 -->
+        <div id="show_depend_response_info" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                        <div class="modal-title">
+                            <h2 class="text-center">依 赖 接 口 响 应 信 息</h2>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>ID：</label>
+                            <label id="case_id_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>依赖接口：</label>
+                            <label id="is_depend_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>接口名称：</label>
+                            <label id="interface_name_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>接口地址：</label>
+                            <label id="interface_url_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>请求方式：</label>
+                            <label id="request_method_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>请求头文件：</label>
+                            <label id="request_header_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>请求参数：</label>
+                            <label id="request_params_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>用例状态：</label>
+                            <label id="case_status_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>响应信息：</label>
+                            <label id="response_info_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>依赖等级：</label>
+                            <label id="depend_level_show_depend"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label><font color="#5B00AE">依赖字段名列表：</font></label>
+                            <label id="depend_field_name_list_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#5B00AE">依赖字段值列表：</font></label>
+                            <label id="depend_field_value_list_show_depend"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label><font color="#5B00AE">测试结果：</font></label>
+                            <label id="test_result_show_depend"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label>更新时间：</label>
+                            <label id="update_time_show_depend"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>创建时间：</label>
+                            <label id="create_time_show_depend"></label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 显示测试接口响应信息 -->
+        <div id="show_test_response_info" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                        <div class="modal-title">
+                            <h2 class="text-center">测 试 接 口 响 应 信 息</h2>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>ID：</label>
+                            <label id="case_id_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>依赖接口：</label>
+                            <label id="is_depend_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>接口名称：</label>
+                            <label id="interface_name_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>接口地址：</label>
+                            <label id="interface_url_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>请求方式：</label>
+                            <label id="request_method_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>请求头文件：</label>
+                            <label id="request_header_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>请求参数：</label>
+                            <label id="request_params_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>用例状态：</label>
+                            <label id="case_status_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>响应信息：</label>
+                            <label id="response_info_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>验证模式：</label>
+                            <label id="verify_mode_show_test"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label><font color="#5B00AE">待比较关键字段名列表：</font></label>
+                            <label id="compare_core_field_name_list_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#5B00AE">期望的关键字段值列表：</font></label>
+                            <label id="expect_core_field_value_list_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#5B00AE">实际的关键字段值列表：</font></label>
+                            <label id="actual_core_field_value_list_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#5B00AE">关键字段值比较结果：</font></label>
+                            <label id="result_core_field_value_show_test"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label><font color="#5B00AE">期望的响应字段列表：</font></label>
+                            <label id="expect_field_name_list_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#5B00AE">实际的响应字段列表：</font></label>
+                            <label id="actual_field_name_list_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#5B00AE">响应字段列表比较结果：</font></label>
+                            <label id="result_field_name_list_show_test"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label><font color="#5B00AE">测试结果：</font></label>
+                            <label id="test_result_show_test"></label>
+                        </div>
+                        <hr />
+                        <div class="form-group">
+                            <label>更新时间：</label>
+                            <label id="update_time_show_test"></label>
+                        </div>
+                        <div class="form-group">
+                            <label>创建时间：</label>
+                            <label id="create_time_show_test"></label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
                     </div>
                 </div>
             </div>
