@@ -69,6 +69,9 @@ function exec_test(pro_name, nginx_api_proxy){
         cancelButtonText: "取消"
 
     }).then(function(isConfirm){
+        // 按钮禁灰 不可点击
+        // $("#test_btn").attr('disabled', true);
+
         if (isConfirm) {
             var host = $("#host").val().trim();
             if(host == ""){
@@ -96,9 +99,10 @@ function exec_test(pro_name, nginx_api_proxy){
                     }
                 }
             }
-            // 清空'host'下拉框
-            $("#host").val("");
         }
+        // 清空'host'下拉框
+        $("#host").val("");
+
     }).catch((e) => {
         console.log(e)
         console.log("cancel");

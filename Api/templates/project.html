@@ -126,7 +126,7 @@
                                                 </div>
                                             </div>
                                             {# 选择 host #}
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-2" style="margin-left:20px">
                                                 <div class="input-group">
                                                     <span class="input-group-addon">选择HOST：</span>
                                                     <div class="fg-line">
@@ -138,16 +138,16 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            {# 测试 按钮 #}
-                                            <div class="col-sm-1" align="center">
-                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-primary"
-                                                        data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
-                                                </button>
+                                            {# 批量上下线 #}
+                                            <div class="col-sm-1" align="center" style="margin-left:40px">
+                                                 <button id="on_line_all" type="button" class="btn btn-success"
+                                                        onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 批 量 上 线 </button>
+                                             </div>
+                                            <div class="col-sm-1" align="center" >
+                                                 <button id="off_line_all" type="button" class="btn btn-danger"
+                                                        onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 批 量 下 线 </button>
                                             </div>
-                                            {# 执行 结果 #}
-                                            <div class="col-sm-1" align="center" style="line-height:35px; font-size:15px;">
-                                                <span id="result_info" style="font-size:15px" class="label label-info"></span>
-                                            </div>
+
 
                                         </div>
 
@@ -184,15 +184,15 @@
                                             </div>
                                             {# 搜索 条数 #}
                                             <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:15px;" id="search_case_num">共 {{ tasks['case_num'] }} 条</div>
-
-
-                                            <div class="col-sm-1" align="center" >
-                                                 <button id="on_line_all" type="button" class="btn btn-success"
-                                                        onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 批 量 上 线 </button>
-                                             </div>
-                                            <div class="col-sm-1" align="center" >
-                                                 <button id="off_line_all" type="button" class="btn btn-danger"
-                                                        onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 批 量 下 线 </button>
+                                            {# 测试 按钮 #}
+                                            <div class="col-sm-1" align="center" style="margin-left:20px">
+                                                <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
+                                                        data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
+                                                </button>
+                                            </div>
+                                            {# 执行 结果 #}
+                                            <div class="col-sm-1" align="center" style="line-height:35px; font-size:15px;">
+                                                <span id="result_info" style="font-size:15px" class="label label-info"></span>
                                             </div>
 
 
@@ -765,7 +765,6 @@
         <script src="/{{nginx_api_proxy}}/static/scripts/sweetalert.min.js" type="text/javascript"></script>
         <script src="/{{nginx_api_proxy}}/static/scripts/jquery.dataTables.js" type="text/javascript"></script>
         <script src="/{{nginx_api_proxy}}/static/scripts/dataTables.bootstrap.js" type="text/javascript"></script>
-
 
         <script type="text/JavaScript">
             $(function (){
