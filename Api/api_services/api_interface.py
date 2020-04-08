@@ -178,7 +178,7 @@ def get_test_case_list(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
-    result_dict["test_case_list"] = get_test_case(pro_name)
+    result_dict["test_case_list"], result_dict["case_num"] = get_test_case(pro_name)
     return render_template('project.html', tasks=result_dict)
 
 
@@ -196,6 +196,57 @@ def import_action(pro_name, import_method):
     return json.dumps(res_info, ensure_ascii=False)
 
 
+@flask_app.route("/API/run_test/<pro_name>", methods=["POST"])
+def run_test(pro_name):
+    """
+    运行测试
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = run_test_by_pro(request_json=request.json, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/set_case_status_all/<pro_name>/<case_status>", methods=["GET"])
+def set_case_status_all(pro_name, case_status):
+    """
+    设置整个项目的'测试用例'的'状态'(上下线)
+    :param pro_name:
+    :param case_status:
+    :return:
+    """
+    res_info = dict()
+    if is_null(pro_name) or is_null(case_status):
+        res_info["msg"] = PARAMS_NOT_NONE
+    else:
+        if case_status in [True, False, "false", "FALSE", "TRUE", "true"]:
+            case_status = case_status in [True, "TRUE", "true"] and True or False
+            res_info["msg"] = update_case_status_all(pro_name, case_status)
+        else:
+            res_info["msg"] = REQUEST_ARGS_WRONG
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/set_case_status/<pro_name>/<_id>", methods=["GET"])
+def set_case_status(pro_name, _id):
+    """
+    设置某个'测试用例'的'状态'(上下线)
+    :param pro_name:
+    :param _id:
+    :return:
+    """
+    new_case_status = None
+    if is_null(pro_name) or is_null(_id):
+        msg = PARAMS_NOT_NONE
+    else:
+        new_case_status = update_case_status(pro_name, _id)
+        msg = new_case_status == "mongo error" and MONGO_CONNECT_FAIL or UPDATE_SUCCESS
+    re_dict = interface_template(msg, {"pro_name": pro_name, "_id": _id,
+                                       "new_case_status": new_case_status})
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
 @flask_app.route("/API/search_case/<pro_name>", methods=["GET"])
 def search_case(pro_name):
     """
@@ -204,7 +255,7 @@ def search_case(pro_name):
     :return:
     """
     res_info = dict()
-    res_info["test_case_list"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
+    res_info["test_case_list"], res_info["case_num"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 

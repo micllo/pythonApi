@@ -11,6 +11,8 @@ from Tools.date_helper import get_current_iso_date
 import unittest
 import re
 from bson.objectid import ObjectId
+from Common.test_func import test_interface
+
 # sys.path.append("./")
 
 
@@ -34,6 +36,59 @@ def clear_reports_logs(time):
     print(rm_report_cmd)
     os.system(rm_log_cmd)
     os.system(rm_report_cmd)
+
+
+def run_test_by_pro(request_json, pro_name):
+    """
+    运行测试
+    :param request_json
+    :param pro_name:
+    :return:
+    """
+    host_name = request_json.get("host", "").strip()
+    if is_null(host_name):
+        return "HOST 不 能 为 空"
+    if is_null(pro_name):
+        return "项 目 名 不 能 为 空"
+    return test_interface(pro_name=pro_name, host_name=host_name)
+
+
+def update_case_status_all(pro_name, case_status=False):
+    """
+    更新项目所有测试用例状态(上下线)
+    :param pro_name:
+    :param case_status:
+    :return:
+    """
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            update_dict = {"$set": {"case_status": case_status}}
+            pro_db.update({}, update_dict, multi=True)
+            return "done"
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="更新'" + pro_name + "'项目所有测试用例状态")
+            return "mongo error"
+
+
+def update_case_status(pro_name, _id):
+    """
+    更新项目测试用例状态
+    :param pro_name:
+    :param _id:
+    :return:
+    """
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            query_dict = {"_id": ObjectId(_id)}
+            result = pro_db.find_one(query_dict, {"_id": 0})
+            old_case_status = result.get("case_status")
+            new_case_status = bool(1 - old_case_status)  # 布尔值取反
+            update_dict = {"$set": {"case_status": new_case_status}}
+            pro_db.update_one(query_dict, update_dict)
+            return new_case_status
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="更新'" + pro_name + "'项目测试用例状态(单个)")
+            return "mongo error"
 
 
 def case_import_action(pro_name, upload_file, import_method):
@@ -304,10 +359,12 @@ def get_test_case(pro_name):
     on_line_list_with_depend = []
     on_line_list_with_test = []
     off_line_list = []
+    case_num = 0
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
-            results = pro_db.find({})
-            for res in results:
+            results_cursor = pro_db.find({})
+            for res in results_cursor:
+                case_num += 1
                 test_case_dict = dict()
                 test_case_dict["_id"] = str(res.get("_id"))
                 test_case_dict["interface_name"] = res.get("interface_name")
@@ -341,7 +398,7 @@ def get_test_case(pro_name):
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试用例列表")
             return []
         finally:
-            return test_case_list
+            return test_case_list, case_num
 
 
 def get_case_search_result(request_args, pro_name):
@@ -356,16 +413,20 @@ def get_case_search_result(request_args, pro_name):
     3.依赖等级小的排在前面
     """
     search_pattern = {}
+    case_num = 0
     if request_args:
         interface_name = request_args.get("interface_name", "").strip()
         interface_url = request_args.get("interface_url", "").strip()
         request_method = request_args.get("request_method", "").strip()
         case_status = request_args.get("case_status", "").strip()
+        test_result = request_args.get("test_result", "").strip()
         is_depend = request_args.get("is_depend", "").strip()
         if interface_name:
             search_pattern["interface_name"] = re.compile(interface_name)
         if interface_url:
             search_pattern["interface_url"] = re.compile(interface_url)
+        if test_result:
+            search_pattern["test_result"] = re.compile(test_result)
         if request_method:
             search_pattern["request_method"] = request_method
         if case_status:
@@ -395,6 +456,7 @@ def get_case_search_result(request_args, pro_name):
     off_line_list = []
     if results:
         for res in results:
+            case_num += 1
             test_case_dict = dict()
             test_case_dict["_id"] = str(res.get("_id"))
             test_case_dict["interface_name"] = res.get("interface_name")
@@ -424,7 +486,7 @@ def get_case_search_result(request_args, pro_name):
                 off_line_list.append(test_case_dict)
         on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
         test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
-    return test_case_list
+    return test_case_list, case_num
 
 
 def get_case_operation_result(request_json, pro_name, mode):
@@ -534,7 +596,7 @@ def get_case_operation_result(request_json, pro_name, mode):
                       "request_header": request_header, "request_params": request_params, "verify_mode": verify_mode,
                       "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
                       "expect_field_name_list": expect_field_name_list, "is_depend": is_depend, "depend_level": depend_level,
-                      "depend_field_name_list": depend_field_name_list, "case_status": case_status, "update_time": current_iso_date}
+                      "depend_field_name_list": depend_field_name_list, "case_status": case_status}
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -572,6 +634,7 @@ def get_case_operation_result(request_json, pro_name, mode):
                 test_case_dict["result_core_field_value"] = ""
                 test_case_dict["result_field_name_list"] = ""
                 test_case_dict["test_result"] = ""
+                test_case_dict["update_time"] = current_iso_date
                 test_case_dict["create_time"] = current_iso_date
                 pro_db.insert(test_case_dict)
         except Exception as e:

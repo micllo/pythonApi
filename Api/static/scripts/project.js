@@ -57,6 +57,103 @@ function exec_import(pro_name, nginx_api_proxy){
 
 
 /**
+ *  执 行 测 试
+ */
+function exec_test(pro_name, nginx_api_proxy){
+    swal({
+        title: "确定要执行测试吗?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            var host = $("#host").val().trim();
+            if(host == ""){
+                swal({text: "HOST 未 选 择", type: "error", confirmButtonText: "知道了"});
+            }else{
+                // 调用ajax请求(同步)
+                var post_data = {"host": host}
+                var request_url = "/" + nginx_api_proxy + "/API/run_test/" + pro_name
+                var response_info = request_interface_url_v2(url=request_url, method="POST", data=post_data, async=false);
+                if(response_info == "请求失败"){
+                    swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+                    $("#result_info").html(response_info);
+                    $("#result_info").removeClass().addClass("label label-danger");
+                }else{
+                    var msg = response_info.msg;
+                    if (msg.search("完 成") != -1){
+                        swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                        $("#result_info").html(msg);
+                        $("#result_info").removeClass().addClass("label label-success");
+                        setTimeout(function(){location.reload();}, 2000);
+                    }else{
+                        swal({text: msg, type: "error", confirmButtonText: "知道了"});
+                        $("#result_info").html(msg);
+                        $("#result_info").removeClass().addClass("label label-warning");
+                    }
+                }
+            }
+            // 清空'host'下拉框
+            $("#host").val("");
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
+}
+
+
+
+/**
+ * 修改案件状态（所有）
+ */
+function update_case_status_all(pro_name, case_status, nginx_api_proxy) {
+    swal({
+        title: "确定吗?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/set_case_status_all/" + pro_name + "/" + case_status
+            var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+            if(response_info != "请求失败"){
+                setTimeout(function(){location.reload();}, 500);
+            }
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
+}
+
+/**
+ * 修改案件状态（单个）  display:table-cell; vertical-align:middle;
+ */
+function update_case_status(pro_name, nginx_api_proxy, _id) {
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/set_case_status/" + pro_name + "/" + _id
+    var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+    if(response_info != "请求失败"){
+        if(response_info.data.new_case_status == true){
+            $("#case_status_" + _id).html("上 线");
+            $("#case_status_" + _id).attr('style', "width:100px;color:#00A600;display:table-cell;vertical-align:middle;");
+        }else{
+            $("#case_status_" + _id).html("下 线");
+            $("#case_status_" + _id).attr('style', "width:100px;color:#DC143C;display:table-cell;vertical-align:middle;");
+        }
+    }
+}
+
+
+/**
  * 搜索用例
  */
 function search_case(pro_name, nginx_api_proxy) {
@@ -70,15 +167,20 @@ function search_case(pro_name, nginx_api_proxy) {
     var interface_url = $("#interface_url").val().trim();
     var case_status = $("#case_status").val().trim();
     var is_depend = $("#is_depend").val().trim();
+    var test_result = $("#test_result").val().trim();
 
     var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
-        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend
+        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result
 
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "?" + get_pramas
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case_list = response_info.test_case_list;
+        var case_num = response_info.case_num
+
+        // 替换搜索条数
+        $("#search_case_num").html("共 " + case_num + " 条");
 
         // 重新渲染table页面 <tbody id="case_tbody">
         var tbody_html = "";
@@ -105,11 +207,11 @@ function search_case(pro_name, nginx_api_proxy) {
 
             var tr_html = "<tr>";
 
-            // 接口名称
+            // 接口名称（测试信息）
             if(is_depend){
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "<font color=\"#DC143C\"> (依赖) </font></td>";
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#DC143C\"> (依赖) </font></td>";
             }else{
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + interface_name + "</td>";
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_test_response_info\">" + interface_name + "</td>";
             }
 
             // 请求方式（请求头文件）
@@ -135,11 +237,11 @@ function search_case(pro_name, nginx_api_proxy) {
                 }
             }
 
-            // 用例状态（实际的关键字段值）
+            // 用例状态（实际的关键字段值）  onclick="update_case_status('{{pro_name}}','{{_id}}','{{nginx_api_proxy}}')" id="case_status_{{_id}}"
             if(is_depend){
-                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" onclick=\"update_case_status('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" id=\"case_status_" + _id + "\">";
             }else{
-                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" onclick=\"update_case_status('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" id=\"case_status_" + _id + "\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
             }
             if(case_status){
                 tr_html += "<font color=\"#00A600\">上线</font></td>";
@@ -151,7 +253,7 @@ function search_case(pro_name, nginx_api_proxy) {
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"测试结果信息\" data-content=\"" + test_result + "\">";
             if(is_depend){
                 if(test_result.search("success") != -1){
-                    tr_html += "<font color=\"#00A600\"> 依赖通过 </font>";
+                    tr_html += "<font color=\"#00A600\"> 依赖成功 </font>";
                 }else if(test_result.search("fail") != -1){
                     tr_html += "<font color=\"#DC143C\"> 依赖失败 </font>";
                 }else if(test_result.search("error") != -1){
@@ -162,7 +264,7 @@ function search_case(pro_name, nginx_api_proxy) {
                 if(test_result.search("依赖") != -1){
                 tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-warning\"> 依赖错误 </span></td>";
                 }else if(test_result.search("success") != -1){
-                    tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-success\"> 测试通过 </span></td>";
+                    tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-success\"> 测试成功 </span></td>";
                 }else if(test_result.search("fail") != -1){
                     tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-danger\"> 测试失败 </span></td>";
                 }else if(test_result.search("error") != -1){
@@ -376,14 +478,6 @@ function edit_case(pro_name, nginx_api_proxy) {
 
 /**
  *  显示接口响应信息
-
-    <font color="#00A600"> 依赖通过 </font>
-    {% elif "fail" in test_result %}
-        <font color="#DC143C"> 依赖失败 </font>
-    {% elif "error" in test_result %}
-        <font color="#C6A300"> 配置错误 </font>
-
- depend_field_value_list
  */
 function show_response_info(pro_name, nginx_api_proxy, _id) {
 
