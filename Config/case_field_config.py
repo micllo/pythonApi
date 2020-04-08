@@ -24,8 +24,9 @@ def get_case_special_field_list():
     18.关键字段值比较结果：result_core_field_value
     19.响应字段列表比较结果：result_field_name_list
     20.测试结果：test_result
-    21.创建时间：create_time   < (Mongo)ISODate -> (Excel)string >
-    22.更新时间：update_time   < (Mongo)ISODate -> (Excel)string >
+    21.运行状态：run_status    < (Mongo)bool -> (Excel)string >
+    22.创建时间：create_time   < (Mongo)ISODate -> (Excel)string >
+    23.更新时间：update_time   < (Mongo)ISODate -> (Excel)string >
 
     【 备 注 】
      验证模式：verify_mode

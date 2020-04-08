@@ -5,6 +5,7 @@ from Config.error_mapping import *
 from Api.api_services.api_template import interface_template
 from Api.api_services.api_calculate import *
 from Common.com_func import is_null, log
+from Common.test_func import set_pro_run_status
 from Tools.mongodb import MongoGridFS
 from Config import config as cfg
 
@@ -178,7 +179,7 @@ def get_test_case_list(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
-    result_dict["test_case_list"], result_dict["case_num"] = get_test_case(pro_name)
+    result_dict["test_case_list"], result_dict["case_num"], result_dict["is_run"] = get_test_case(pro_name)
     return render_template('project.html', tasks=result_dict)
 
 
@@ -247,6 +248,19 @@ def set_case_status(pro_name, _id):
     return json.dumps(re_dict, ensure_ascii=False)
 
 
+@flask_app.route("/API/stop_run_status/<pro_name>", methods=["GET"])
+def stop_run_status(pro_name):
+    """
+    停止用例运行状态
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    set_pro_run_status(pro_name=pro_name, run_status=False)
+    res_info["msg"] = "停止成功"
+    return json.dumps(res_info, ensure_ascii=False)
+
+
 @flask_app.route("/API/search_case/<pro_name>", methods=["GET"])
 def search_case(pro_name):
     """
@@ -255,7 +269,7 @@ def search_case(pro_name):
     :return:
     """
     res_info = dict()
-    res_info["test_case_list"], res_info["case_num"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
+    res_info["test_case_list"], res_info["case_num"], res_info["is_run"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 

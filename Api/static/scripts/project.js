@@ -139,7 +139,7 @@ function update_case_status_all(pro_name, case_status, nginx_api_proxy) {
 }
 
 /**
- * 修改案件状态（单个）  display:table-cell; vertical-align:middle;
+ * 修改案件状态（单个）
  */
 function update_case_status(pro_name, nginx_api_proxy, _id) {
     // 调用ajax请求(同步)
@@ -155,6 +155,50 @@ function update_case_status(pro_name, nginx_api_proxy, _id) {
         }
     }
 }
+
+
+/**
+ * 停止运行状态
+ */
+function stop_status(pro_name, nginx_api_proxy) {
+    swal({
+        title: "确定要停止运行状态码?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/stop_run_status/" + pro_name
+            var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+            if(response_info == "请求失败"){
+                swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+                $("#stop_info").html(response_info);
+                $("#stop_info").removeClass().addClass("label label-danger");
+            }else{
+                var msg = response_info.msg;
+                if (msg.search("成功") != -1){
+                    swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                    $("#stop_info").html(msg);
+                    $("#stop_info").removeClass().addClass("label label-success");
+                    setTimeout(function(){location.reload();}, 2000);
+                }else{
+                    swal({text: msg, type: "error", confirmButtonText: "知道了"});
+                    $("#stop_info").html(msg);
+                    $("#stop_info").removeClass().addClass("label label-warning");
+                }
+            }
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
+}
+
+
+
 
 
 /**
@@ -182,6 +226,7 @@ function search_case(pro_name, nginx_api_proxy) {
     if(response_info != "请求失败"){
         var test_case_list = response_info.test_case_list;
         var case_num = response_info.case_num
+        var is_run = response_info.is_run
 
         // 替换搜索条数
         $("#search_case_num").html("共 " + case_num + " 条");
@@ -285,11 +330,15 @@ function search_case(pro_name, nginx_api_proxy) {
             }
 
             // 操作
-            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">" +
-                "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
-                "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>" +
-                "</td>" +
-                "</tr>";
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
+            if(is_run){
+                tr_html += "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\" disabled=\"disabled\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
+                           "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" disabled=\"disabled\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>";
+            }else{
+                tr_html += "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
+                           "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>";
+            }
+            tr_html += "</td></tr>";
             tbody_html += tr_html;
         }
         $("#case_tbody").html(tbody_html);
@@ -507,6 +556,7 @@ function show_response_info(pro_name, nginx_api_proxy, _id) {
             $("#depend_field_value_list_show_depend").text(test_case.depend_field_value_list);
             $("#depend_level_show_depend").text(test_case.depend_level);
             $("#test_result_show_depend").text(test_case.test_result);
+            $("#run_status_show_depend").text(test_case.run_status);
             $("#create_time_show_depend").text(test_case.create_time);
             $("#update_time_show_depend").text(test_case.update_time);
 
@@ -537,6 +587,7 @@ function show_response_info(pro_name, nginx_api_proxy, _id) {
             $("#actual_field_name_list_show_test").text(test_case.actual_field_name_list);
             $("#result_field_name_list_show_test").text(test_case.result_field_name_list);
             $("#test_result_show_test").text(test_case.test_result)
+            $("#run_status_show_test").text(test_case.run_status)
             $("#create_time_show_test").text(test_case.create_time);
             $("#update_time_show_test").text(test_case.update_time);
 

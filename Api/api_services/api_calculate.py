@@ -13,6 +13,7 @@ import re
 from bson.objectid import ObjectId
 from Common.test_func import test_interface
 
+
 # sys.path.append("./")
 
 
@@ -184,6 +185,7 @@ def filled_other_field(excel_list):
         line_dict["result_core_field_value"] = ""
         line_dict["result_field_name_list"] = ""
         line_dict["test_result"] = ""
+        line_dict["run_status"] = False
         line_dict["create_time"] = current_iso_date
         line_dict["update_time"] = current_iso_date
     # show_excel_list(excel_list)
@@ -353,13 +355,14 @@ def get_test_case(pro_name):
     """
     根据项目获取测试用例列表（上线的依赖接口排在前面）
     :param pro_name:
-    :return: 返回值
+    :return: 用例列表、用例数量、是否存在运行的用例
     """
     test_case_list = []
     on_line_list_with_depend = []
     on_line_list_with_test = []
     off_line_list = []
     case_num = 0
+    run_case_list = []
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
             results_cursor = pro_db.find({})
@@ -385,6 +388,8 @@ def get_test_case(pro_name):
                 test_case_dict["actual_field_name_list"] = res.get("actual_field_name_list")
                 test_case_dict["update_time"] = res.get("update_time")
                 test_case_dict["test_result"] = res.get("test_result")
+                if res.get("run_status"):
+                    run_case_list.append(res.get("run_status"))
                 if res.get("case_status"):
                     if res.get("is_depend"):
                         on_line_list_with_depend.append(test_case_dict)
@@ -396,9 +401,10 @@ def get_test_case(pro_name):
             test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试用例列表")
-            return []
+            return [], 0, False
         finally:
-            return test_case_list, case_num
+            is_run = len(run_case_list) != 0
+            return test_case_list, case_num, is_run
 
 
 def get_case_search_result(request_args, pro_name):
@@ -413,7 +419,6 @@ def get_case_search_result(request_args, pro_name):
     3.依赖等级小的排在前面
     """
     search_pattern = {}
-    case_num = 0
     if request_args:
         interface_name = request_args.get("interface_name", "").strip()
         interface_url = request_args.get("interface_url", "").strip()
@@ -454,6 +459,8 @@ def get_case_search_result(request_args, pro_name):
     on_line_list_with_depend = []
     on_line_list_with_test = []
     off_line_list = []
+    case_num = 0
+    run_case_list = []
     if results:
         for res in results:
             case_num += 1
@@ -477,6 +484,8 @@ def get_case_search_result(request_args, pro_name):
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["update_time"] = str(res.get("update_time"))
             test_case_dict["test_result"] = res.get("test_result")
+            if res.get("run_status"):
+                run_case_list.append(res.get("run_status"))
             if res.get("case_status"):
                 if res.get("is_depend"):
                     on_line_list_with_depend.append(test_case_dict)
@@ -486,7 +495,8 @@ def get_case_search_result(request_args, pro_name):
                 off_line_list.append(test_case_dict)
         on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
         test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
-    return test_case_list, case_num
+    is_run = len(run_case_list) != 0
+    return test_case_list, case_num, is_run
 
 
 def get_case_operation_result(request_json, pro_name, mode):
@@ -550,10 +560,8 @@ def get_case_operation_result(request_json, pro_name, mode):
     if is_depend == "":
         return "<是否为依赖接口> 未选择"
 
-    log.info(is_depend)
     # 2.转换'is_depend'字段格式 string -> bool
     is_depend = is_depend in ["true", "TRUE", "True"]
-    log.info(is_depend)
 
     # 3.根据'is_depend'字段 检查必填项
     if is_null(interface_name) or is_null(interface_url) or is_null(request_method):
@@ -634,6 +642,7 @@ def get_case_operation_result(request_json, pro_name, mode):
                 test_case_dict["result_core_field_value"] = ""
                 test_case_dict["result_field_name_list"] = ""
                 test_case_dict["test_result"] = ""
+                test_case_dict["run_status"] = False
                 test_case_dict["update_time"] = current_iso_date
                 test_case_dict["create_time"] = current_iso_date
                 pro_db.insert(test_case_dict)
@@ -697,8 +706,9 @@ def get_case_by_id(request_args, pro_name):
       18.关键字段值比较结果：result_core_field_value
       19.响应字段列表比较结果：result_field_name_list
       20.测试结果：test_result
-      21.创建时间：create_time   < (Mongo)ISODate -> (表单)string >
-      22.更新时间：update_time   < (Mongo)ISODate -> (表单)string >
+      21.运行状态：run_status    < (Mongo)bool -> (表单)string >
+      22.创建时间：create_time   < (Mongo)ISODate -> (表单)string >
+      23.更新时间：update_time   < (Mongo)ISODate -> (表单)string >
 
     """
     _id = request_args.get("_id", "").strip()
@@ -716,7 +726,7 @@ def get_case_by_id(request_args, pro_name):
         if field in ["verify_mode", "depend_level"]:
             test_case_dict[field] = value != 0 and str(value) or ""
 
-        if field in ["_id", "case_status", "is_depend", "create_time", "update_time"]:
+        if field in ["_id", "case_status", "is_depend", "create_time", "update_time", "run_status"]:
             test_case_dict[field] = str(value)
 
         if field in get_list_field():

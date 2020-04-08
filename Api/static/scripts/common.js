@@ -41,8 +41,13 @@ function request_interface_url_v2(url, method, data="", async=false, is_file=fal
         async: async,
         dataType: "json",
         success: function (response_info) {
-            console.log("'http'请求成功.....")
-            response_text = response_info
+            if(async == true){
+                console.log("'http'请求成功.....（异步）")
+                response_text = "异步请求成功"
+            }else{
+                console.log("'http'请求成功.....（同步）")
+                response_text = response_info
+            }
         },
         error: function () {
             console.log("'http'请求失败.....")
