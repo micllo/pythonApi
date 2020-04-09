@@ -58,20 +58,25 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-12" style="margin-top: 2%">
-                                        <div class="col-sm-3" align="center" style="line-height:30px;">
-                                            {% if is_run %}
+                                        {% if is_run %}
+                                            <div class="col-sm-3" align="center" style="line-height:30px;">
                                                 <button id="import_btn" name="import_btn" type="button" class="btn btn-primary" disabled="disabled"
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行导入
                                                 </button>
-                                            {% else %}
+                                            </div>
+                                            <div class="col-sm-3" align="center" style="line-height:35px; font-size:15px;">
+                                                <span id="exec_result" style="font-size:15px" class="label label-warning">当前项目正在运行中</span>
+                                            </div>
+                                        {% else %}
+                                            <div class="col-sm-3" align="center" style="line-height:30px;">
                                                 <button id="import_btn" name="import_btn" type="button" class="btn btn-primary"
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行导入
                                                 </button>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-sm-3" align="center" style="line-height:35px; font-size:15px;">
-                                            <span id="exec_result" style="font-size:15px" class="label label-info"></span>
-                                        </div>
+                                            </div>
+                                            <div class="col-sm-3" align="center" style="line-height:35px; font-size:15px;">
+                                                <span id="exec_result" style="font-size:15px" class="label label-info"></span>
+                                            </div>
+                                        {% endif %}
                                     </div>
                                  </form>
 
@@ -209,7 +214,7 @@
                                                             data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
                                                     </button>
                                                 </div>
-                                                <div class="col-sm-1" align="center" style="line-height:35px; font-size:15px;"><span id="result_info" class="label label-warning">当前项目正在运行中。。。</span></div>
+                                                <div class="col-sm-1" align="center" style="line-height:35px; font-size:15px;"><span id="result_info" class="label label-warning">当前项目正在运行中</span></div>
                                             {% else %}
                                                 <div class="col-sm-1" align="center" style="margin-left:20px">
                                                     <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
@@ -330,7 +335,6 @@
                                                                 {% endif %}
                                                             {% endif %}
                                                         </td>
-
 
                                                         {# 更新时间（实际的响应字段列表）#}
                                                         {% if is_depend %}

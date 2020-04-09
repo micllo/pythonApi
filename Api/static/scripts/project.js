@@ -42,6 +42,9 @@ function exec_import(pro_name, nginx_api_proxy){
                         swal({text: msg, type: "error", confirmButtonText: "知道了"});
                         $("#exec_result").html(msg);
                         $("#exec_result").removeClass().addClass("label label-warning");
+                        if (msg.search("运行中") != -1){
+                            setTimeout(function(){location.reload();}, 2000);
+                        }
                     }
                 }
             }
@@ -87,15 +90,18 @@ function exec_test(pro_name, nginx_api_proxy){
                     $("#result_info").removeClass().addClass("label label-danger");
                 }else{
                     var msg = response_info.msg;
-                    if (msg.search("完 成") != -1){
+                    if (msg.search("测试进行中") != -1){
                         swal({text: msg, type: "success", confirmButtonText: "知道了"});
                         $("#result_info").html(msg);
                         $("#result_info").removeClass().addClass("label label-success");
-                        setTimeout(function(){location.reload();}, 2000);
+                        setTimeout(function(){location.reload();}, 1000);
                     }else{
                         swal({text: msg, type: "error", confirmButtonText: "知道了"});
                         $("#result_info").html(msg);
                         $("#result_info").removeClass().addClass("label label-warning");
+                        if (msg.search("运行中") != -1){
+                            setTimeout(function(){location.reload();}, 2000);
+                        }
                     }
                 }
             }
@@ -146,12 +152,16 @@ function update_case_status(pro_name, nginx_api_proxy, _id) {
     var request_url = "/" + nginx_api_proxy + "/API/set_case_status/" + pro_name + "/" + _id
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
-        if(response_info.data.new_case_status == true){
-            $("#case_status_" + _id).html("上 线");
-            $("#case_status_" + _id).attr('style', "width:100px;color:#00A600;display:table-cell;vertical-align:middle;");
+        if(response_info.msg.search("运行中") != -1 ){
+             setTimeout(function(){location.reload();}, 500);
         }else{
-            $("#case_status_" + _id).html("下 线");
-            $("#case_status_" + _id).attr('style', "width:100px;color:#DC143C;display:table-cell;vertical-align:middle;");
+            if(response_info.data.new_case_status == true){
+                $("#case_status_" + _id).html("上 线");
+                $("#case_status_" + _id).attr('style', "width:100px;color:#00A600;display:table-cell;vertical-align:middle;");
+            }else{
+                $("#case_status_" + _id).html("下 线");
+                $("#case_status_" + _id).attr('style', "width:100px;color:#DC143C;display:table-cell;vertical-align:middle;");
+            }
         }
     }
 }
@@ -417,6 +427,9 @@ function del_case(pro_name, nginx_api_proxy, _id) {
                     setTimeout(function(){location.reload();}, 1500);
                 }else {
                     swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
+                    if (msg.search("运行中") != -1){
+                        setTimeout(function(){location.reload();}, 2000);
+                    }
                 }
             }
         }
@@ -524,6 +537,9 @@ function edit_case(pro_name, nginx_api_proxy) {
             setTimeout(function(){location.reload();}, 1000);
         }else {
             swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
+            if (msg.search("运行中") != -1){
+                setTimeout(function(){location.reload();}, 2000);
+            }
         }
     }
 }

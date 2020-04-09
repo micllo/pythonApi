@@ -12,7 +12,10 @@ import unittest
 import re
 from bson.objectid import ObjectId
 from Common.test_func import test_interface
-
+from Config.pro_config import get_pro_host
+from TestBase.verify_interface import VerifyInterface
+from TestBase.acquire_depend import AcquireDependField
+from concurrent.futures import ThreadPoolExecutor
 
 # sys.path.append("./")
 
@@ -39,19 +42,146 @@ def clear_reports_logs(time):
     os.system(rm_report_cmd)
 
 
+def pro_is_running(pro_name):
+    """
+    判断项目是否在运行
+    :param pro_name:
+    :return:
+    """
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        run_status_case_list = []
+        try:
+            run_status_case_cursor = pro_db.find({"run_status": True})
+            run_status_case_list = [each for each in run_status_case_cursor]
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目运行状态列表")
+        finally:
+            is_run = len(run_status_case_list) != 0
+            return is_run
+
+
+def set_pro_run_status(pro_name, run_status=False):
+    """
+    设置项目'所有'的'测试用例'的运行状态
+    :param pro_name:
+    :param run_status:
+    :return:
+    """
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            pro_db.update({}, {"$set": {"run_status": run_status}}, multi=True)
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="设置'" + pro_name + "'项目所有用例的运行状态")
+            return "mongo error"
+
+
 def run_test_by_pro(request_json, pro_name):
     """
     运行测试
     :param request_json
     :param pro_name:
     :return:
+        1.<判断>相关信息
+        2.获取上线的接口列表
+         （1）上线的'依赖接口列表'
+         （2）上线的'测试接口列表'
+        3.<判断>是否存在 上线的'测试接口列表'
+        4.开启线程进行 接口测试
     """
+    if is_null(pro_name):
+        return "项目名不能为空"
+
     host_name = request_json.get("host", "").strip()
     if is_null(host_name):
-        return "HOST 不 能 为 空"
-    if is_null(pro_name):
-        return "项 目 名 不 能 为 空"
-    return test_interface(pro_name=pro_name, host_name=host_name)
+        return "HOST不能为空"
+
+    host = get_pro_host(pro_name, host_name)
+    if is_null(host):
+        return "HOST错误"
+
+    if pro_is_running(pro_name):
+        return "当前项目正在运行中"
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            depend_interface_list = pro_db.find({"case_status": True, "is_depend": True})
+            test_interface_list = pro_db.find({"case_status": True, "is_depend": False})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目上线接口列表")
+            return "mongo error"
+
+    depend_interface_list = list(depend_interface_list)
+    test_interface_list = list(test_interface_list)
+
+    if is_null(test_interface_list):
+        return "没有上线的用例"
+
+    pool = ThreadPoolExecutor(1)
+    pool.submit(test_interface, pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
+                test_interface_list=test_interface_list)
+    return "测试进行中"
+
+
+def test_interface(pro_name, host, depend_interface_list, test_interface_list):
+    """
+    【 测 试 接 口 】（根据项目名）
+    :param pro_name:
+    :param host:
+    :param depend_interface_list:
+    :param test_interface_list:
+    :return:
+
+        【 测 试 流 程 】
+        1.将项目'运行状态'设置为开启
+        2.获取依赖字段值
+           < 判断 > 是否需要执行依赖：
+         （1）若不需要 则 直接进入'验证接口'步骤
+         （2）若需要 则获取依赖字段：
+              1）若获取成功，则替换接口中的相应变量、进入'验证接口'步骤
+              2）若获取失败，则不进行接口验证
+              （ 备注：通过 'verify_flag' 标记进行控制 ）
+        3.验证接口
+        （1）执行测试，获取测试结果列表
+        （2）更新测试结果
+        4.将项目'运行状态'设置为停止
+    """
+    # 1.将项目'运行状态'设置为开启
+    set_pro_run_status(pro_name=pro_name, run_status=True)
+    time.sleep(10)
+
+    # 2.获取依赖字段值
+    adf = AcquireDependField(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
+                             test_interface_list=test_interface_list)
+    if adf.is_need_depend():
+        test_interface_list = adf.acquire()
+
+    # 3.验证接口
+    if adf.verify_flag:
+        # 执行测试，获取测试结果列表
+        id_result_dict = {}   # {"_id":{"test_resuld":"success", "":""}, "_id":{}, }
+        for test_interface in test_interface_list:
+            result_dict = VerifyInterface(interface_name=test_interface.get("interface_name"),
+                                          host=host, interface_url=test_interface.get("interface_url"),
+                                          request_method=test_interface.get("request_method"),
+                                          request_header=test_interface.get("request_header"),
+                                          request_params=test_interface.get("request_params"),
+                                          verify_mode=test_interface.get("verify_mode"),
+                                          compare_core_field_name_list=test_interface.get("compare_core_field_name_list"),
+                                          expect_core_field_value_list=test_interface.get("expect_core_field_value_list"),
+                                          expect_field_name_list=test_interface.get("expect_field_name_list"),
+                                          depend_interface_list=test_interface.get("depend_interface_list"),
+                                          depend_field_name_list=test_interface.get("depend_field_name_list")).verify()
+            id_result_dict[test_interface.get("_id")] = result_dict
+
+        # 更新测试结果
+        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+            update_time = get_current_iso_date()
+            for _id, test_result in id_result_dict.items():
+                test_result["update_time"] = update_time
+                pro_db.update({"_id": _id}, {"$set": test_result})
+
+    # 4.将项目'运行状态'设置为停止
+    set_pro_run_status(pro_name=pro_name, run_status=False)
 
 
 def update_case_status_all(pro_name, case_status=False):
@@ -106,6 +236,8 @@ def case_import_action(pro_name, upload_file, import_method):
     elif ('.' not in upload_file.filename) or \
             (upload_file.filename.rsplit('.', 1)[1] not in ['xls', 'xlsx', 'csv']):
         res_info["msg"] = u"格式仅支持：.xls、.xlsx、.csv"
+    elif pro_is_running(pro_name):
+        res_info["msg"] = u"当前项目正在运行中"
     else:
         # 将上传的文件保存入指定Excel文件中
         upload_file.save(cfg.UPLOAD_CASE_FILE)
@@ -460,7 +592,6 @@ def get_case_search_result(request_args, pro_name):
     on_line_list_with_test = []
     off_line_list = []
     case_num = 0
-    run_case_list = []
     if results:
         for res in results:
             case_num += 1
@@ -484,8 +615,6 @@ def get_case_search_result(request_args, pro_name):
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["update_time"] = str(res.get("update_time"))
             test_case_dict["test_result"] = res.get("test_result")
-            if res.get("run_status"):
-                run_case_list.append(res.get("run_status"))
             if res.get("case_status"):
                 if res.get("is_depend"):
                     on_line_list_with_depend.append(test_case_dict)
@@ -495,8 +624,7 @@ def get_case_search_result(request_args, pro_name):
                 off_line_list.append(test_case_dict)
         on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
         test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
-    is_run = len(run_case_list) != 0
-    return test_case_list, case_num, is_run
+    return test_case_list, case_num, pro_is_running(pro_name)
 
 
 def get_case_operation_result(request_json, pro_name, mode):
@@ -507,6 +635,7 @@ def get_case_operation_result(request_json, pro_name, mode):
     :param mode:  添加 add | 编辑 edit
     :return:
     【 添 加 步 骤 】
+    0.若项目在运行中，不能进行编辑
     1.验证'is_depend'字段不能为空
     2.转换'is_depend'字段格式 string -> bool
     3.根据'is_depend'字段 检查必填项
@@ -555,6 +684,10 @@ def get_case_operation_result(request_json, pro_name, mode):
     depend_level = request_json.get("depend_level", "").strip()
     depend_field_name_list = request_json.get("depend_field_name_list", "").strip()
     case_status = request_json.get("case_status", "").strip()
+
+    # 0.若项目在运行中，不能进行编辑
+    if pro_is_running(pro_name) and mode == "edit":
+        return "当前项目正在运行中"
 
     # 1.验证'is_depend'字段不能为空
     if is_depend == "":
@@ -660,6 +793,10 @@ def get_case_del_result(request_json, pro_name):
     :param pro_name:
     :return:
     """
+    # 判断是否在运行中
+    if pro_is_running(pro_name):
+        return "当前项目正在运行中"
+
     # 获取请求中的参数
     _id = request_json.get("_id", "").strip()
     query_dict = {"_id": ObjectId(_id)}

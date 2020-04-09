@@ -5,7 +5,6 @@ from Config.error_mapping import *
 from Api.api_services.api_template import interface_template
 from Api.api_services.api_calculate import *
 from Common.com_func import is_null, log
-from Common.test_func import set_pro_run_status
 from Tools.mongodb import MongoGridFS
 from Config import config as cfg
 
@@ -220,6 +219,8 @@ def set_case_status_all(pro_name, case_status):
     res_info = dict()
     if is_null(pro_name) or is_null(case_status):
         res_info["msg"] = PARAMS_NOT_NONE
+    elif pro_is_running(pro_name):
+        res_info["msg"] = CURRENT_IS_RUNNING
     else:
         if case_status in [True, False, "false", "FALSE", "TRUE", "true"]:
             case_status = case_status in [True, "TRUE", "true"] and True or False
@@ -240,6 +241,8 @@ def set_case_status(pro_name, _id):
     new_case_status = None
     if is_null(pro_name) or is_null(_id):
         msg = PARAMS_NOT_NONE
+    elif pro_is_running(pro_name):
+        msg = CURRENT_IS_RUNNING
     else:
         new_case_status = update_case_status(pro_name, _id)
         msg = new_case_status == "mongo error" and MONGO_CONNECT_FAIL or UPDATE_SUCCESS

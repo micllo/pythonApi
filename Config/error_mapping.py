@@ -20,6 +20,7 @@ STATUS_FAILED = u"查询状态失败"
 CALCULATE_FAILED = u"计算数据失败"
 
 # 400
+CURRENT_IS_RUNNING = u"当前项目正在运行中"
 BASIC_INFO_MISSING = u"缺少基本信息或者不存在"
 REQUEST_ARGS_WRONG = u"请求参数有误"
 REQUEST_VERANDA_WRONG = u"该甬道不存在"
@@ -78,6 +79,7 @@ def get_error_code(code_msg):
         CONNECT_DB_TIMEOUT: 31504,
 
         # 400
+        CURRENT_IS_RUNNING: 31400,
         BASIC_INFO_MISSING: 31400,
         REQUEST_ARGS_WRONG: 31400,
         REQUEST_VERANDA_WRONG: 31400,
