@@ -196,6 +196,18 @@ def import_action(pro_name, import_method):
     return json.dumps(res_info, ensure_ascii=False)
 
 
+@flask_app.route("/API/get_run_status/<pro_name>", methods=["GET"])
+def get_run_status(pro_name):
+    """
+    获取运行状态
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["is_run"] = pro_is_running(pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
 @flask_app.route("/API/run_test/<pro_name>", methods=["POST"])
 def run_test(pro_name):
     """

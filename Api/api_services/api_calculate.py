@@ -5,13 +5,10 @@ from Tools.excel_data import read_excel
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
     get_not_null_field_list_with_depend
 from Tools.mongodb import MongodbUtils
-from Common.com_func import is_null, log, mongo_exception_send_DD
-from dateutil import parser
+from Common.com_func import is_null, log, mongo_exception_send_DD, ping_host
 from Tools.date_helper import get_current_iso_date
-import unittest
 import re
 from bson.objectid import ObjectId
-from Common.test_func import test_interface
 from Config.pro_config import get_pro_host
 from TestBase.verify_interface import VerifyInterface
 from TestBase.acquire_depend import AcquireDependField
@@ -82,11 +79,12 @@ def run_test_by_pro(request_json, pro_name):
     :param pro_name:
     :return:
         1.<判断>相关信息
-        2.获取上线的接口列表
+        2.<判断>host是否可以ping通
+        3.获取上线的接口列表
          （1）上线的'依赖接口列表'
          （2）上线的'测试接口列表'
-        3.<判断>是否存在 上线的'测试接口列表'
-        4.开启线程进行 接口测试
+        4.<判断>是否存在 上线的'测试接口列表'
+        5.开启线程进行 接口测试
     """
     if is_null(pro_name):
         return "项目名不能为空"
@@ -101,6 +99,9 @@ def run_test_by_pro(request_json, pro_name):
 
     if pro_is_running(pro_name):
         return "当前项目正在运行中"
+
+    if not ping_host(host=host, check_num=5):
+        return "本地无法 ping 通 HOST"
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -147,7 +148,6 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
     """
     # 1.将项目'运行状态'设置为开启
     set_pro_run_status(pro_name=pro_name, run_status=True)
-    time.sleep(10)
 
     # 2.获取依赖字段值
     adf = AcquireDependField(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
@@ -880,35 +880,3 @@ if __name__ == "__main__":
     # else:
     #     print(verify_result)
 
-
-
-
-# # param = "{'image_id':'{{image_id}}', 'token':'{{token}}'}"
-#     # param = "?token={{token}}"
-#     # param = "?token={{token}}&test={{test}}"
-#     param = "/test/add/{{token}}"
-#
-#     depend_dict = {"token": "2222222", "image_id": "11111"}
-#
-#     # 获取参数中的依赖字段列表
-#     params_depend_field_list = []
-#     num = param.count('{{')  # 统计参数的依赖字段数量
-#     pattern = r'.*{{(.*)}}' * num  # 整理匹配模式（捕获数量）
-#     if pattern:  # 若存在 则进行捕获
-#         match_obj = re.match(pattern, param)
-#         for i in range(num):
-#             params_depend_field_list.append(match_obj.group(i + 1))
-#     print(params_depend_field_list)
-#
-#     # 判断参数中的依赖字段值是否都已获取
-#     #（ 判断'params_depend_field_list'列表中的每个字段是否都包含在'depend_dict'的'key'列表中）
-#     no_contain_depend_field_list = [field for field in params_depend_field_list if field not in list(depend_dict.keys())]
-#     print(no_contain_depend_field_list)
-#     if no_contain_depend_field_list:
-#         print("依赖字段没有全部获取到")
-#     else:
-#         # 替换依赖字段
-#         for field in params_depend_field_list:
-#             param = param.replace("{{" + field + "}}", depend_dict[field])
-#
-#     print(param)

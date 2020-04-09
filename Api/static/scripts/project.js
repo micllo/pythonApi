@@ -94,7 +94,7 @@ function exec_test(pro_name, nginx_api_proxy){
                         swal({text: msg, type: "success", confirmButtonText: "知道了"});
                         $("#result_info").html(msg);
                         $("#result_info").removeClass().addClass("label label-success");
-                        setTimeout(function(){location.reload();}, 1000);
+                        setTimeout(function(){location.reload();}, 2000);
                     }else{
                         swal({text: msg, type: "error", confirmButtonText: "知道了"});
                         $("#result_info").html(msg);
@@ -115,7 +115,23 @@ function exec_test(pro_name, nginx_api_proxy){
     });
 }
 
-
+/**
+ *  后 台 轮 询
+ */
+function background_polling(pro_name, nginx_api_proxy){
+    // 轮询修改页面信息
+    var interval = setInterval(function () {  // 间隔指定的毫秒数不停地执行指定的代码，定时器
+        // 调用ajax请求(同步)
+        var request_url = "/" + nginx_api_proxy + "/API/get_run_status/" + pro_name
+        var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+        if(response_info != "请求失败"){
+            if(!response_info.is_run){
+                clearInterval(interval); // 用于停止 setInterval() 方法执行的函数代码
+                location.reload();
+            }
+        }
+    }, 1000);
+}
 
 /**
  * 修改案件状态（所有）
@@ -287,8 +303,8 @@ function search_case(pro_name, nginx_api_proxy) {
             }else{
                 // 验证关键字段（期望的关键字段值）
                 tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>";
-                // 验证模式（期望的响应字段列表）
-                tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的响应字段列表\" data-content=\"" + expect_field_name_list + "\">";
+                // 验证模式
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
                 if(verify_mode == 1){
                     tr_html += "仅关键字</td>";
                 }else{
@@ -296,12 +312,8 @@ function search_case(pro_name, nginx_api_proxy) {
                 }
             }
 
-            // 用例状态（实际的关键字段值）  onclick="update_case_status('{{pro_name}}','{{_id}}','{{nginx_api_proxy}}')" id="case_status_{{_id}}"
-            if(is_depend){
-                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" onclick=\"update_case_status('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" id=\"case_status_" + _id + "\">";
-            }else{
-                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" onclick=\"update_case_status('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" id=\"case_status_" + _id + "\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的关键字段值\" data-content=\"" + actual_core_field_value_list + "\">";
-            }
+            // 用例状态
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" onclick=\"update_case_status('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" id=\"case_status_" + _id + "\">";
             if(case_status){
                 tr_html += "<font color=\"#00A600\">上线</font></td>";
             }else{
@@ -333,11 +345,7 @@ function search_case(pro_name, nginx_api_proxy) {
                 }
             }
             // 更新时间（实际的响应字段列表）
-            if(is_depend){
-                tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>";
-            }else{
-                tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"实际的响应字段列表\" data-content=\"" + actual_field_name_list + "\">" + update_time + "</td>";
-            }
+            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>";
 
             // 操作
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";

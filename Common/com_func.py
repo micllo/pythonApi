@@ -12,6 +12,8 @@ import traceback
 from Config import config as cfg
 import requests
 import json
+import re
+import pexpect
 
 
 log = FrameLog().log()
@@ -156,6 +158,32 @@ def mongo_exception_send_DD(e, msg):
     send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
 
 
+def ping_host(host, check_num):
+    """
+    检查 host 是否可以 ping 通
+    :param host:
+    :param check_num: 次数
+    :return:
+        【 两 种 情 况 】
+        1. http://127.0.0.1:7060/api_local/test 捕获 127.0.0.1
+        2. http://www.baidu.com/api_local/test 捕获 www.baidu.com
+    """
+    match_obj = re.search(r'http://(.*?)/', host)
+    ip = match_obj.group(1)
+    ip = ":" in ip and ip.split(":")[0] or ip
+    ping_command = 'ping ' + ip
+    ping = pexpect.spawn(ping_command)
+    is_pass = False
+    for n in range(check_num):
+        p = ping.readline()
+        p_str = str(p, encoding="utf-8").strip()
+        log.info(p_str)
+        if "ttl" in p_str:
+            is_pass = True
+            break
+    return is_pass
+
+
 if __name__ == "__main__":
     pass
     # attach_file = cfg.REPORTS_PATH + "report.html"
@@ -169,4 +197,8 @@ if __name__ == "__main__":
     # print(os.path.split(os.path.realpath(__file__))[0].split('C'))
     # print(os.path.split(os.path.realpath(__file__))[0].split('C')[0])
 
+    # host = "http://127.0.0.11:7060/api_local/test"
+    host = "http://www.baidu.com/api_local/test"
+    is_pass = ping_host(host, 5)
+    print(is_pass)
 
