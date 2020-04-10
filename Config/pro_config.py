@@ -12,7 +12,9 @@ def get_pro_host(pro_name, host_name):
     host = None
     if pro_name == "pro_demo_1":
         if host_name == "7060":
-            host = "http://127.0.0.11:7060/api_local"
+            host = "http://127.0.0.1:7060/api_local"
+        if host_name == "1111":
+            host = "http://www.google.com.hk/api_local"
     return host
 
 

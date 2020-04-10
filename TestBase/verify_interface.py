@@ -3,31 +3,34 @@ import requests
 import json
 from Common.com_func import is_null, log
 import re
+from Tools.decorator_tools import retry_func
 
 
 class VerifyInterface(object):
     """
     【 验 证 接 口 】
-     1.发送请求，验证response响应
+     1.转换 参数 格式类型
+        若转换失败，记录'测试结果：test_result'<error:'请求参数'或'请求头文件'格式有误>
+        若转换成功，继续
+     2.发送请求，验证response响应
       （1）无响应：记录'测试结果：test_result' < fail:测试接口无响应 >
       （2）有相应（ http != 200 ）：记录'测试结果：test_result' < fail:测试接口错误,http_code<500>,原因解析(Internal Server Error)" >
       （3）有响应（ http == 200 ）：继续
-      （4）若出现 invalid syntax，记录'测试结果：test_result'<error:'请求参数'或'请求头文件'格式有误>
-     2.记录 '响应信息：response_info' 字段值、获取'实际的响应字段列表、键值字典'
-     3.验证'待比较的关键字段名'列表
+     3.记录 '响应信息：response_info' 字段值、获取'实际的响应字段列表、键值字典'
+     4.验证'待比较的关键字段名'列表
       （1）验证'待比较的关键字段名'列表是否都存在
       （2）获取'实际的关键字段值'列表
       （3）比较'关键字段值'列表
          记录 '响应字段列表比较结果：result_core_field_value'（ pass、fail、fail:关键字段名不存在）
-     4.若'验证模式 = 2'，则还需要验证'待比较的响应字段列表'
+     5.若'验证模式 = 2'，则还需要验证'待比较的响应字段列表'
          记录 '响应字段列表比较结果：result_field_name_list'（ pass、fail ）
-     5.记录 '测试结果：test_result' 字段值
+     6.记录 '测试结果：test_result' 字段值
       （1）success:通过
       （2）fail:关键字段验证失败
       （3）fail:关键字段验证失败,响应字段列表验证失败
       （4）fail:关键字段验证通过,响应字段列表验证失败
       （5）fail:关键字段验证失败,响应字段列表验证通过
-     6.retrun: 待更新字典
+     7.retrun: 待更新字典
 
        < 验 证 接 口 test_result >
         01.success:测试通过
@@ -57,15 +60,6 @@ class VerifyInterface(object):
         self.request_method = request_method
         self.request_header = request_header
         self.request_params = request_params
-        # if request_header:
-        #     self.request_header = eval(request_header)  # string -> dict
-        # else:  # ""
-        #     self.request_header = request_header
-        # if request_params and request_params.startswith("{"):
-        #     self.request_params = json.dumps(eval(request_params))  # string -> dict -> json
-        # else:  # "" 或 '?xx=xx'
-        #     self.request_params = request_params
-
         # 验证模式
         self.verify_mode = verify_mode
         # 依赖数据
@@ -91,46 +85,49 @@ class VerifyInterface(object):
 
     def verify(self):
 
-        # 1.发送请求，验证response响应
-        try:
+        # 1.转换 参数 格式类型
+        transform_fail, self.request_params, self.request_header = \
+            self.transform_params_format(request_params=self.request_params, request_header=self.request_header)
+        if transform_fail:
+            self.test_result = "error:'请求参数'或'请求头文件'格式有误"
+        else:
+            # 2.发送请求，验证response响应
             response = self.send_request(request_method=self.request_method, interface_url=self.host+self.interface_url,
                                          request_params=self.request_params, request_header=self.request_header)
-        except Exception as e:
-            # verify_interface.py -> verify line:370 [ERROR]  invalid syntax (<string>, line 1)
-            log.error(e)
-            self.test_result = "fail:测试接口无响应"
-            # 获取 待数据库更新的字典
-            self.get_mongo_update_result_dict()
-            return self.update_result_dict
-        if response == "invalid syntax":
-            self.test_result = "error:'请求参数'或'请求头文件'格式有误"
-        elif response.status_code != 200:
-            msg = re.search(r'<title>(.*?)</title>', response.text)
-            self.test_result = "fail:测试接口错误,http_code<" + str(response.status_code) + ">,原因解析(" + msg.group(1) + ")"
-        else:
-            # 2.记录'响应信息：response_info'字段值、获取'实际的响应字段列表、键值字典'
-            self.response_info = response.text
-            self.response_dict = json.loads(self.response_info)
-            self.get_response_field_list_and_dict()
+            if response == 31500:
+                self.test_result = "fail:测试接口无响应"
+            elif response.status_code != 200:
+                msg = re.search(r'<title>(.*?)</title>', response.text)
+                self.test_result = "fail:测试接口错误,http_code<" + str(response.status_code) + ">,原因解析(" + msg.group(1) + ")"
+            else:
+                # 4.记录'响应信息：response_info'字段值、获取'实际的响应字段列表、键值字典'
+                self.response_info = response.text
+                self.response_dict = json.loads(self.response_info)
+                self.get_response_field_list_and_dict()
 
-            # 3.验证'待比较的关键字段'列表
-            self.verify_core_field_list()
+                # 5.验证'待比较的关键字段'列表
+                self.verify_core_field_list()
 
-            # 4.若'验证模式 = 2'，则验证'待比较的响应字段列表'
-            self.verify_mode == 2 and self.verify_response_field_name_list()
+                # 6.若'验证模式 = 2'，则验证'待比较的响应字段列表'
+                self.verify_mode == 2 and self.verify_response_field_name_list()
 
-            # 5.记录 '测试结果：test_result' 字段值
-            self.get_test_result()
+                # 7.记录 '测试结果：test_result' 字段值
+                self.get_test_result()
 
         # 获取 待数据库更新的字典
         self.get_mongo_update_result_dict()
         return self.update_result_dict
 
     @staticmethod
-    def send_request(request_method, interface_url, request_params, request_header):
-
+    def transform_params_format(request_params, request_header):
+        """
+        转换 参数 格式类型
+        :param request_params:
+        :param request_header:
+        :return:
+        """
+        transform_fail = False
         try:
-            # 类 型 转 换
             # 若 request_header = ""，则保持不变，否则 string -> dict
             request_header = request_header and eval(request_header)
 
@@ -140,16 +137,23 @@ class VerifyInterface(object):
             else:  # "" 或 '?xx=xx'
                 request_params = request_params
         except Exception as e:
-            log.error(e)
-            return "invalid syntax"
+            log.error(e)  # "invalid syntax"
+            transform_fail = True
+        finally:
+            log.info("transform_fail  -> " + str(transform_fail))
+            return transform_fail, request_params, request_header
+
+    @staticmethod
+    # @retry_func(3, show_func=True)
+    def send_request(request_method, interface_url, request_params, request_header):
         if request_method == "GET":
-            response_info = requests.get(url=interface_url+request_params, headers=request_header)
+            response_info = requests.get(url=interface_url+request_params, headers=request_header, timeout=5)
         elif request_method == "POST":
-            response_info = requests.post(url=interface_url, data=request_params, headers=request_header)
+            response_info = requests.post(url=interface_url, data=request_params, headers=request_header, timeout=5)
         elif request_method == "PUT":
-            response_info = requests.put(url=interface_url, data=request_params, headers=request_header)
+            response_info = requests.put(url=interface_url, data=request_params, headers=request_header, timeout=5)
         else:
-            response_info = requests.delete(url=interface_url, data=request_params, headers=request_header)
+            response_info = requests.delete(url=interface_url, data=request_params, headers=request_header, timeout=5)
         return response_info
 
     def get_response_field_list_and_dict(self):

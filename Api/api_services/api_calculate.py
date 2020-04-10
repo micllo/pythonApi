@@ -12,7 +12,7 @@ from bson.objectid import ObjectId
 from Config.pro_config import get_pro_host
 from TestBase.verify_interface import VerifyInterface
 from TestBase.acquire_depend import AcquireDependField
-from concurrent.futures import ThreadPoolExecutor
+from Tools.decorator_tools import async
 
 # sys.path.append("./")
 
@@ -84,7 +84,7 @@ def run_test_by_pro(request_json, pro_name):
          （1）上线的'依赖接口列表'
          （2）上线的'测试接口列表'
         4.<判断>是否存在 上线的'测试接口列表'
-        5.开启线程进行 接口测试
+        5.异步执行 接口测试
     """
     if is_null(pro_name):
         return "项目名不能为空"
@@ -117,10 +117,23 @@ def run_test_by_pro(request_json, pro_name):
     if is_null(test_interface_list):
         return "没有上线的用例"
 
-    pool = ThreadPoolExecutor(1)
-    pool.submit(test_interface, pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
-                test_interface_list=test_interface_list)
+    async_test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
+                         test_interface_list=test_interface_list)
     return "测试进行中"
+
+
+@async
+def async_test_interface(pro_name, host, depend_interface_list, test_interface_list):
+    """
+    异步执行 接口测试
+    :param pro_name:
+    :param host:
+    :param depend_interface_list:
+    :param test_interface_list:
+    :return:
+    """
+    test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
+                   test_interface_list=test_interface_list)
 
 
 def test_interface(pro_name, host, depend_interface_list, test_interface_list):

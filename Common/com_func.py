@@ -2,9 +2,6 @@
 import os, configparser
 import threading
 from Tools.log import FrameLog
-import pandas as pd
-import numpy as np
-import inspect
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
@@ -14,6 +11,8 @@ import requests
 import json
 import re
 import pexpect
+import requests
+from Tools.decorator_tools import retry_func
 
 
 log = FrameLog().log()
@@ -168,8 +167,9 @@ def ping_host(host, check_num):
         1. http://127.0.0.1:7060/api_local/test 捕获 127.0.0.1
         2. http://www.baidu.com/api_local/test 捕获 www.baidu.com
     """
-    match_obj = re.search(r'http://(.*?)/', host)
+    match_obj = re.search(r'http://(.*?)/', host + "/")
     ip = match_obj.group(1)
+    print(ip)
     ip = ":" in ip and ip.split(":")[0] or ip
     ping_command = 'ping ' + ip
     ping = pexpect.spawn(ping_command)
@@ -182,6 +182,16 @@ def ping_host(host, check_num):
             is_pass = True
             break
     return is_pass
+
+
+def test_01(url):
+    test_request(url=url)
+
+
+@retry_func(3, show_func=True)
+def test_request(url):
+    response_info = requests.get(url, timeout=5)
+    return response_info
 
 
 if __name__ == "__main__":
@@ -198,7 +208,11 @@ if __name__ == "__main__":
     # print(os.path.split(os.path.realpath(__file__))[0].split('C')[0])
 
     # host = "http://127.0.0.11:7060/api_local/test"
-    host = "http://www.baidu.com/api_local/test"
-    is_pass = ping_host(host, 5)
-    print(is_pass)
+    host = "http://www.baidu.com"
+    # host = "http://www.google.com.hk"
+    # is_pass = ping_host(host, 5)
+    # print(is_pass)
+
+    print(test_request(host))
+
 

@@ -16,19 +16,19 @@ class AcquireDependField(object):
      1.<判断> 是否存在依赖接口
       （1）若不存在，则'整体记录' < error:依赖接口不存在 >
       （2）若存在，则 继续
-     2.获取'依赖接口列表'中的'依赖字段值名列表'
+     2.获取'依赖接口列表'中的'依赖字段值名列表'，并清空相关结果记录
      3.<判断> '测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
       （1）若存在不包含的情况，则'整体记录' < error:依赖字段名配置有误 >
       （2）若全包含，则 继续
      4.'依赖接口列表'按照依赖等级排序
      5.循环发送'依赖接口列表'中的请求
       （1）替换'依赖接口'中的'依赖变量'
-      （2）<判断> 响应码
-           1）无响应：'分开记录' < fail:依赖接口无响应 >
-           2）有相应（ http != 200 ）：'分开记录'< fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)" >
-           3）有响应（ http == 200 ）：'分开记录'< success:依赖通过 >、捕获'依赖字段值'
-           4）若出现 invalid syntax：'分开记录'< error:依赖接口'请求参数'或'请求头文件'格式有误 >
-      （3）获取 '依赖接口' 中的 '依赖字段值列表'
+      （2）转换 参数 格式类型 <判断>
+            若转换失败，'分开记录'< error:依赖接口'请求参数'或'请求头文件'格式有误 >
+            若转换成功 <判断> 响应码
+            1）无响应：'分开记录' < fail:依赖接口无响应 >
+            2）有相应（ http != 200 ）：'分开记录'< fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)" >
+            3）有响应（ http == 200 ）：'分开记录'< success:依赖通过 >、捕获'依赖字段值'、获取'依赖接口'中的'依赖字段值列表'并判断依赖字段是否获取到
      6.获取'依赖接口'执行失败的结果列表 < 判断 >
       （1）若存在'fail'，则不做处理，保持原有结果记录
       （2）若全部是'success'，则 < 判断 > '依赖字段值'是否全部都获取到
@@ -46,9 +46,10 @@ class AcquireDependField(object):
         01.success:依赖通过
         02.fail:依赖接口无响应
         03.fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
-        04.error:依赖字段值没有全部获取到
-        05.error:依赖字段名配置有误
-        06.error:依赖接口'请求参数'或'请求头文件'格式有误
+        04.error:依赖字段没有获取到
+        05.error:依赖字段名配置有遗漏(all)
+        06.error:依赖字段值没有全部获取到(all)
+        07.error:依赖接口'请求参数'或'请求头文件'格式有误
 
         [ 备 注 ]
         1.'error:依赖接口不存在'不记录在'依赖接口 test_result'中，而是记录在'测试接口 test_result'中
@@ -61,6 +62,7 @@ class AcquireDependField(object):
         （2）fail:依赖接口无响应
         （3）fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
         （4）error:依赖接口'请求参数'或'请求头文件'格式有误
+        （5）error:依赖字段没有获取到
 
         举例：
         1.整体记录：["error:依赖接口不存在", "error:依赖接口不存在"]
@@ -113,9 +115,11 @@ class AcquireDependField(object):
         获取 '依赖接口' 中的 '依赖字段值列表'
         :param depend_interface_dict:
         :return:
+          判断 字段值列表数量 是否与 字段名列表数量 一致
         """
         depend_interface_dict["depend_field_value_list"] = [value for key, value in self.capture_depend_field_dict.items()
                                                             if key in depend_interface_dict["depend_field_name_list"]]
+        return len(depend_interface_dict["depend_field_value_list"]) == len(depend_interface_dict["depend_field_name_list"])
 
     def is_need_depend(self):
         """
@@ -134,15 +138,21 @@ class AcquireDependField(object):
         if is_null(self.depend_interface_list):
             self.depend_interface_result_list = ["error:依赖接口不存在(all)"]
         else:
-            # 2.获取'依赖接口列表'中的'依赖字段值名列表'（去重、排序）
+            # 2.获取'依赖接口列表'中的'依赖字段值名列表'（去重、排序），并清空相关结果记录
             for index, depend_interface_dict in enumerate(self.depend_interface_list):
                 self.depend_field_list += depend_interface_dict["depend_field_name_list"]
+                depend_interface_dict["test_result"] = ""
+                depend_interface_dict["response_info"] = ""
+                depend_interface_dict["depend_field_value_list"] = ""
             self.depend_field_list = list(set(self.depend_field_list))
             self.depend_field_list.sort()
 
             # 3.判断 '测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
             no_contain_list = [field for field in self.params_depend_field_list if field not in self.depend_field_list]
             if no_contain_list:
+                self.response_info_list.append("")
+                # 将需要整体记录的'response_info'，按照依赖列表个数赋值给'response_info_list'
+                self.response_info_list = self.response_info_list * len(self.depend_interface_list)
                 self.depend_interface_result_list = ["error:依赖字段名配置有遗漏(all)"]
             else:
                 # 4.'依赖接口列表'按照依赖等级排序
@@ -150,44 +160,53 @@ class AcquireDependField(object):
 
                 # 5.循环发送'依赖接口列表'中的请求
                 for depend_interface_dict in self.depend_interface_list:
+
                     # 替换'依赖接口'中的'依赖变量'
                     self.replace_params(depend_interface_dict)
-                    try:
+
+                    # 转换 参数 格式类型
+                    transform_fail, depend_interface_dict["request_params"], depend_interface_dict["request_header"] = \
+                        VerifyInterface.transform_params_format(request_params=depend_interface_dict["request_params"],
+                                                                request_header=depend_interface_dict["request_header"])
+                    if transform_fail:
+                        self.response_info_list.append("")
+                        self.depend_interface_result_list.append("error:依赖接口'请求参数'或'请求头文件'格式有误")
+                    else:
                         response = VerifyInterface.send_request(request_method=depend_interface_dict["request_method"],
-                                                                interface_url=self.host+depend_interface_dict["interface_url"],
+                                                                interface_url=self.host + depend_interface_dict["interface_url"],
                                                                 request_params=depend_interface_dict["request_params"],
                                                                 request_header=depend_interface_dict["request_header"])
-                    except Exception as e:
-                        self.response_info_list.append("")
-                        log.error(e)
-                        self.depend_interface_result_list.append("fail:依赖接口无响应")
-                        continue  # 直接进入下一个循环
-                    if response == "invalid syntax":
-                        self.response_info_list.append(response)
-                        self.depend_interface_result_list.append("error:依赖接口'请求参数'或'请求头文件'格式有误")
-                    elif response.status_code != 200:
-                        self.response_info_list.append(response.text)
-                        msg = re.search(r'<title>(.*?)</title>', response.text)
-                        self.depend_interface_result_list.append("fail:依赖接口错误,http_code<" + str(response.status_code)
-                                                                 + ">,原因解析(" + msg.group(1) + ")")
-                    else:
-                        self.response_info_list.append(response.text)
-                        # 递归捕获'依赖字段值' ( 暂时递归三层进行捕获 )
-                        response_dict = json.loads(response.text)
-                        for key, value in response_dict.items():
-                            if key in self.depend_field_list:
-                                self.capture_depend_field_dict[key] = value
-                            if isinstance(value, dict):  # 若第一层的value是字典类型，则继续遍历捕获
-                                for key_2, value_2 in value.items():
-                                    if key_2 in self.depend_field_list:
-                                        self.capture_depend_field_dict[key_2] = value_2
-                                    if isinstance(value_2, dict):  # 若第二层的value_2是字典类型，则继续遍历捕获
-                                        for key_3, value_3 in value.items():
-                                            if key_3 in self.depend_field_list:
-                                                self.capture_depend_field_dict[key_3] = value_3
-                        self.depend_interface_result_list.append("success:依赖通过")
-                    # 获取 '依赖接口' 中的 '依赖字段值列表'
-                    self.get_depend_field_value(depend_interface_dict)
+                        if response == 31500:
+                            self.response_info_list.append("")
+                            self.depend_interface_result_list.append("fail:依赖接口无响应")
+                        elif response.status_code != 200:
+                            self.response_info_list.append(response.text)
+                            msg = re.search(r'<title>(.*?)</title>', response.text)
+                            self.depend_interface_result_list.append(
+                                "fail:依赖接口错误,http_code<" + str(response.status_code)
+                                + ">,原因解析(" + msg.group(1) + ")")
+                        else:
+                            self.response_info_list.append(response.text)
+                            # 递归捕获'依赖字段值' ( 暂时递归三层进行捕获 )
+                            response_dict = json.loads(response.text)
+                            for key, value in response_dict.items():
+                                if key in self.depend_field_list:
+                                    self.capture_depend_field_dict[key] = value
+                                if isinstance(value, dict):  # 若第一层的value是字典类型，则继续遍历捕获
+                                    for key_2, value_2 in value.items():
+                                        if key_2 in self.depend_field_list:
+                                            self.capture_depend_field_dict[key_2] = value_2
+                                        if isinstance(value_2, dict):  # 若第二层的value_2是字典类型，则继续遍历捕获
+                                            for key_3, value_3 in value.items():
+                                                if key_3 in self.depend_field_list:
+                                                    self.capture_depend_field_dict[key_3] = value_3
+
+                            # 获取'依赖接口'中的'依赖字段值列表' 并判断依赖字段是否获取到
+                            is_capture = self.get_depend_field_value(depend_interface_dict)
+                            if is_capture:
+                                self.depend_interface_result_list.append("success:依赖通过")
+                            else:
+                                self.depend_interface_result_list.append("error:依赖字段没有获取到")
 
                 # 6.获取'依赖接口'执行失败的结果列表 < 判断 >
                 fail_result_list = [result for result in self.depend_interface_result_list if "success" not in result]
@@ -208,8 +227,7 @@ class AcquireDependField(object):
             if error_result:
                 print(self.depend_interface_result_list)
                 print(len(self.depend_interface_list))
-                self.depend_interface_result_list = self.depend_interface_result_list * len(
-                    self.depend_interface_list)
+                self.depend_interface_result_list = self.depend_interface_result_list * len(self.depend_interface_list)
 
         # 8.更新'依赖接口列表'、'测试接口列表'结果
         update_time = get_current_iso_date()
@@ -276,13 +294,13 @@ class AcquireDependField(object):
             print("depend_level  " + str(depend_interface_dict["depend_level"]))
             print("interface_name  " + depend_interface_dict["interface_name"])
             print("interface_url  " + depend_interface_dict["interface_url"])
-            print("request_header  " + depend_interface_dict["request_header"])
-            print("request_params  " + depend_interface_dict["request_params"])
+            print("request_header  " + str(depend_interface_dict["request_header"]))
+            print("request_params  " + str(depend_interface_dict["request_params"]))
             print("-----")
         print("\n===========================[ test_interface_list ]==================================\n")
         for index, test_interface_dict in enumerate(self.test_interface_list):
             print("interface_name  " + test_interface_dict["interface_name"])
             print("interface_url  " + test_interface_dict["interface_url"])
-            print("request_header  " + test_interface_dict["request_header"])
-            print("request_params  " + test_interface_dict["request_params"])
+            print("request_header  " + str(test_interface_dict["request_header"]))
+            print("request_params  " + str(test_interface_dict["request_params"]))
             print("-----")
