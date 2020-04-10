@@ -8,17 +8,19 @@ from Tools.date_helper import current_timestamp
 from threading import Thread
 import threading
 from functools import wraps
+from Config import config as cfg
 
 save_mutex = threading.Lock()
 log = FrameLog().log()
 
 
-def retry_func(try_limit, show_func=True):
+def retry_func(try_limit, log_show=True, send_dd=False, send_flag=""):
     """
     错误重试装饰器
     :param try_limit:
-    :param show_func:
-    :param send_mail_func:
+    :param log_show:
+    :param send_dd:
+    :param send_flag:
     :return:
 
      备注：若重试全部失败后，返回 31500
@@ -31,17 +33,24 @@ def retry_func(try_limit, show_func=True):
                     st = time.time()
                     res = func(*args, **kwargs)
                     et = time.time()
-                    if show_func:
+                    if log_show:
                         log.info("%s: DONE %s" % (func.__name__, (et-st)))
                     return res
                 except Exception as e:
                     time.sleep(1)
                     try_cnt += 1
-                    if show_func:
+                    if log_show:
                         log.error(e)
                         log.warning("%s: RETRY CNT %s" % (func.__name__, try_cnt))
-            if show_func:
+            if log_show:
                 log.warning("%s: FAILED" % func.__name__)
+            if send_dd:
+                if send_flag == "接口监控":
+                    title = "[监控]'接口测试'"
+                    text = "#### API自动化测试'接口无响应"
+                    from Common.com_func import send_DD
+                    send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+
             return 31500
         return wrapper
     return try_func

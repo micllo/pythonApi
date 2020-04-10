@@ -140,12 +140,24 @@ class VerifyInterface(object):
             log.error(e)  # "invalid syntax"
             transform_fail = True
         finally:
-            log.info("transform_fail  -> " + str(transform_fail))
             return transform_fail, request_params, request_header
 
     @staticmethod
-    # @retry_func(3, show_func=True)
+    @retry_func(try_limit=3, send_dd=True, send_flag="接口监控")
     def send_request(request_method, interface_url, request_params, request_header):
+        """
+        【 发 送 请 求 】
+        :param request_method:
+        :param interface_url:
+        :param request_params:
+        :param request_header:
+        :return:
+
+            【 备 注 】
+            1.请求默认超时时间，设置 5 秒
+            2.失败重试次数，设置 3 次 （每次间隔 1 秒）
+            3.一个请求最长用时：5 * 3 + 2 = 17 秒
+        """
         if request_method == "GET":
             response_info = requests.get(url=interface_url+request_params, headers=request_header, timeout=5)
         elif request_method == "POST":

@@ -172,6 +172,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
     if adf.verify_flag:
         # 执行测试，获取测试结果列表
         id_result_dict = {}   # {"_id":{"test_resuld":"success", "":""}, "_id":{}, }
+        host = "http://www.google.com.hk"
         for test_interface in test_interface_list:
             result_dict = VerifyInterface(interface_name=test_interface.get("interface_name"),
                                           host=host, interface_url=test_interface.get("interface_url"),
