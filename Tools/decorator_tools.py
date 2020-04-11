@@ -9,15 +9,17 @@ from threading import Thread
 import threading
 from functools import wraps
 from Config import config as cfg
+from Config.pro_config import get_pro_name
 
 save_mutex = threading.Lock()
 log = FrameLog().log()
 
 
-def retry_func(try_limit, log_show=True, send_dd=False, send_flag=""):
+def retry_request(try_limit=3, interval_time=1, log_show=True, send_dd=False):
     """
-    错误重试装饰器
+    接口重试
     :param try_limit:
+    :param interval_time:
     :param log_show:
     :param send_dd:
     :param send_flag:
@@ -37,7 +39,7 @@ def retry_func(try_limit, log_show=True, send_dd=False, send_flag=""):
                         log.info("%s: DONE %s" % (func.__name__, (et-st)))
                     return res
                 except Exception as e:
-                    time.sleep(1)
+                    time.sleep(interval_time)
                     try_cnt += 1
                     if log_show:
                         log.error(e)
@@ -45,11 +47,12 @@ def retry_func(try_limit, log_show=True, send_dd=False, send_flag=""):
             if log_show:
                 log.warning("%s: FAILED" % func.__name__)
             if send_dd:
-                if send_flag == "接口监控":
-                    title = "[监控]'接口测试'"
-                    text = "#### API自动化测试'接口无响应"
-                    from Common.com_func import send_DD
-                    send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+                # log.info("interface_url -> " + str(kwargs.get("interface_url", "")))
+                pro_name = get_pro_name(str(kwargs.get("interface_url", "")))
+                from Common.com_func import send_DD
+                title = " '" + pro_name + "' 项目 API自动化测试"
+                text = "#### '" + pro_name + "' 项目 API自动化测试 - 接口无响应'"
+                send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
 
             return 31500
         return wrapper

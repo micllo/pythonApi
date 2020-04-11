@@ -12,7 +12,6 @@ import json
 import re
 import pexpect
 import requests
-from Tools.decorator_tools import retry_func
 
 
 log = FrameLog().log()
@@ -105,7 +104,7 @@ def send_mail(subject, content, to_list, attach_file=None):
         log.error("邮件发送失败！")
 
 
-def send_DD(dd_group_id, title, text, at_phones, is_at_all=False):
+def send_DD(dd_group_id, title, text, at_phones="", is_at_all=False):
     """
     发 送 钉 钉
     :param dd_group_id: 发送的钉钉消息群
@@ -132,7 +131,7 @@ def send_DD(dd_group_id, title, text, at_phones, is_at_all=False):
             at_mobile_text += "@" + mobile + " "
         at_text += at_mobile_text
     data = {"msgtype": "markdown"}
-    data["markdown"] = {"title": title, "text": text + at_text}
+    data["markdown"] = {"title": "[监控]" + title, "text": text + at_text}
     data["at"] = {"atMobiles": at_mobiles, "isAtAll": at_all}
     dd_url = "https://oapi.dingtalk.com/robot/send?access_token=" + dd_group_id
     log.info(data)
@@ -152,9 +151,24 @@ def mongo_exception_send_DD(e, msg):
     :param msg:
     :return:
     """
-    title = "[监控]'mongo'操作通知"
+    title = "'mongo'操作通知"
     text = "#### WEB自动化测试'mongo'操作错误\n\n****操作方式：" + msg + "****\n\n****错误原因：" + str(e) + "****"
     send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+
+
+def api_monitor_send_DD(pro_name, wrong_type):
+    """
+    接口监控 发钉钉
+    :param pro_name:
+    :param wrong_type: error、fail
+    :return:
+    """
+    title = " '" + pro_name + "'项目 API自动化测试"
+    text = "#### '" + pro_name + "'项目 API自动化测试存在 '" + wrong_type + "' 的用例"
+    if wrong_type == "fail":
+        send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, is_at_all=True)
+    else:
+        send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
 
 
 def ping_host(host, check_num):
@@ -184,16 +198,6 @@ def ping_host(host, check_num):
     return is_pass
 
 
-def test_01(url):
-    test_request(url=url)
-
-
-@retry_func(3, show_func=True)
-def test_request(url):
-    response_info = requests.get(url, timeout=5)
-    return response_info
-
-
 if __name__ == "__main__":
     pass
     # attach_file = cfg.REPORTS_PATH + "report.html"
@@ -213,6 +217,5 @@ if __name__ == "__main__":
     # is_pass = ping_host(host, 5)
     # print(is_pass)
 
-    print(test_request(host))
 
 

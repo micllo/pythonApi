@@ -216,7 +216,8 @@ def run_test(pro_name):
     :return:
     """
     res_info = dict()
-    res_info["msg"] = run_test_by_pro(request_json=request.json, pro_name=pro_name)
+    host_name = request.json.get("host", "").strip()
+    res_info["msg"] = run_test_by_pro(host_name=host_name, pro_name=pro_name, run_type="manual")
     return json.dumps(res_info, ensure_ascii=False)
 
 

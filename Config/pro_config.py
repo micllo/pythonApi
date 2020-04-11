@@ -18,3 +18,18 @@ def get_pro_host(pro_name, host_name):
     return host
 
 
+def get_pro_name(test_url):
+    """
+    通过 测试地址 获取 项目名称
+    :param test_url:
+    :return:
+    """
+    pro_name = None
+    if "127.0.0.1:7060" in test_url:
+        pro_name = "pro_demo_1"
+    elif "www.google.com.hk" in test_url:
+        pro_name = "谷歌"
+    return pro_name
+
+
+

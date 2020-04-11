@@ -5,7 +5,7 @@ from Tools.excel_data import read_excel
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
     get_not_null_field_list_with_depend
 from Tools.mongodb import MongodbUtils
-from Common.com_func import is_null, log, mongo_exception_send_DD, ping_host
+from Common.com_func import is_null, log, mongo_exception_send_DD, ping_host, send_DD, api_monitor_send_DD
 from Tools.date_helper import get_current_iso_date
 import re
 from bson.objectid import ObjectId
@@ -72,36 +72,43 @@ def set_pro_run_status(pro_name, run_status=False):
             return "mongo error"
 
 
-def run_test_by_pro(request_json, pro_name):
+def run_test_by_pro(host_name, pro_name, run_type):
     """
     运行测试
-    :param request_json
+    :param host_name
     :param pro_name:
+    :param run_type: 运行方式：定时 cron、手动 manual
     :return:
         1.<判断>相关信息
-        2.<判断>host是否可以ping通
-        3.获取上线的接口列表
+           host是否可以ping通
+        2.获取上线的接口列表
          （1）上线的'依赖接口列表'
          （2）上线的'测试接口列表'
-        4.<判断>是否存在 上线的'测试接口列表'
-        5.异步执行 接口测试
+          <判断>是否存在 上线的'测试接口列表'
+        3.若 存在错误信息
+        （1）直接返回
+        （2）若是 定时任务，则需要钉钉通知
+        4.异步执行 接口测试
     """
-    if is_null(pro_name):
-        return "项目名不能为空"
-
-    host_name = request_json.get("host", "").strip()
-    if is_null(host_name):
-        return "HOST不能为空"
-
+    error_msg = ""
     host = get_pro_host(pro_name, host_name)
-    if is_null(host):
-        return "HOST错误"
+    if is_null(pro_name):
+        error_msg = "项目名不能为空"
+    elif is_null(host_name):
+        error_msg = "HOST不能为空"
+    elif is_null(get_pro_host(pro_name, host_name)):
+        error_msg = "HOST错误"
+    elif pro_is_running(pro_name):
+        error_msg = "当前项目正在运行中"
+    elif not ping_host(host=host, check_num=5):
+        error_msg = "本地无法 ping 通 HOST"
 
-    if pro_is_running(pro_name):
-        return "当前项目正在运行中"
-
-    if not ping_host(host=host, check_num=5):
-        return "本地无法 ping 通 HOST"
+    if error_msg:
+        if run_type == "cron":
+            title = " '" + pro_name + "'项目 API自动化测试"
+            text = "#### '" + pro_name + "'项目 API定时任务执行 提示：" + error_msg
+            send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+        return error_msg
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -115,27 +122,14 @@ def run_test_by_pro(request_json, pro_name):
     test_interface_list = list(test_interface_list)
 
     if is_null(test_interface_list):
-        return "没有上线的用例"
+        return"没有上线的用例"
 
-    async_test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
-                         test_interface_list=test_interface_list)
+    test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
+                   test_interface_list=test_interface_list)
     return "测试进行中"
 
 
 @async
-def async_test_interface(pro_name, host, depend_interface_list, test_interface_list):
-    """
-    异步执行 接口测试
-    :param pro_name:
-    :param host:
-    :param depend_interface_list:
-    :param test_interface_list:
-    :return:
-    """
-    test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
-                   test_interface_list=test_interface_list)
-
-
 def test_interface(pro_name, host, depend_interface_list, test_interface_list):
     """
     【 测 试 接 口 】（根据项目名）
@@ -158,6 +152,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
         （1）执行测试，获取测试结果列表
         （2）更新测试结果
         4.将项目'运行状态'设置为停止
+        5.若存在'失败'或'错误'则发送钉钉
     """
     # 1.将项目'运行状态'设置为开启
     set_pro_run_status(pro_name=pro_name, run_status=True)
@@ -169,10 +164,15 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
         test_interface_list = adf.acquire()
 
     # 3.验证接口
+    error_list = []
+    fail_list = []
     if adf.verify_flag:
+
         # 执行测试，获取测试结果列表
         id_result_dict = {}   # {"_id":{"test_resuld":"success", "":""}, "_id":{}, }
-        host = "http://www.google.com.hk"
+
+        # host = "http://www.google.com.hk"  # 测试重试次数使用
+
         for test_interface in test_interface_list:
             result_dict = VerifyInterface(interface_name=test_interface.get("interface_name"),
                                           host=host, interface_url=test_interface.get("interface_url"),
@@ -190,12 +190,20 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
         # 更新测试结果
         with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
             update_time = get_current_iso_date()
-            for _id, test_result in id_result_dict.items():
-                test_result["update_time"] = update_time
-                pro_db.update({"_id": _id}, {"$set": test_result})
+            for _id, test_info in id_result_dict.items():
+                test_info["update_time"] = update_time
+                pro_db.update({"_id": _id}, {"$set": test_info})
+                if "error" in test_info["test_result"]: error_list.append(test_info["test_result"])
+                if "fail" in test_info["test_result"]: fail_list.append(test_info["test_result"])
 
     # 4.将项目'运行状态'设置为停止
     set_pro_run_status(pro_name=pro_name, run_status=False)
+
+    # 5.若存在'失败'或'错误'则发送钉钉
+    if fail_list:
+        api_monitor_send_DD(pro_name=pro_name, wrong_type="fail")
+    elif error_list:
+        api_monitor_send_DD(pro_name=pro_name, wrong_type="error")
 
 
 def update_case_status_all(pro_name, case_status=False):

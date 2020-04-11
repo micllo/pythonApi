@@ -3,7 +3,7 @@ import requests
 import json
 from Common.com_func import is_null, log
 import re
-from Tools.decorator_tools import retry_func
+from Tools.decorator_tools import retry_request
 
 
 class VerifyInterface(object):
@@ -143,7 +143,7 @@ class VerifyInterface(object):
             return transform_fail, request_params, request_header
 
     @staticmethod
-    @retry_func(try_limit=3, send_dd=True, send_flag="接口监控")
+    @retry_request(try_limit=3, interval_time=1, send_dd=True)
     def send_request(request_method, interface_url, request_params, request_header):
         """
         【 发 送 请 求 】

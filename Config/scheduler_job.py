@@ -23,23 +23,15 @@ class Config(object):
             'second': "*/10"
             # 执行时间段：周一到周六，10点30-31分之间，每隔10秒 执行一次
         }
-        # {
-        #     'id': 'clear_reports_logs',
-        #     'func': 'Api.api_services.api_calculate:clear_reports_logs',
-        #     'args': [60],
-        #     'trigger': 'interval',
-        #     'seconds': 60
-        #     # 测试使用
-        # }
     ]
 
     # JOBS = [
     #     {
     #         'id': 'sync_run_case',
-    #         'func': 'Common.sync_run_case:suite_sync_run_case',
-    #         'args': ("pro_demo_1", "Chrome", 3, True),
+    #         'func': 'Api.api_services.api_calculate:run_test_by_pro',
+    #         'args': ("7060", "pro_demo_1", "cron"),
     #         'trigger': 'interval',
-    #         'seconds': 60
+    #         'seconds': 30
     #         # 测试使用
     #     },
     #     {
@@ -52,16 +44,6 @@ class Config(object):
     #         'minute': '30',
     #         'second': "10"
     #         # 每周日10点30分10秒 -> 清理7天前的报告和日志（注意：正式使用时 要把 '-mmin' 改成 '-mtime'）
-    #     },
-    #     {
-    #         'id': 'clear_screen_shot',
-    #         'func': 'Api.api_services.api_calculate:clear_screen_shot',
-    #         'args': [7],
-    #         'trigger': 'cron',
-    #         'day_of_week': '1',
-    #         'hour': 10,
-    #         'minute': '30'
-    #         # 每周一10点30分 -> 清理7天前的截图
     #     }
     # ]
 

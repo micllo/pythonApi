@@ -18,7 +18,8 @@ class AcquireDependField(object):
       （2）若存在，则 继续
      2.获取'依赖接口列表'中的'依赖字段值名列表'，并清空相关结果记录
      3.<判断> '测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
-      （1）若存在不包含的情况，则'整体记录' < error:依赖字段名配置有误 >
+      （1）若存在不包含的情况，则'整体记录' < error:依赖字段名配置有遗漏(all) >
+         （ 由于没有进行请求,所以需要给每个用例的"response_info"设置为空 ）
       （2）若全包含，则 继续
      4.'依赖接口列表'按照依赖等级排序
      5.循环发送'依赖接口列表'中的请求
@@ -34,7 +35,7 @@ class AcquireDependField(object):
       （2）若全部是'success'，则 < 判断 > '依赖字段值'是否全部都获取到
            1）是，则 替换'测试接口列表'中的'依赖字段变量'
            2）否，则 '整体记录' < error:依赖字段值没有全部获取到 >
-     7.将需要整体记录的'test_result'，按照依赖接口个数赋值给'depend_interface_result_list'
+     7.若存在(all)的失败用例,则需要给每个用例的"test_result"设置为该(all)结果
      8.更新'依赖接口列表'、'测试接口列表'结果
         < 判断 > '测试接口列表'
        （1）若 全部是'success' 则 不更新
@@ -52,7 +53,7 @@ class AcquireDependField(object):
         07.error:依赖接口'请求参数'或'请求头文件'格式有误
 
         [ 备 注 ]
-        1.'error:依赖接口不存在'不记录在'依赖接口 test_result'中，而是记录在'测试接口 test_result'中
+        1.'error:依赖接口不存在(all)'不记录在'依赖接口 test_result'中，而是记录在'测试接口 test_result'中
         2.依赖接口列表 整体记录 的 'test_result'
         （1）error:依赖接口不存在(all)
         （2）error:依赖字段名配置有遗漏(all)
@@ -151,6 +152,7 @@ class AcquireDependField(object):
             no_contain_list = [field for field in self.params_depend_field_list if field not in self.depend_field_list]
             if no_contain_list:
                 self.response_info_list.append("")
+                # 由于没有进行请求,所以需要给每个用例的"response_info"设置为空
                 # 将需要整体记录的'response_info'，按照依赖列表个数赋值给'response_info_list'
                 self.response_info_list = self.response_info_list * len(self.depend_interface_list)
                 self.depend_interface_result_list = ["error:依赖字段名配置有遗漏(all)"]
@@ -221,12 +223,10 @@ class AcquireDependField(object):
                         for test_interface_dict in self.test_interface_list:
                             self.replace_params(test_interface_dict)
 
-            # 7.将需要整体记录的'test_result'，按照依赖列表个数赋值给'depend_interface_result_list'
+            # 7.若存在(all)的失败用例,则需要给每个用例的"test_result"设置为该(all)结果
+            #   将需要整体记录的'test_result'，按照依赖列表个数赋值给'depend_interface_result_list'
             error_result = [result for result in self.depend_interface_result_list if "(all)" in result]
-            print("error_result " + str(error_result))
             if error_result:
-                print(self.depend_interface_result_list)
-                print(len(self.depend_interface_list))
                 self.depend_interface_result_list = self.depend_interface_result_list * len(self.depend_interface_list)
 
         # 8.更新'依赖接口列表'、'测试接口列表'结果
