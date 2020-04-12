@@ -50,9 +50,8 @@ def retry_request(try_limit=3, interval_time=1, log_show=True, send_dd=False):
                 # log.info("interface_url -> " + str(kwargs.get("interface_url", "")))
                 pro_name = get_pro_name(str(kwargs.get("interface_url", "")))
                 from Common.com_func import send_DD
-                title = " '" + pro_name + "' 项目 API自动化测试"
-                text = "#### '" + pro_name + "' 项目 API自动化测试 - 接口无响应'"
-                send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+                text = "#### '" + pro_name + "' 项目测试请求 - 接口无响应'"
+                send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
 
             return 31500
         return wrapper

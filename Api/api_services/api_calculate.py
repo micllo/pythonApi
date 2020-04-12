@@ -1,19 +1,20 @@
 # -*- coding:utf-8 -*-
 from Config import config as cfg
 import sys, os, time
-from Tools.excel_data import read_excel
+from Tools.excel_data import read_excel, set_style
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
     get_not_null_field_list_with_depend
 from Tools.mongodb import MongodbUtils
-from Common.com_func import is_null, log, mongo_exception_send_DD, ping_host, send_DD, api_monitor_send_DD
+from Common.com_func import is_null, log, mongo_exception_send_DD, ping_host, send_DD, api_monitor_send_DD, mkdir
 from Tools.date_helper import get_current_iso_date
 import re
 from bson.objectid import ObjectId
 from Config.pro_config import get_pro_host
+from Config.case_field_config import get_case_field_name
 from TestBase.verify_interface import VerifyInterface
 from TestBase.acquire_depend import AcquireDependField
 from Tools.decorator_tools import async
-
+import xlwt
 # sys.path.append("./")
 
 
@@ -105,9 +106,8 @@ def run_test_by_pro(host_name, pro_name, run_type):
 
     if error_msg:
         if run_type == "cron":
-            title = " '" + pro_name + "'项目 API自动化测试"
-            text = "#### '" + pro_name + "'项目 API定时任务执行 提示：" + error_msg
-            send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+            text = "#### '" + pro_name + "'项目 定时任务执行 提示：" + error_msg
+            send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
         return error_msg
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
@@ -894,6 +894,125 @@ def get_case_by_id(request_args, pro_name):
     return test_case_dict
 
 
+def statis_case(pro_name):
+    """
+    统计用例：成功、失败、错误、下线、依赖
+    :param pro_name:
+    :return:
+    【 步 骤 】
+        1.获取所有用例
+        2.将所有字段格式转换成string
+        3.统计区分
+        {"success_1":[], "fail_2":[], "error_1":[], "depend_2":[], "offline_3":[]}
+    """
+    # 获取所有用例
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
+        try:
+            all_cursor = pro_db.find({}, {"_id": 0})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="统计'" + pro_name + "'项目用例")
+            return "mongo error"
+
+    # 将所有字段格式转换成string
+    all_case_list = [each for each in all_cursor]
+    for case_dict in all_case_list:
+        for field, value in case_dict.items():
+            # 若"验证模式、依赖等级"为0，则赋空值
+            if field in ["verify_mode", "depend_level"]:
+                case_dict[field] = value != 0 and str(value) or ""
+            if field in ["_id", "case_status", "is_depend", "run_status", "create_time", "update_time"]:
+                case_dict[field] = str(value)
+            if field in get_list_field():
+                case_dict[field] = ",".join(value)
+
+    # 统计区分
+    statis_dict = {}
+    success_case_list = []
+    fail_case_list = []
+    error_case_list = []
+    depend_case_list = []
+    offline_case_list = []
+    for case_dict in all_case_list:
+        if case_dict["is_depend"] == "True":
+            depend_case_list.append(case_dict)
+        else:
+            if case_dict["case_status"] == "False":
+                offline_case_list.append(case_dict)
+            else:
+                if "success" in case_dict["test_result"]:
+                    success_case_list.append(case_dict)
+                elif "fail" in case_dict["test_result"]:
+                    fail_case_list.append(case_dict)
+                else:
+                    error_case_list.append(case_dict)
+    statis_dict["success_" + str(len(success_case_list))] = success_case_list
+    statis_dict["fail_" + str(len(fail_case_list))] = fail_case_list
+    statis_dict["error_" + str(len(error_case_list))] = error_case_list
+    statis_dict["depend_" + str(len(depend_case_list))] = depend_case_list
+    statis_dict["offline_" + str(len(offline_case_list))] = offline_case_list
+    return statis_dict
+
+
+def generate_report(statis_dict):
+    """
+    生成测试报告 ( Excel )
+    :param statis_dict:
+    :return:
+    """
+    now = time.strftime("%Y-%m-%d_%H_%M_%S", time.localtime(time.time()))
+    current_report_name = now + ".xls"
+    history_report_path = cfg.REPORTS_PATH + "history/"
+    mkdir(history_report_path)
+    current_report_file = history_report_path + current_report_name
+
+    case_info_save_excel(excel_file=current_report_file, statis_dict=statis_dict)
+
+    # 将最新报告替换../logs/下的report.html
+    res = os.system("cp " + current_report_file + " " + cfg.REPORTS_PATH + " && "
+                    "mv " + cfg.REPORTS_PATH + current_report_name + " " + cfg.REPORTS_PATH + "report.xls")
+    if res != 0:
+        log.error("测试报告替换操作有误！")
+
+
+def case_info_save_excel(excel_file, statis_dict):
+    """
+    用例信息保存入 Excel
+    :param excel_file:
+    :param statis_dict:
+    :return:
+    """
+    # 获取 excel head 数据
+    field_name_dict = get_case_field_name()
+    field_zn_list = list(field_name_dict.keys())
+    field_cn_list = list(field_name_dict.values())
+
+    # 获取 统计类别
+    category_list = list(statis_dict.keys())
+
+    # 将获取的数据存入excel中
+    workbook = xlwt.Workbook(encoding='utf-8')
+    for category_i, category in enumerate(category_list):
+        category_name = category.split("_")[0]
+        category_num = category.split("_")[1]
+        # 添加 工作表
+        sheet = workbook.add_sheet(category_name + "(" + category_num + ")", cell_overwrite_ok=True)
+
+        # 工作表 添加 head 数据
+        for cn_col_i in range(len(field_cn_list)):
+            sheet.write(0, cn_col_i, field_cn_list[cn_col_i], set_style(name=u"宋体", bold=True, colour=0, size=300))
+        for zn_col_i in range(len(field_zn_list)):
+            sheet.write(1, zn_col_i, field_zn_list[zn_col_i], set_style(name=u"宋体", bold=True, colour=23, size=300))
+
+        # 工作表 添加 数据
+        case_list = statis_dict.get(category, [])
+        print(case_list)
+        for row_i, case_dict in enumerate(case_list):
+            for col_i, value in enumerate(list(case_dict.values())):
+                sheet.write(row_i + 2, col_i, value, set_style(name=u"宋体", bold=True, colour=0, size=300))
+
+    workbook.save(excel_file)
+
+
 if __name__ == "__main__":
     pass
     # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
@@ -901,4 +1020,7 @@ if __name__ == "__main__":
     #     import_mongodb("pro_demo_1", excel_list, "all_replace")  # batch_insert、all_replace、batch_insert_and_replace
     # else:
     #     print(verify_result)
+    generate_report(statis_case("pro_demo_1"))
+
+
 

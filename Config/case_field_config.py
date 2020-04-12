@@ -1,4 +1,44 @@
 
+def get_case_field_name():
+    """
+    获取用例字段名
+    :return:
+    """
+    field_name_dict = {}
+    field_name_dict["interface_name"] = "接口名称"
+    field_name_dict["interface_url"] = "接口地址"
+    field_name_dict["request_method"] = "请求方式"
+    field_name_dict["request_header"] = "请求头文件"
+    field_name_dict["request_params"] = "请求参数"
+    field_name_dict["verify_mode"] = "验证模式"
+
+    field_name_dict["compare_core_field_name_list"] = "待比较关键字段名列表"
+    field_name_dict["expect_core_field_value_list"] = "期望的关键字段值列表"
+    field_name_dict["expect_field_name_list"] = "期望的响应字段列表"
+
+    field_name_dict["is_depend"] = "是否为依赖接口"
+    field_name_dict["depend_level"] = "依赖等级"
+
+    field_name_dict["depend_field_name_list"] = "依赖字段名列表"
+    field_name_dict["case_status"] = "用例状态"
+
+    field_name_dict["response_info"] = "响应信息"
+    field_name_dict["depend_field_value_list"] = "依赖字段值列表"
+
+    field_name_dict["actual_core_field_value_list"] = "实际的关键字段值列表"
+    field_name_dict["actual_field_name_list"] = "实际的响应字段列表"
+
+    field_name_dict["result_core_field_value"] = "关键字段值比较结果"
+    field_name_dict["result_field_name_list"] = "响应字段列表比较结果"
+
+    field_name_dict["test_result"] = "测试结果"
+    field_name_dict["run_status"] = "运行状态"
+    field_name_dict["update_time"] = "上次执行时间"
+    field_name_dict["create_time"] = "创建时间"
+
+    return field_name_dict
+
+
 def get_case_special_field_list():
     """
     【 获 取 excel 用 例 的 指 定 字 段 名 称 】

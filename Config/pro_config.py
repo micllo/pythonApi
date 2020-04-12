@@ -30,6 +30,3 @@ def get_pro_name(test_url):
     elif "www.google.com.hk" in test_url:
         pro_name = "谷歌"
     return pro_name
-
-
-
