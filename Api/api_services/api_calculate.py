@@ -23,16 +23,17 @@ api 服务底层的业务逻辑
 """
 
 
-def clear_reports_logs(time):
+def clear_reports_logs(time, pro_name):
     """
     删除指定时间之前 生成的报告和日志
       -mmin +1 -> 表示1分钟前的
       -mtime +1 -> 表示1天前的
     :param time:
+    :param pro_name:
     :return:
     """
-    rm_log_cmd = "find '" + cfg.LOGS_PATH + "' -name '*.log' -mmin +" + str(time) + " -type f -exec rm -rf {} \\;"
-    rm_report_cmd = "find '" + cfg.REPORTS_PATH + "history' -name '*.html' -mmin +" + str(time) + \
+    rm_log_cmd = "find '" + cfg.LOGS_DIR + "' -name '*.log' -mmin +" + str(time) + " -type f -exec rm -rf {} \\;"
+    rm_report_cmd = "find '" + cfg.REPORTS_DIR + pro_name + "/history' -name '*.xls' -mmin +" + str(time) + \
                     " -type f -exec rm -rf {} \\;"
     print(rm_log_cmd)
     print(rm_report_cmd)
@@ -340,8 +341,8 @@ def filled_other_field(excel_list):
         line_dict["result_field_name_list"] = ""
         line_dict["test_result"] = ""
         line_dict["run_status"] = False
-        line_dict["create_time"] = current_iso_date
         line_dict["update_time"] = current_iso_date
+        line_dict["create_time"] = current_iso_date
     # show_excel_list(excel_list)
     return excel_list
 
@@ -383,9 +384,10 @@ def verify_excel_and_transfer_format(excel_file):
     （5）若存在'请求参数'，则需要检查是否以'?'或'{'开头
     7.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
     """
-    # 读取Excel用例文件
-    excel_list = read_excel(excel_file, 0)
-
+    # 读取Excel用例文件（第一个工作表）
+    excel_list = read_excel(filename=excel_file, sheet_index=0, set_head_row_num=1)
+    for line in excel_list:
+        print(line)
     if excel_list == []:
         return "上传的excel文件中没有用例", None
 
@@ -415,15 +417,15 @@ def verify_excel_and_transfer_format(excel_file):
         if line_dict["is_depend"]:
             for key, value in line_dict.items():
                 if key.strip() in get_not_null_field_list_with_depend() and str(value).strip() == "":
-                    return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段不能为空", None
+                    return "第 " + str(index + 3) + " 行的 " + key.strip() + " 字段不能为空", None
                 if key.strip() == "depend_level" and not type(value) is float:
-                        return "第 " + str(index + 2) + " 行的 < depend_level > 字段格式不正确", None
+                        return "第 " + str(index + 3) + " 行的 < 依赖等级 > 字段格式不正确", None
         else:
             for key, value in line_dict.items():
                 if key.strip() in get_not_null_field_list() and str(value).strip() == "":
-                    return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段不能为空", None
+                    return "第 " + str(index + 3) + " 行的 " + key.strip() + " 字段不能为空", None
                 if key.strip() == "verify_mode" and not type(value) is float:
-                        return "第 " + str(index + 2) + " 行的 < verify_mode > 字段格式不正确", None
+                        return "第 " + str(index + 3) + " 行的 < 验证模式 > 字段格式不正确", None
 
     # 5.检查是否存在重复的用例(接口名称、请求方式+接口地址)
     interface_name_list = []  # '接口名称'列表
@@ -472,24 +474,24 @@ def verify_excel_and_transfer_format(excel_file):
                     line_dict[key] = value.strip() in ["true", "True", "TRUE"] or False
             if key.strip() in ["request_header", "request_params"]:
                 if "，" in value.strip():
-                    return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
+                    return "第 " + str(index + 3) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
             if key.strip() in get_list_field():
                 if value.strip() == "":
                     line_dict[key] = []
                 else:
                     if "，" in value.strip():
-                        return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
+                        return "第 " + str(index + 3) + " 行的 " + key.strip() + " 字段存在中文逗号 ！", None
                     else:
                         line_dict[key] = str(value.strip()).split(",")
             if key.strip() == "request_params":
                 if value:
                     if not value.startswith("?") and not value.startswith("{"):
-                        return "第 " + str(index + 2) + " 行的 " + key.strip() + " 字段值 必须以 ? 或 { 开头 ！", None
+                        return "第 " + str(index + 3) + " 行的 " + key.strip() + " 字段值 必须以 ? 或 { 开头 ！", None
 
     # 7.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
     for index, line_dict in enumerate(excel_list):
         if len(line_dict["compare_core_field_name_list"]) != len(line_dict["expect_core_field_value_list"]):
-            return "第 " + str(index + 2) + " 行的 'compare_core_field_name_list' 与 'expect_core_field_value_list' 字段数量不一致", None
+            return "第 " + str(index + 3) + " 行的<待比较关键字段名列表>与<期望的关键字段值列表>字段数量不一致", None
 
     # show_excel_list(excel_list)
     return "验证通过", excel_list
@@ -758,8 +760,8 @@ def get_case_operation_result(request_json, pro_name, mode):
     test_case_dict = {"interface_name": interface_name, "interface_url": interface_url, "request_method": request_method,
                       "request_header": request_header, "request_params": request_params, "verify_mode": verify_mode,
                       "compare_core_field_name_list": compare_core_field_name_list, "expect_core_field_value_list": expect_core_field_value_list,
-                      "expect_field_name_list": expect_field_name_list, "is_depend": is_depend, "depend_level": depend_level,
-                      "depend_field_name_list": depend_field_name_list, "case_status": case_status}
+                      "expect_field_name_list": expect_field_name_list, "is_depend": is_depend, "depend_field_name_list": depend_field_name_list,
+                      "depend_level": depend_level, "case_status": case_status}
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name) as pro_db:
         try:
@@ -919,7 +921,9 @@ def statis_case(pro_name):
         for field, value in case_dict.items():
             # 若"验证模式、依赖等级"为0，则赋空值
             if field in ["verify_mode", "depend_level"]:
-                case_dict[field] = value != 0 and str(value) or ""
+                # case_dict[field] = value != 0 and str(value) or ""
+                if value == 0:
+                    case_dict[field] = ""
             if field in ["_id", "case_status", "is_depend", "run_status", "create_time", "update_time"]:
                 case_dict[field] = str(value)
             if field in get_list_field():
@@ -953,25 +957,31 @@ def statis_case(pro_name):
     return statis_dict
 
 
-def generate_report(statis_dict):
+def generate_report_with_statis_case(pro_name):
     """
     生成测试报告 ( Excel )
-    :param statis_dict:
+    :param pro_name:
     :return:
     """
-    now = time.strftime("%Y-%m-%d_%H_%M_%S", time.localtime(time.time()))
-    current_report_name = now + ".xls"
-    history_report_path = cfg.REPORTS_PATH + "history/"
-    mkdir(history_report_path)
-    current_report_file = history_report_path + current_report_name
+    if pro_is_running(pro_name):
+        return "当前项目正在运行中"
+    else:
+        statis_dict = statis_case(pro_name)
+        now = time.strftime("%Y-%m-%d_%H_%M_%S", time.localtime(time.time()))
+        current_report_name = "[API_report]" + pro_name + "[" + now + "].xls"
+        pro_report_path = cfg.REPORTS_DIR + pro_name + "/"
+        history_report_path = pro_report_path + "/history/"
+        mkdir(history_report_path)
+        current_report_file = history_report_path + current_report_name
 
-    case_info_save_excel(excel_file=current_report_file, statis_dict=statis_dict)
+        case_info_save_excel(excel_file=current_report_file, statis_dict=statis_dict)
 
-    # 将最新报告替换../logs/下的report.html
-    res = os.system("cp " + current_report_file + " " + cfg.REPORTS_PATH + " && "
-                    "mv " + cfg.REPORTS_PATH + current_report_name + " " + cfg.REPORTS_PATH + "report.xls")
-    if res != 0:
-        log.error("测试报告替换操作有误！")
+        # 将最新报告替换../logs/下的report.xls
+        res = os.system("cp " + current_report_file + " " + pro_report_path + " && "
+                        "mv " + pro_report_path + current_report_name + " " + pro_report_path + "[API_report]" + pro_name + ".xls")
+        if res != 0:
+            log.error("测试报告替换操作有误！")
+    return "生成完毕"
 
 
 def case_info_save_excel(excel_file, statis_dict):
@@ -1005,7 +1015,6 @@ def case_info_save_excel(excel_file, statis_dict):
 
         # 工作表 添加 数据
         case_list = statis_dict.get(category, [])
-        print(case_list)
         for row_i, case_dict in enumerate(case_list):
             for col_i, value in enumerate(list(case_dict.values())):
                 sheet.write(row_i + 2, col_i, value, set_style(name=u"宋体", bold=True, colour=0, size=300))
@@ -1015,12 +1024,11 @@ def case_info_save_excel(excel_file, statis_dict):
 
 if __name__ == "__main__":
     pass
-    # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
-    # if verify_result == "验证通过":
-    #     import_mongodb("pro_demo_1", excel_list, "all_replace")  # batch_insert、all_replace、batch_insert_and_replace
-    # else:
-    #     print(verify_result)
-    generate_report(statis_case("pro_demo_1"))
+    verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
+    print(verify_result)
+    print(excel_list)
+
+    # generate_report_with_statis_case("pro_demo_1")
 
 
 

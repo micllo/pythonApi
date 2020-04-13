@@ -178,6 +178,8 @@ def get_test_case_list(pro_name):
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
     result_dict["test_case_list"], result_dict["case_num"], result_dict["is_run"] = get_test_case(pro_name)
+    result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
+    result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
     return render_template('project.html', tasks=result_dict)
 
 
@@ -192,6 +194,18 @@ def import_action(pro_name, import_method):
     # 获取request中的upload文件
     upload_file = request.files.get("file", None)
     res_info = case_import_action(pro_name, upload_file, import_method)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/generate_report/<pro_name>", methods=["GET"])
+def generate_report(pro_name):
+    """
+    生成报告
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = generate_report_with_statis_case(pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 

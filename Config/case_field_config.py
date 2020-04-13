@@ -1,8 +1,10 @@
 
 def get_case_field_name():
     """
-    获取用例字段名
+    获取用例字段名（用于Excel头部的显示）
     :return:
+     【 注 意 事 项 】
+      列表顺序 必须和 数据库中的顺序 保持一致
     """
     field_name_dict = {}
     field_name_dict["interface_name"] = "接口名称"
@@ -17,9 +19,9 @@ def get_case_field_name():
     field_name_dict["expect_field_name_list"] = "期望的响应字段列表"
 
     field_name_dict["is_depend"] = "是否为依赖接口"
+    field_name_dict["depend_field_name_list"] = "依赖字段名列表"
     field_name_dict["depend_level"] = "依赖等级"
 
-    field_name_dict["depend_field_name_list"] = "依赖字段名列表"
     field_name_dict["case_status"] = "用例状态"
 
     field_name_dict["response_info"] = "响应信息"
@@ -124,5 +126,5 @@ def get_list_field():
     """
     list_field = ["compare_core_field_name_list", "expect_core_field_value_list", "expect_field_name_list",
                   "depend_field_name_list", "depend_field_value_list",
-                  "actual_core_field_value_list", "actual_core_field_value_list"]
+                  "actual_core_field_value_list", "actual_field_name_list"]
     return list_field

@@ -16,9 +16,9 @@
                http://127.0.0.1:7072/WEB/get_img/5e5cac9188121299450740b3
 
 4.访问地址（ uwsgi 启动 ）：
-（1）用例页面 -> http://localhost:8900/api_local/WEB/index
+（1）用例页面 -> http://localhost:8900/api_local/API/index
 （2）用例模板 -> http://localhost:7060/api_case_tmpl
-（2）测试报告 -> http://127.0.0.1:7060/test_report_local/report.html
+（2）测试报告 -> http://127.0.0.1:7060/test_report_local/report.xls
 
 （3）接口地址 -> http://127.0.0.1:7060/api_local/
    （ 备注：uwgsi 启动 7071 端口、nginx 配置 7060 反向代理 7071 ）

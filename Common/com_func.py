@@ -199,7 +199,7 @@ def ping_host(host, check_num):
 
 if __name__ == "__main__":
     pass
-    # attach_file = cfg.REPORTS_PATH + "report.html"
+    # attach_file = cfg.REPORTS_DIR + "report.html"
     # send_mail(subject="测试发送", content="测试内容。。。。", to_list=cfg.MAIL_LIST, attach_file=attach_file)
 
     # print("项目路径：" + project_path())

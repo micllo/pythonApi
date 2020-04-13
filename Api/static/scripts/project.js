@@ -60,6 +60,28 @@ function exec_import(pro_name, nginx_api_proxy){
 
 
 /**
+ * 生成报告
+ */
+function generate_report(pro_name, nginx_api_proxy) {
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/generate_report/" + pro_name
+    var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+    if(response_info != "请求失败"){
+        var msg = response_info.msg;
+        if (msg.search("运行中") != -1) {
+            setTimeout(function () { location.reload();}, 1000);
+            $("#generate_result").html(msg);
+             $("#generate_result").removeClass().addClass("label label-warning");
+        }else{
+             $("#generate_result").html(msg);
+             $("#generate_result").removeClass().addClass("label label-success");
+        }
+    }
+}
+
+
+
+/**
  *  执 行 测 试
  */
 function exec_test(pro_name, nginx_api_proxy){
