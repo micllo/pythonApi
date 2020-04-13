@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
-from Config import config as cfg
-import sys, os, time
+from Env import config as cfg
+import os, time
 from Tools.excel_data import read_excel, set_style
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
     get_not_null_field_list_with_depend
@@ -11,8 +11,8 @@ import re
 from bson.objectid import ObjectId
 from Config.pro_config import get_pro_host
 from Config.case_field_config import get_case_field_name
-from TestBase.verify_interface import VerifyInterface
-from TestBase.acquire_depend import AcquireDependField
+from Common.verify_interface import VerifyInterface
+from Common.acquire_depend import AcquireDependField
 from Tools.decorator_tools import async
 import xlwt
 # sys.path.append("./")
@@ -976,7 +976,7 @@ def generate_report_with_statis_case(pro_name):
 
         case_info_save_excel(excel_file=current_report_file, statis_dict=statis_dict)
 
-        # 将最新报告替换../logs/下的report.xls
+        # 将最新报告替换../Reports/{{pro_name}}/下的[API_report]{{pro_name}}.xls
         res = os.system("cp " + current_report_file + " " + pro_report_path + " && "
                         "mv " + pro_report_path + current_report_name + " " + pro_report_path + "[API_report]" + pro_name + ".xls")
         if res != 0:

@@ -1,11 +1,11 @@
 # -*- coding:utf-8 -*-
 import json
 from Tools.mongodb import MongodbUtils
-from Config import config as cfg
+from Env import config as cfg
 from Tools.date_helper import get_current_iso_date
-from Common.com_func import is_null, log, mongo_exception_send_DD
+from Common.com_func import is_null, mongo_exception_send_DD
 import re
-from TestBase.verify_interface import VerifyInterface
+from Common.verify_interface import VerifyInterface
 
 
 class AcquireDependField(object):

@@ -1,13 +1,12 @@
 # -*- coding:utf-8 -*-
-import os, configparser
+import os
 import threading
 from Tools.log import FrameLog
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 import traceback
-from Config import config as cfg
-import requests
+from Env import config as cfg
 import json
 import re
 import pexpect

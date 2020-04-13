@@ -58,27 +58,40 @@ function exec_import(pro_name, nginx_api_proxy){
     });
 }
 
-
 /**
  * 生成报告
  */
 function generate_report(pro_name, nginx_api_proxy) {
-    // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/generate_report/" + pro_name
-    var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
-    if(response_info != "请求失败"){
-        var msg = response_info.msg;
-        if (msg.search("运行中") != -1) {
-            setTimeout(function () { location.reload();}, 1000);
-            $("#generate_result").html(msg);
-             $("#generate_result").removeClass().addClass("label label-warning");
-        }else{
-             $("#generate_result").html(msg);
-             $("#generate_result").removeClass().addClass("label label-success");
-        }
-    }
-}
+    swal({
+        title: "确定要生成报告吗?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
 
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/generate_report/" + pro_name
+            var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+            if(response_info != "请求失败"){
+                var msg = response_info.msg;
+                if (msg.search("运行中") != -1) {
+                    setTimeout(function () { location.reload();}, 1000);
+                    $("#generate_result").html(msg);
+                     $("#generate_result").removeClass().addClass("label label-warning");
+                }else{
+                     $("#generate_result").html(msg);
+                     $("#generate_result").removeClass().addClass("label label-success");
+                }
+            }
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
+}
 
 
 /**

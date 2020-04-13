@@ -8,7 +8,7 @@ from Tools.date_helper import current_timestamp
 from threading import Thread
 import threading
 from functools import wraps
-from Config import config as cfg
+from Env import config as cfg
 from Config.pro_config import get_pro_name
 
 save_mutex = threading.Lock()

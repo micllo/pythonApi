@@ -22,23 +22,15 @@ class Config(object):
             'minute': '30-31',
             'second': "*/10"
             # 执行时间段：周一到周六，10点30-31分之间，每隔10秒 执行一次
-        },
-        {
-            'id': 'clear_reports_logs',
-            'func': 'Api.api_services.api_calculate:clear_reports_logs',
-            'args': [5, "pro_demo_1"],
-            'trigger': 'interval',
-            'seconds': 60
-            # 测试使用
-        },
-        {
-            'id': 'generate_report',
-            'func': 'Api.api_services.api_calculate:generate_report_with_statis_case',
-            'args': ["pro_demo_1"],
-            'trigger': 'interval',
-            'seconds': 60
-            # 测试使用
         }
+        # {
+        #     'id': 'clear_reports_logs',
+        #     'func': 'Api.api_services.api_calculate:clear_reports_logs',
+        #     'args': [5, "pro_demo_1"],
+        #     'trigger': 'interval',
+        #     'seconds': 60
+        #     # 测试使用
+        # }
     ]
 
     # JOBS = [

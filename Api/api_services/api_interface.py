@@ -4,161 +4,11 @@ import json
 from Config.error_mapping import *
 from Api.api_services.api_template import interface_template
 from Api.api_services.api_calculate import *
-from Common.com_func import is_null, log
-from Config import config as cfg
+from Common.com_func import is_null
+from Env import config as cfg
 
 """
 api 服务接口
-"""
-
-
-# http://127.0.0.1:7060/api_local/test/test_get_request_no_params
-@flask_app.route("/test/test_get_request_no_params", methods=["GET"])
-def test_get_request_no_params():
-    result_dict = {"pro_name": "pro_demo_1", "browser_name": "Chrome"}
-    msg = CASE_RUNING
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-# http://127.0.0.1:7060/api_local/test/test_get_request?test_str=接口自动化测试&test_int=5&test_bool=True
-@flask_app.route("/test/test_get_request", methods=["GET"])
-def test_get_request():
-    params = request.args
-    test_str = params.get("test_str", "")  # str
-    test_int = params.get("test_int", "")  # str
-    test_bool = params.get("test_bool", "")  # str
-    result_dict = {"test_str": test_str, "test_int": test_int, "test_bool": test_bool}
-    msg = REQUEST_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-# http://127.0.0.1:7060/api_local/test/test_post_request
-@flask_app.route("/test/test_post_request", methods=["POST"])
-def test_post_request():
-    params = request.json
-    test_str = params.get("test_str")  # str
-    test_int = params.get("test_int")   # int
-    test_bool = params.get("test_bool")  # str
-    response_list = ["list_str", 5, True]
-    response_dict = {"name": "Messi", "age": 32, "sex": True}
-    response_list_dict = [{"name": "Henry", "age": 43}, {"name": "Ronaldo", "age": 40}]
-    result_dict = {"test_str": test_str, "test_int": test_int, "test_bool": test_bool, "response_list": response_list,
-                   "response_dict": response_dict, "response_list_dict": response_list_dict}
-    msg = SYNC_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-"""
-    【 依 赖 接 口 逻 辑 】
-    1.获取图片：  依赖接口 < 登录 >          依赖字段 < token >
-    2.依赖get：  依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id >
-    3.依赖post： 依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id,Content_Type >
-"""
-
-
-# http://127.0.0.1:7060/api_local/test/login
-@flask_app.route("/test/login", methods=["POST"])
-def test_login():
-    """
-    登录接口
-     返回依赖参数
-      1.token
-      2.Content_Type
-    :return:
-    """
-    params = request.json
-    name = params.get("name")  # str
-    passwd = params.get("passwd")   # int
-    result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "content-type": "application/json"}
-    msg = REQUEST_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-# http://127.0.0.1:7060/api_local/test/get_image?token=123456
-@flask_app.route("/test/get_image", methods=["GET"])
-def test_get_image():
-    """
-    获取图片接口
-     需要的依赖参数
-      1.token
-     返回的依赖参数
-      1.image_id
-    :return:
-    """
-    params = request.args
-    image_id = params.get("image_id", "1234567890")
-    token = params.get("token", "")
-    if token == "tokenid_112233445566":
-        result_dict = {"image_id": image_id, "token": token}
-    else:
-        result_dict = {"token": token}
-    msg = REQUEST_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-# http://127.0.0.1:7060/api_local/test/depend_get?image_id=xxxx&token=xxxx
-@flask_app.route("/test/depend_get", methods=["GET"])
-def test_depend_get():
-    """
-    依赖get接口
-     需要的依赖参数
-      1.token
-      2.image_id
-    :return:
-    """
-    params = request.args
-    image_id = params.get("image_id", "")
-    token = params.get("token", "")
-    result_dict = {"image_id": image_id, "token": token, "info": "messi_get"}
-    msg = REQUEST_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-# http://127.0.0.1:7060/api_local/test/depend_get2/xxxxxxxx?token=xxxx
-@flask_app.route("/test/depend_get2/<image_id>", methods=["GET"])
-def test_depend_get2(image_id):
-    """
-    依赖get接口2
-     需要的依赖参数
-      1.image_id
-    :return:
-    """
-    params = request.args
-    token = params.get("token", "")
-    result_dict = {"image_id": image_id, "token": token, "info": "messi_get2"}
-    msg = REQUEST_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-# http://127.0.0.1:7060/api_local/test/depend_post
-@flask_app.route("/test/depend_post", methods=["POST"])
-def test_depend_post():
-    """
-    依赖post接口
-     需要的依赖参数
-      1.token
-      2.image_id
-      3.Content_Type
-    :return:
-    """
-    params = request.json
-    image_id = params.get("image_id", "")
-    token = params.get("token", "")
-    result_dict = {"image_id": image_id, "token": token, "info": "messi_post"}
-    msg = REQUEST_SUCCESS
-    re_dict = interface_template(msg, result_dict)
-    return json.dumps(re_dict, ensure_ascii=False)
-
-
-"""
-#######################################################################################################################
 """
 
 
@@ -339,3 +189,155 @@ def get_case(pro_name):
     return json.dumps(res_info, ensure_ascii=False)
 
 
+"""
+#################################【 以 下 为 测 试 接 口（ 供 debug 使 用 ） 】###########################################
+"""
+
+"""
+  【 不 需 要 依 赖 的 接 口 】
+"""
+
+
+# http://127.0.0.1:7060/api_local/test/test_get_request_no_params
+@flask_app.route("/test/test_get_request_no_params", methods=["GET"])
+def test_get_request_no_params():
+    result_dict = {"pro_name": "pro_demo_1", "browser_name": "Chrome"}
+    msg = CASE_RUNING
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/test_get_request?test_str=接口自动化测试&test_int=5&test_bool=True
+@flask_app.route("/test/test_get_request", methods=["GET"])
+def test_get_request():
+    params = request.args
+    test_str = params.get("test_str", "")  # str
+    test_int = params.get("test_int", "")  # str
+    test_bool = params.get("test_bool", "")  # str
+    result_dict = {"test_str": test_str, "test_int": test_int, "test_bool": test_bool}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/test_post_request
+@flask_app.route("/test/test_post_request", methods=["POST"])
+def test_post_request():
+    params = request.json
+    test_str = params.get("test_str")  # str
+    test_int = params.get("test_int")   # int
+    test_bool = params.get("test_bool")  # str
+    response_list = ["list_str", 5, True]
+    response_dict = {"name": "Messi", "age": 32, "sex": True}
+    response_list_dict = [{"name": "Henry", "age": 43}, {"name": "Ronaldo", "age": 40}]
+    result_dict = {"test_str": test_str, "test_int": test_int, "test_bool": test_bool, "response_list": response_list,
+                   "response_dict": response_dict, "response_list_dict": response_list_dict}
+    msg = SYNC_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+"""
+    【 依 赖 接 口 逻 辑 】
+    1.获取图片：  依赖接口 < 登录 >          依赖字段 < token >
+    2.依赖get：  依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id >
+    3.依赖post： 依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id,Content_Type >
+"""
+
+
+# http://127.0.0.1:7060/api_local/test/login
+@flask_app.route("/test/login", methods=["POST"])
+def test_login():
+    """
+    登录接口
+     返回依赖参数
+      1.token
+      2.Content_Type
+    :return:
+    """
+    params = request.json
+    name = params.get("name")  # str
+    passwd = params.get("passwd")   # int
+    result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "content-type": "application/json"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/get_image?token=123456
+@flask_app.route("/test/get_image", methods=["GET"])
+def test_get_image():
+    """
+    获取图片接口
+     需要的依赖参数
+      1.token
+     返回的依赖参数
+      1.image_id
+    :return:
+    """
+    params = request.args
+    image_id = params.get("image_id", "1234567890")
+    token = params.get("token", "")
+    if token == "tokenid_112233445566":
+        result_dict = {"image_id": image_id, "token": token}
+    else:
+        result_dict = {"token": token}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/depend_get?image_id=xxxx&token=xxxx
+@flask_app.route("/test/depend_get", methods=["GET"])
+def test_depend_get():
+    """
+    依赖get接口
+     需要的依赖参数
+      1.token
+      2.image_id
+    :return:
+    """
+    params = request.args
+    image_id = params.get("image_id", "")
+    token = params.get("token", "")
+    result_dict = {"image_id": image_id, "token": token, "info": "messi_get"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/depend_get2/xxxxxxxx?token=xxxx
+@flask_app.route("/test/depend_get2/<image_id>", methods=["GET"])
+def test_depend_get2(image_id):
+    """
+    依赖get接口2
+     需要的依赖参数
+      1.image_id
+    :return:
+    """
+    params = request.args
+    token = params.get("token", "")
+    result_dict = {"image_id": image_id, "token": token, "info": "messi_get2"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+# http://127.0.0.1:7060/api_local/test/depend_post
+@flask_app.route("/test/depend_post", methods=["POST"])
+def test_depend_post():
+    """
+    依赖post接口
+     需要的依赖参数
+      1.token
+      2.image_id
+      3.Content_Type
+    :return:
+    """
+    params = request.json
+    image_id = params.get("image_id", "")
+    token = params.get("token", "")
+    result_dict = {"image_id": image_id, "token": token, "info": "messi_post"}
+    msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)

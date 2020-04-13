@@ -1,4 +1,13 @@
 
+【 用 例 编 写 注 意 事 项 】
+1.在'Config > pro_config.py'文件中配置<pro_name>与<host>对应关系
+（1）get_pro_host()
+（2）get_pro_name()
+
+
+########################################################################################################################
+
+
 【 本地 Mac 相关 】
 
 1.uWSGI配置文件：./vassals/mac_app_uwsgi.ini
@@ -12,13 +21,13 @@
 
 3.访问地址（ server.py 启动 ）：
 （1）接口地址 -> http://127.0.0.1:7072/
-               http://127.0.0.1:7072/WEB/sync_run_case
-               http://127.0.0.1:7072/WEB/get_img/5e5cac9188121299450740b3
+               http://127.0.0.1:7072/API/index
+               http://127.0.0.1:7072/API/get_project_case_list/<pro_name>
 
 4.访问地址（ uwsgi 启动 ）：
-（1）用例页面 -> http://localhost:8900/api_local/API/index
+（1）用例页面 -> http://localhost:7076/api_local/API/index
 （2）用例模板 -> http://localhost:7060/api_case_tmpl
-（2）测试报告 -> http://127.0.0.1:7060/test_report_local/report.xls
+（2）测试报告 -> http://127.0.0.1:7060/test_report_local/<pro_name>/[API_report]<pro_name>.xls
 
 （3）接口地址 -> http://127.0.0.1:7060/api_local/
    （ 备注：uwgsi 启动 7071 端口、nginx 配置 7060 反向代理 7071 ）
@@ -118,24 +127,25 @@ pip3 install -v flask==0.12 -i http://mirrors.aliyun.com/pypi/simple/ --trusted-
 ########################################################################################################################
 
 【 框 架 工 具 】
- Python3 + Selenium3 + unittest + Flask + uWSGI + Nginx + Bootstrap + MongoDB + Docker + Fabric + Gulp
+ Python3 + Flask + uWSGI + Nginx + Bootstrap + MongoDB + Docker + Fabric + Gulp
 
 
 【 框 架 结 构 】（ 提高代码的：可读性、重用性、易扩展性 ）
  1.Api层：       对外接口、原静态文件
- 2.Base层：      封装了浏览器驱动操作方法、提供'测试用例'父类第基础方法(继承’unittest.TestCase')
- 3.Build层：     编译后的静态文件
- 4.Common层：    通用方法、公共测试方法、测试报告生成、同步执行用例方法
- 5.Config层：    环境配置、错误码映射、全局变量、定时任务、项目配置
- 6.Data层：      相关测试数据
- 7.Project层：   区分不同项目、page_object(页面操作方法、元素定位)、test_case(测试用例)
- 8.Tools层：     工具函数
- 9.其他：
- （1）vassals/ -> 服务器的'uWSGI配置'
- （2）vassals_local/、venv/ -> 本地的'uWSGI配置、python3虚拟环境'
- （3）Logs/、Reports/、Screenshot/ -> 临时生产的 日志、报告、截图
- （4）node_modules/、gulpfile.js、package.json、package-lock.json -> 供本地启动使用的gulp工具
- （5）deploy.py、start_uwsgi_local.sh、stop_uwsgi_local.sh、tmp_uwsgi_pid.txt -> 本地部署文件及相关命令和临时文件
+ 2.Build层：     编译后的静态文件
+ 3.Common层：    通用方法、获取依赖变量类、验证接口类
+ 4.Config层：    用例字段配置、错误码映射、定时任务、项目配置
+ 5.Env层：       环境配置
+ 6.Tools层：     工具函数
+ 7.其他：
+ （1）tmp/ -> 临时存放上传的用例Excel文件
+ （2）api_case_tmpl.xlsx  -> 供页面下载的测试用例模板文件
+ （3）vassals/ -> 服务器的'uWSGI配置'
+ （4）vassals_local/、venv/ -> 本地的'uWSGI配置、python3虚拟环境'
+ （5）Logs/、Reports/、Screenshot/ -> 临时生产的 日志、报告、截图
+ （6）node_modules/、gulpfile.js、package.json、package-lock.json -> 供本地启动使用的gulp工具
+ （7）deploy.py、start_uwsgi_local.sh、stop_uwsgi_local.sh、tmp_uwsgi_pid.txt -> 本地部署文件及相关命令和临时文件
+
 
 【 功 能 点 】
 
