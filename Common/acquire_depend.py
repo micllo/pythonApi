@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import json
 from Tools.mongodb import MongodbUtils
-from Env import config as cfg
+from Env import env_config as cfg
 from Tools.date_helper import get_current_iso_date
 from Common.com_func import is_null, mongo_exception_send_DD
 import re

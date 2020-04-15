@@ -30,6 +30,22 @@ class Config(object):
         #     'trigger': 'interval',
         #     'seconds': 60
         #     # 测试使用
+        # },
+        # {
+        #     'id': 'run_test',
+        #     'func': 'Api.api_services.api_calculate:run_test_by_pro',
+        #     'args': ("docker", "pro_demo_1", "cron"),
+        #     'trigger': 'interval',
+        #     'seconds': 30
+        #     # 测试使用
+        # },
+        # {
+        #     'id': 'generate_report',
+        #     'func': 'Api.api_services.api_calculate:generate_report_with_statis_case',
+        #     'args': ["pro_demo_1"],
+        #     'trigger': 'interval',
+        #     'seconds': 60
+        #     # 测试使用
         # }
     ]
 
@@ -37,7 +53,7 @@ class Config(object):
     #     {
     #         'id': 'run_test',
     #         'func': 'Api.api_services.api_calculate:run_test_by_pro',
-    #         'args': ("7060", "pro_demo_1", "cron"),
+    #         'args': ("local", "pro_demo_1", "cron"),
     #         'trigger': 'interval',
     #         'seconds': 30
     #         # 测试使用

@@ -1,41 +1,47 @@
 # -*- coding:utf-8 -*-
 
-# 日志、报告、截图 等路径
-LOGS_DIR = "/Users/micllo/Documents/works/GitHub/pythonApi/Logs/"
-REPORTS_DIR = "/Users/micllo/Documents/works/GitHub/pythonApi/Reports/"
+# 日志、报告 等路径
+LOGS_DIR = "/opt/project/logs/"
+REPORTS_DIR = "/opt/project/reports/"
 
 # 服务器地址
-SERVER_IP = "127.0.0.1"
+# SERVER_IP_PORT = "192.168.3.102"  #  MERCURY_1602
+SERVER_IP = "192.168.31.10"  # Demba Ba_5G
 
 # Nginx 端口
-NGINX_PORT = "7060"
+NGINX_PORT = "1180"
+
+# Mongo 端口
+MONGO_PORT = "27037"
 
 # Nginx中的接口反向代理名称
-NGINX_API_PROXY = "api_local"
+NGINX_API_PROXY = "api"
 
-# 保存上传的用例文件
-UPLOAD_CASE_FILE = "/Users/micllo/Documents/works/GitHub/pythonApi/tmp/upload_case_file.xlsx"
+# 上传的用例文件临时目录
+UPLOAD_CASE_DIR = "/opt/project/tmp/"
+UPLOAD_CASE_FILE = UPLOAD_CASE_DIR + "upload_case_file.xlsx"
 
 
 ############################################# 相 同 的 配 置 #############################################
+
 
 # 邮箱配置参数
 ERROR_MAIL_HOST = "smtp.163.com"
 ERROR_MAIL_ACCOUNT = "miclloo@163.com"
 ERROR_MAIL_PASSWD = "qweasd123"  # 客户端授权密码，非登录密码
 
-# 构建的时候使用前端静态文件路径 ( Api/__init__.py文件的同级目录 ) 'static'、'templates'
+# 构建的时候使用前端静态文件路径 ( Api/__init__.py文件的同级目录 )
 GULP_STATIC_PATH = '../Build'
 GULP_TEMPLATE_PATH = '../Build/templates'
 
 # 测试报告地址
-BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + "/test_report_local/"
+BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + "/test_report/"
 
-# 接口地址( uwsgi )
+# 接口地址
 API_ADDR = SERVER_IP + ":" + NGINX_PORT + "/" + NGINX_API_PROXY
 
 # mongo 数据库
-MONGODB_ADDR = SERVER_IP + ":27017"
+MONGODB_ADDR = SERVER_IP + ":" + MONGO_PORT
 MONGODB_DATABASE = "api_auto_test"
 
 # 报错邮箱地址

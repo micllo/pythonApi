@@ -3,7 +3,7 @@ import traceback
 from pymongo import MongoClient
 from pymongo import ReadPreference
 from pymongo.write_concern import WriteConcern
-from Env import config as cfg
+from Env import env_config as cfg
 from Common.com_func import log
 
 db_pool = {}

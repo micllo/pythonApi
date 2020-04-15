@@ -8,7 +8,7 @@ from Tools.date_helper import current_timestamp
 from threading import Thread
 import threading
 from functools import wraps
-from Env import config as cfg
+from Env import env_config as cfg
 from Config.pro_config import get_pro_name
 
 save_mutex = threading.Lock()
@@ -48,9 +48,9 @@ def retry_request(try_limit=3, interval_time=1, log_show=True, send_dd=False):
                 log.warning("%s: FAILED" % func.__name__)
             if send_dd:
                 # log.info("interface_url -> " + str(kwargs.get("interface_url", "")))
-                pro_name = get_pro_name(str(kwargs.get("interface_url", "")))
+                pro_name, server_ip = get_pro_name(str(kwargs.get("interface_url", "")))
                 from Common.com_func import send_DD
-                text = "#### '" + pro_name + "' 项目测试请求 - 接口无响应'"
+                text = "#### [API]'" + pro_name + "' 项目测试请求 - 接口无响应，服务器iP: " + server_ip
                 send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
 
             return 31500

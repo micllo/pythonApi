@@ -1,8 +1,19 @@
 
-【 用 例 编 写 注 意 事 项 】
-1.在'Config > pro_config.py'文件中配置<pro_name>与<host>对应关系
-（1）get_pro_host()
-（2）get_pro_name()
+【 注 意 事 项 】
+1.新增项目时
+（1）项目页面新增"host"选项
+（2）需要在'Config > pro_config.py'文件中
+     1) 配置 项目对应的 HOST
+     2) 配置 项目对应的服务器地址
+
+2.导入用例时
+（1）必填项：是否为依赖接口、接口名称、接口地址、请求方式
+（2）测试必填项：验证模式、待比较关键字段名列表、期望的关键字段值列表
+（3）依赖必填项：依赖字段名列表、依赖等级
+（4）Excel中的'验证模式、依赖等级'：必须是数字类型、或者可以为空
+（5）Excel中的'是否为依赖接口、用例状态'：必须是布尔类型、或者可以为空
+（6）相关'xxx列表'字段：若有多个必须使用英文逗号隔开
+（7）需要替换的依赖变量：前后必须使用'{{' 和 '}}'做标记
 
 
 ########################################################################################################################
@@ -25,11 +36,10 @@
                http://127.0.0.1:7072/API/get_project_case_list/<pro_name>
 
 4.访问地址（ uwsgi 启动 ）：
-（1）用例页面 -> http://localhost:7076/api_local/API/index
-（2）用例模板 -> http://localhost:7060/api_case_tmpl
-（2）测试报告 -> http://127.0.0.1:7060/test_report_local/<pro_name>/[API_report]<pro_name>.xls
-
-（3）接口地址 -> http://127.0.0.1:7060/api_local/
+（1）用例模板 -> http://localhost:7060/api_case_tmpl
+（2）测试报告 -> http://localhost:7060/test_report_local/<pro_name>/[API_report]<pro_name>.xls
+（3）页面首页 -> http://localhost:7060/api_local/API/index
+（4）接口地址 -> http://localhost:7060/api_local/API/xxxxxxx
    （ 备注：uwgsi 启动 7071 端口、nginx 配置 7060 反向代理 7071 ）
 
 5.本地相关服务的启动操作（ gulpfile.js 文件 ）
@@ -77,57 +87,42 @@ pip3 install -v flask==0.12 -i http://mirrors.aliyun.com/pypi/simple/ --trusted-
 （1）从GitGub上拉取代码至临时目录
 （2）关闭nginx、mongo、uwsgi服务
 （3）替换项目、uwsgi.ini配置文件
-（4）替换config配置文件：删除'config.py'、将'config.py'重命名为'config.py'
+（4）替换env_config配置文件
 （5）启动nginx、mongo、uwsgi服务
 （6）清空临时文件
 
 4.部署时的存放位置：
-（1）./pythonSelenium -> /opt/project/pythonSelenium
-（2）./pythonSelenium/vassals/app_uwsgi.ini -> /etc/uwsgi/vassals/app_uwsgi.ini
+（1）./pythonApi -> /opt/project/pythonApi
+（2）./pythonApi/vassals/app_uwsgi.ini -> /etc/uwsgi/vassals/app_uwsgi.ini
 
 5.部署时相关配置文件的替换操作：
-（1）将./Config/目录下的 config.py 删除
-（2）将./Config/目录下的 config_docker.py 重命名为 config.py
+（1）将./Env/目录下的 env_config.py 删除
+（2）将./Env/目录下的 env_config_docker.py 重命名为 env_config.py
 
 6.访问地址（ Docker 内部 ）：
-（1）测试报告 -> http://127.0.0.1:80/test_report/report.html
-（2）接口地址 -> http://127.0.0.1:80/api/
-               http://127.0.0.1:80/api/WEB/sync_run_case
-               http://127.0.0.1:80/api/WEB/get_img/5e5cac9188121299450740b3
+（1）用例模板 -> http://127.0.0.1:80/api_case_tmpl
+（2）测试报告 -> http://127.0.0.1:80/test_report/<pro_name>/[API_report]<pro_name>.xls
+（3）页面首页 -> http://127.0.0.1:80/api/API/index
+（4）接口地址 -> http://127.0.0.1:80/api/API/xxxxxxx
     ( 备注：uwgsi 启动 8081 端口、nginx 配置 80 反向代理 8081 )
 
 7.访问地址（ 外部访问 ）：
-（1）用例页面 -> http://192.168.31.10:1080/api/WEB/index
-（2）测试报告 -> http://192.168.31.10:1080/test_report/report.html
-（3）接口地址 -> http://192.168.31.10:1080/api/
-               http://192.168.31.10:1080/api/WEB/sync_run_case
-               http://192.168.31.10:1080/api/WEB/get_img/5e5cac9188121299450740b3
-    ( 备注：docker 配置 1080 映射 80 )
+（1）用例模板 -> http://192.168.31.10:1180/api_case_tmpl
+（2）测试报告 -> http://192.168.31.10:1180/test_report/<pro_name>/[API_report]<pro_name>.xls
+（3）页面首页 -> http://192.168.31.10:1180/api/API/index
+（4）接口地址 -> http://192.168.31.10:1180/api/API/xxxxxxx
+    ( 备注：docker 配置 1180 映射 80 )
 
 8.关于部署
-  方式一：通过'shell'脚本命令进行部署
-         sh /Users/micllo/Documents/works/expect-deploy/docker_python/deploy.sh pythonSelenium 127.0.0.1 1022
-  方式二：通过'fabric'工具进行部署 -> deploy.py
+  通过'fabric'工具进行部署 -> deploy.py
     （1）将本地代码拷贝入临时文件夹，并删除不需要的文件目录
     （2）将临时文件夹中的该项目压缩打包，上传至服务器的临时文件夹中
     （3）在服务器中进行部署操作：停止nginx、mongo、uwsgi服务 -> 替换项目、uwsgi.ini配置文件 -> 替换config配置文件 -> 启动nginx、mongo、uwsgi服务
     （4）删除本地的临时文件夹
-  方式三：通过'gulp'命令 执行 deploy.py 文件 进行部署
-
-
-9.关于 Selenium Grid Console
-（1）Hub 界面地址
-    http://localhost:5555/grid/console
-    http://192.168.31.10:5555/grid/console
-（2）使用mac自带的远程桌面工具进入debug模式的界面
-    在Finder图标右键选择'连接服务器' -> vnc://127.0.0.1:5911 -> 默认密码：secret
-
+  'gulp'命令 执行 deploy.py 文件 进行部署
 
 
 ########################################################################################################################
-
-【 框 架 工 具 】
- Python3 + Flask + uWSGI + Nginx + Bootstrap + MongoDB + Docker + Fabric + Gulp
 
 
 【 框 架 结 构 】（ 提高代码的：可读性、重用性、易扩展性 ）
@@ -149,40 +144,60 @@ pip3 install -v flask==0.12 -i http://mirrors.aliyun.com/pypi/simple/ --trusted-
 
 【 功 能 点 】
 
-1.使用 Python3 + Selenium3 + unittest + Bootstrap:
-（1）使用'unittest'作为测试用例框架
-（2）通过动态修改和添加'unittest.TestSuite'类中的方法和属性，实现启用多线程同时执行多条测试用例
-（3）通过修改'HTMLTestRunner'文件并结合'unittest'测试框架，优化了测试报告的展示方式，并提供了每个测试用例的截图显示
-（4）所有用例执行后，若有'失败'或'错误'的用例，则发送钉钉和邮件通知
-（5）提供日志记录功能：按照日期区分
-（6）提供定时任务：定时删除过期(一周前)的文件：日志、报告、截图文件(mongo数据)，定时执行测试用例
-（7）提供页面展示项目用例，实现用例上下线、批量执行用例、显示报告、用例运行进度等功能
+1.项目用途
+（1）接口的文档管理
+（2）接口的定时监控（生产环境）
+（3）接口的自动化回归测试（测试环境）
 
-2.使用 Flask ：
-（1）提供 执行用例的接口
-（2）提供 获取截图的接口：供测试报告页面调用
+2.页面功能、定时任务
+（1）[页面] 下载接口测试用例模板(Excel)
+（2）[页面] 批量导入(新增、替换)、增删改查 测试用例
+（3）[页面] 下载测试报告(Excel)：成功的用例、失败的用例、错误的用例、依赖的用例、未执行的用例
+（4）[页面] 批量执行测试、用例上下线
+（5）[页面] 显示用例相关信息：接口名称、接口地址、请求方式、请求参数、响应信息、待验证的关键字、待验证的响应字段列表、测试结果 等
+（6）[定时任务] 删除过期(一周前)的文件：日志、报告
+（7）[定时任务] 生成报告(每天一次)
+（8）[定时任务] 执行接口测试(每天n次)
 
-3.使用 Nginx ：
-（1）提供测试报告的查看地址
-（2）反向代理相关接口、解决测试报告调用'获取截图接口'时的跨域访问问题
+3.验证模式
+（1）验证关键字段：验证期望的关键字段值是否正确
+（2）验证响应字段列表：验证期望的响应字段名列表是否正确
 
-4.使用 uWSGI :
+4.依赖逻辑
+（1）若测试接口需要依赖某接口返回的某个字段值，则先执行依赖接口，通过 {{ field }} 的形式进行匹配捕获并替换
+（2）若存在多个依赖接口，且依赖接口之间也存在依赖关系的情况，则通过设置'依赖等级'来控制依赖接口的调用顺序
+（3）若某个依赖接口未请求成功的话，则所有测试接口的测试结果都记录为'依赖接口的问题'
+
+5.请求失败重试逻辑
+（1）通过装饰器，循环执行请求
+（2）若请求失败的，则最多重试3次
+
+
+【 框 架 工 具 】
+ Python3 + Flask + uWSGI + Nginx + Bootstrap + MongoDB + Docker + Fabric + Gulp
+
+1.使用 Flask ：
+（1）提供 相关测试接口、页面接口
+
+2.使用 Nginx ：
+（1）提供 用例模板、最新报告 的下载地址
+（2）反向代理 相关接口
+
+3.使用 uWSGI :
 （1）用作 web 服务器
 （2）使用'emperor'命令进行管理：监视和批量启停 vassals 目录下 uwsgi 相关的 .ini 文件
 
-5.使用 Docker：
+4.使用 Docker：
 （1）使用Dockerfile构建centos7镜像：提供项目所需的相关配置环境
-（2）使用'selenium/hub'和'selenium/node-chrome-debug'镜像，搭建'Selenium Grid'分布式测试环境
-     （ 可以在linux中启动无界面浏览器测试，并可以指定浏览器的分辨率和实例个数，可以通过'VNC'连接进行调试）
-（3）使用'docker-compose' 一键管理多个容器
+（2）使用'docker-compose' 一键管理多个容器
 
-6.使用 MongoDB ：
-（1）使用'GridFS'进行图片文件的保存与读取
+5.使用 MongoDB ：
+（1）保存测试用例
 
-7.使用 Fabric ：
+6.使用 Fabric ：
 （1）配置相关脚本，实现一键部署
 
-8.使用 NodeJS 的 Gulp 命令 ：
+7.使用 NodeJS 的 Gulp 命令 ：
 （1）配置本地启动的相关服务，实现一键启动或停止
 （2）编译静态文件，防止浏览器缓存js问题
 （3）实时监听本地调试页面功能

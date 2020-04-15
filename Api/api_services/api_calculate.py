@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from Env import config as cfg
+from Env import env_config as cfg
 import os, time
 from Tools.excel_data import read_excel, set_style
 from Config.case_field_config import get_case_special_field_list, get_not_null_field_list, get_list_field,\
@@ -263,6 +263,7 @@ def case_import_action(pro_name, upload_file, import_method):
         res_info["msg"] = u"当前项目正在运行中"
     else:
         # 将上传的文件保存入指定Excel文件中
+        mkdir(cfg.UPLOAD_CASE_DIR)
         upload_file.save(cfg.UPLOAD_CASE_FILE)
         # 验证Excel用例格式
         verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
@@ -358,7 +359,8 @@ def verify_excel_and_transfer_format(excel_file):
     （1）是否为依赖接口：is_depend
         问题：<Excel> 显示 FALSE、TRUE  <python> 显示 0、1 （ int类型 )
         解决：将 int 或 '其他形式字符串' 转换成 bool 类型（ 其他形式字符串：空、"false"、"true"、"False"、"True"等)
-    4.根据'is_depend'字段 检查必填项
+    4.检查'request_method'字段是否正确
+    5.根据'is_depend'字段 检查必填项
     （1）若'is_depend=True：是依赖接口'
          1）验证依赖接口的必填项  get_not_null_field_list_with_depend()
          2）验证'depend_level'字段必须是 float 类型
@@ -366,11 +368,11 @@ def verify_excel_and_transfer_format(excel_file):
          1）验证测试接口的必填项 get_not_null_field_list()
          2）验证'verify_mode'字段必须是 float 类型
         （ 备注：<Excel> 显示 1、2  <python> 显示 1.0、2.0 （ float类型 ) ）
-    5.检查是否存在重复的用例
+    6.检查是否存在重复的用例
     （1）'接口名称'是否存在重复
     （2）'请求方式+接口地址'是否存在重复
     （3）'依赖等级'是否重复
-    6.转换相关字段值的类型与格式
+    7.转换相关字段值的类型与格式
     （1）验证模式：verify_mode、depend_level
         问题：<Excel> 显示 1、2  <python> 显示 1.0、2.0 （ float类型 )
         解决：将 float 转换成 int 类型（ 若未填，则赋值 0  ）
@@ -382,7 +384,7 @@ def verify_excel_and_transfer_format(excel_file):
         - 检查这些字段中是否存在中文逗号
         - < 里面的每一个元素的类型都是'str'（eg: "5"、"True") >
     （5）若存在'请求参数'，则需要检查是否以'?'或'{'开头
-    7.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
+    8.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致
     """
     # 读取Excel用例文件（第一个工作表）
     excel_list = read_excel(filename=excel_file, sheet_index=0, set_head_row_num=1)
@@ -412,7 +414,16 @@ def verify_excel_and_transfer_format(excel_file):
                 else:
                     line_dict[key] = value.strip() in ["true", "True", "TRUE"] or False
 
-    # 4.根据'is_depend'字段 检查必填项
+    # 4.检查'request_method'字段是否正确
+    for index, line_dict in enumerate(excel_list):
+        for key, value in line_dict.items():
+            if key.strip() == "request_method":
+                if value.upper() in ["GET", "POST", "PUT", "DELETE"]:
+                    line_dict[key] = value.upper()
+                else:
+                    return "第 " + str(index + 3) + " 行的 < 请求方式 > 字段格式不正确", None
+
+    # 5.根据'is_depend'字段 检查必填项
     for index, line_dict in enumerate(excel_list):
         if line_dict["is_depend"]:
             for key, value in line_dict.items():
@@ -427,7 +438,7 @@ def verify_excel_and_transfer_format(excel_file):
                 if key.strip() == "verify_mode" and not type(value) is float:
                         return "第 " + str(index + 3) + " 行的 < 验证模式 > 字段格式不正确", None
 
-    # 5.检查是否存在重复的用例(接口名称、请求方式+接口地址)
+    # 6.检查是否存在重复的用例(接口名称、请求方式+接口地址)
     interface_name_list = []  # '接口名称'列表
     method_and_url_list = []  # '请求方式+接口地址'列表
     depend_level_list = []    # '依赖等级'列表
@@ -459,7 +470,7 @@ def verify_excel_and_transfer_format(excel_file):
             if num > 1:
                 return "depend_level = " + depend_level + " 字段重复出现了 " + str(num) + " 次", None
 
-    # 6.转换字段值的类型与格式
+    # 7.转换字段值的类型与格式
     for index, line_dict in enumerate(excel_list):
         for key, value in line_dict.items():
             if key.strip() in ["verify_mode", "depend_level"]:
@@ -488,7 +499,7 @@ def verify_excel_and_transfer_format(excel_file):
                     if not value.startswith("?") and not value.startswith("{"):
                         return "第 " + str(index + 3) + " 行的 " + key.strip() + " 字段值 必须以 ? 或 { 开头 ！", None
 
-    # 7.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
+    # 8.检查'待比较关键字段名'列表与'期望的关键字段值'列表的数量是否一致'
     for index, line_dict in enumerate(excel_list):
         if len(line_dict["compare_core_field_name_list"]) != len(line_dict["expect_core_field_value_list"]):
             return "第 " + str(index + 3) + " 行的<待比较关键字段名列表>与<期望的关键字段值列表>字段数量不一致", None

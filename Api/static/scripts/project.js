@@ -341,9 +341,9 @@ function search_case(pro_name, nginx_api_proxy) {
                 // 验证模式
                 tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
                 if(verify_mode == 1){
-                    tr_html += "仅关键字</td>";
+                    tr_html += "仅关键字段</td>";
                 }else{
-                    tr_html += "关键字+响应字段</td>";
+                    tr_html += "关键字段+响应字段列表</td>";
                 }
             }
 

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from Api import *
+from flask import render_template, request
 import json
 from Config.error_mapping import *
 from Api.api_services.api_template import interface_template
 from Api.api_services.api_calculate import *
 from Common.com_func import is_null
-from Env import config as cfg
+from Env import env_config as cfg
 
 """
 api 服务接口

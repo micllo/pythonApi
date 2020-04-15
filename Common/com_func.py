@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 import traceback
-from Env import config as cfg
+from Env import env_config as cfg
 import json
 import re
 import pexpect
@@ -162,7 +162,7 @@ def api_monitor_send_DD(pro_name, wrong_type):
     :param wrong_type: error、fail
     :return:
     """
-    text = "#### '" + pro_name + "'项目存在 '" + wrong_type + "' 的用例"
+    text = "#### [API]'" + pro_name + "'项目存在 '" + wrong_type + "' 的用例"
     if wrong_type == "fail":
         send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, is_at_all=True)
     else:
@@ -181,13 +181,19 @@ def ping_host(host, check_num):
     """
     match_obj = re.search(r'http://(.*?)/', host + "/")
     ip = match_obj.group(1)
-    print(ip)
+    # print(ip)
     ip = ":" in ip and ip.split(":")[0] or ip
     ping_command = 'ping ' + ip
     ping = pexpect.spawn(ping_command)
     is_pass = False
     for n in range(check_num):
-        p = ping.readline()
+        try:
+            p = ping.readline()
+        except Exception as e:
+            log.error(e)
+            if "Timeout" in str(e):
+                break
+            continue
         p_str = str(p, encoding="utf-8").strip()
         log.info(p_str)
         if "ttl" in p_str:
