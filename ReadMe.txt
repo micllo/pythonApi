@@ -56,6 +56,63 @@ sudo nginx
 sudo nginx -t
 sudo nginx -s reload
 
+【 python_api.conf 】
+
+upstream api_server_API{
+  server 127.0.0.1:7071 weight=1 max_fails=2 fail_timeout=30s;
+  ip_hash;
+}
+
+server {
+  listen 7060;
+  server_name localhost;
+
+  location /api_case_tmpl {
+        sendfile off;
+        expires off;
+        gzip on;
+        gzip_min_length 1000;
+        gzip_buffers 4 8k;
+        gzip_types application/json application/javascript application/x-javascript text/css application/xml;
+        add_header Cache-Control no-cache;
+        add_header Cache-Control 'no-store';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+        alias /Users/micllo/Documents/works/GitHub/pythonApi/api_case_tmpl.xlsx;
+       }
+
+  location /test_report_local/ {
+        sendfile off;
+        expires off;
+        gzip on;
+        gzip_min_length 1000;
+        gzip_buffers 4 8k;
+        gzip_types application/json application/javascript application/x-javascript text/css application/xml;
+        add_header Cache-Control no-cache;
+        add_header Cache-Control 'no-store';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+        alias /Users/micllo/Documents/works/GitHub/pythonApi/Reports/;
+       }
+
+  location /api_local/ {
+         proxy_set_header Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+         proxy_set_header REMOTE-HOST $remote_addr;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504 http_404;
+         proxy_pass http://api_server_API/;
+         #proxy_pass http://127.0.0.1:7071/;
+         proxy_redirect default;
+  }
+}
+
 
 【 虚拟环境添加依赖 】
 1.创建虚拟环境：virtualenv -p /usr/local/bin/python3 venv （-p：指明python3所在目录）

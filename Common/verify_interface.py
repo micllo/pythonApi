@@ -142,6 +142,8 @@ class VerifyInterface(object):
         finally:
             return transform_fail, request_params, request_header
 
+    # try_func = retry_request(try_limit=3,interval_time=1,send_dd=True)
+    # send_request = try_func(send_request)
     @staticmethod
     @retry_request(try_limit=3, interval_time=1, send_dd=True)
     def send_request(request_method, interface_url, request_params, request_header):
