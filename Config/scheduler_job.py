@@ -34,7 +34,7 @@ class Config(object):
         # {
         #     'id': 'run_test',
         #     'func': 'Api.api_services.api_calculate:run_test_by_pro',
-        #     'args': ("docker", "pro_demo_1", "cron"),
+        #     'args': ["docker", "pro_demo_1", "cron"],
         #     'trigger': 'interval',
         #     'seconds': 30
         #     # 测试使用
@@ -53,7 +53,7 @@ class Config(object):
     #     {
     #         'id': 'run_test',
     #         'func': 'Api.api_services.api_calculate:run_test_by_pro',
-    #         'args': ("local", "pro_demo_1", "cron"),
+    #         'args': ["local", "pro_demo_1", "cron"],
     #         'trigger': 'interval',
     #         'seconds': 30
     #         # 测试使用

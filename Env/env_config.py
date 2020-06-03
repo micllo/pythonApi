@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
 
 # 日志、报告 等路径
-LOGS_DIR = "/Users/micllo/Documents/works/GitHub/pythonApi/Logs/"
-REPORTS_DIR = "/Users/micllo/Documents/works/GitHub/pythonApi/Reports/"
+PRO_PATH = "/Users/micllo/Documents/works/GitHub/pythonApi/"
+LOGS_DIR = PRO_PATH + "Logs/"
+REPORTS_DIR = PRO_PATH + "Reports/"
 
 # 服务器地址
 SERVER_IP = "127.0.0.1"
-
 
 # Nginx 端口
 NGINX_PORT = "7060"
