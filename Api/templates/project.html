@@ -316,7 +316,7 @@
                                                     {% set actual_core_field_value_list = test_case["actual_core_field_value_list"] %}
                                                     {% set actual_field_name_list = test_case["actual_field_name_list"] %}
                                                     {% set case_status = test_case["case_status"] %}
-                                                    {% set update_time = test_case["update_time"] %}
+                                                    {% set exec_time = test_case["exec_time"] %}
                                                     {% set test_result = test_case["test_result"] %}
                                                     <tr>
                                                         {# 接口名称（测试信息） #}
@@ -333,7 +333,7 @@
 
                                                         {% if is_depend %}
                                                             {# 依赖字段值（依赖的字段名列表、依赖的字段值列表）#}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="字段名：{{ depend_field_name_list }}" data-content="字段值：{{ depend_field_value_list }}"><span id="exec_result" style="font-size:14px" class="label label-info">依 赖 字 段 值</span></td>
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="字段名：{{ depend_field_name_list }}" data-content="字段值：{{ depend_field_value_list }}"><span style="font-size:14px" class="label label-info">依 赖 字 段 值</span></td>
                                                             {# 依赖等级 #}
                                                             <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">依赖等级：{{ depend_level }}</td>
                                                         {% else %}
@@ -380,8 +380,8 @@
                                                             {% endif %}
                                                         </td>
 
-                                                        {# 更新时间 #}
-                                                        <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ update_time }}</td>
+                                                        {# 上次执行时间 #}
+                                                        <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ exec_time }}</td>
 
                                                         {# 操作 #}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
@@ -719,7 +719,7 @@
                         </div>
                         <hr />
                         <div class="form-group">
-                            <label>上次执行时间：</label>
+                            <label>更新时间：</label>
                             <label id="update_time_show_depend"></label>
                         </div>
                         <div class="form-group">
@@ -831,7 +831,7 @@
                         </div>
                         <hr />
                         <div class="form-group">
-                            <label>上次测试时间：</label>
+                            <label>更新时间：</label>
                             <label id="update_time_show_test"></label>
                         </div>
                         <div class="form-group">

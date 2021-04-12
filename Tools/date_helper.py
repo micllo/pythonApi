@@ -145,5 +145,9 @@ if __name__ == "__main__":
     # print mth_used("", "")
     # print current_week_days(return_type="tsp")
     # print date_num_str_tra_timestamp("20160214")
-    import tushare as ts
-    print(ts.get_hist_data("600759"))
+    # import tushare as ts
+    # print(ts.get_hist_data("600759"))
+
+    test = get_current_iso_date()
+    print(test)
+    print(type(test))

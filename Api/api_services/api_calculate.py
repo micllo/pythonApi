@@ -98,7 +98,7 @@ def run_test_by_pro(host_name, pro_name, run_type):
         error_msg = "项目名不能为空"
     elif is_null(host_name):
         error_msg = "HOST不能为空"
-    elif is_null(get_pro_host(pro_name, host_name)):
+    elif is_null(host):
         error_msg = "HOST错误"
     elif pro_is_running(pro_name):
         error_msg = "当前项目正在运行中"
@@ -143,10 +143,10 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
         【 测 试 流 程 】
         1.将项目'运行状态'设置为开启
         2.获取依赖字段值
-           < 判断 > 是否需要执行依赖：
+           < 判断 > 是否需要执行依赖（测试类型接口中是否需要引用依赖字段）：
          （1）若不需要 则 直接进入'验证接口'步骤
          （2）若需要 则获取依赖字段：
-              1）若获取成功，则替换接口中的相应变量、进入'验证接口'步骤
+              1）若获取成功，则替换测试接口中的相应变量、进入'验证接口'步骤
               2）若获取失败，则不进行接口验证
               （ 备注：通过 'verify_flag' 标记进行控制 ）
         3.验证接口
@@ -170,7 +170,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
     if adf.verify_flag:
 
         # 执行测试，获取测试结果列表
-        id_result_dict = {}   # {"_id":{"test_resuld":"success", "":""}, "_id":{}, }
+        id_result_dict = {}   # {"_id":{"test_result":"success", "":""}, "_id":{}, }
 
         # host = "http://www.google.com.hk"  # 测试重试次数使用
 
@@ -523,6 +523,11 @@ def get_test_case(pro_name):
     根据项目获取测试用例列表（上线的依赖接口排在前面）
     :param pro_name:
     :return: 用例列表、用例数量、是否存在运行的用例
+
+      < 备注 >
+      页面显示的上次执行时间  exec_time
+      （1）若 update_time - create_time > 0 则 exec_time = update_time
+      （2）若 update_time - create_time = 0 则 exec_time = "--------"
     """
     test_case_list = []
     on_line_list_with_depend = []
@@ -553,8 +558,8 @@ def get_test_case(pro_name):
                 test_case_dict["depend_field_value_list"] = res.get("depend_field_value_list")
                 test_case_dict["actual_core_field_value_list"] = res.get("actual_core_field_value_list")
                 test_case_dict["actual_field_name_list"] = res.get("actual_field_name_list")
-                test_case_dict["update_time"] = res.get("update_time")
                 test_case_dict["test_result"] = res.get("test_result")
+                test_case_dict["exec_time"] = res.get("update_time") == res.get("create_time") and "--------" or res.get("update_time")
                 if res.get("run_status"):
                     run_case_list.append(res.get("run_status"))
                 if res.get("case_status"):

@@ -2,16 +2,16 @@
 import re
 
 # 配置 项目对应的 HOST
+pro_host_dict = {}
 pro_demo_1_host = {"local": "http://127.0.0.1:7060/api_local",
                    "docker": "http://192.168.31.10:1180/api",
                    "1111": "http://www.google.com.hk"}
-
-pro_host_dict = {}
 pro_host_dict["pro_demo_1"] = pro_demo_1_host
+
 
 # 配置 项目对应的服务器地址（目的：监控负载均衡时，若某个服务器无响应，则需要定位该服务器地址）
 pro_server_dict = {}
-pro_server_dict["pro_demo_1"] = ["127.0.0.1", "192.168.31.10"]
+pro_server_dict["pro_demo_1"] = ["127.0.0.1", "192.168.31.9"]
 pro_server_dict["google"] = ["www.google.com.hk"]
 
 

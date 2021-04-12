@@ -6,7 +6,7 @@ REPORTS_DIR = "/opt/project/reports/"
 
 # 服务器地址
 # SERVER_IP_PORT = "192.168.3.102"  #  MERCURY_1602
-SERVER_IP = "192.168.31.10"  # Demba Ba_5G
+SERVER_IP = "192.168.31.9"  # Demba Ba_5G
 
 # Nginx 端口
 NGINX_PORT = "1180"

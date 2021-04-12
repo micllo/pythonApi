@@ -151,7 +151,7 @@ function exec_test(pro_name, nginx_api_proxy){
 }
 
 /**
- *  后 台 轮 询
+ *  后 台 轮 询（ 刷新页面 ）
  */
 function background_polling(pro_name, nginx_api_proxy){
     // 轮询修改页面信息

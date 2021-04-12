@@ -9,7 +9,7 @@ from Tools.decorator_tools import retry_request
 class VerifyInterface(object):
     """
     【 验 证 接 口 】
-     1.转换 参数 格式类型
+     1.转换 参数 格式类型（ 将 mongo 中的 str 类型 转成 需要的类型 ）
         若转换失败，记录'测试结果：test_result'<error:'请求参数'或'请求头文件'格式有误>
         若转换成功，继续
      2.发送请求，验证response响应
@@ -121,7 +121,7 @@ class VerifyInterface(object):
     @staticmethod
     def transform_params_format(request_params, request_header):
         """
-        转换 参数 格式类型
+        转换 参数 格式类型（ 将 mongo 中的 str 类型 转成 需要的类型 ）
         :param request_params:
         :param request_header:
         :return:

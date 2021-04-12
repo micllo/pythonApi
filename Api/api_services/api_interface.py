@@ -240,7 +240,7 @@ def test_post_request():
 
 """
     【 依 赖 接 口 逻 辑 】
-    1.获取图片：  依赖接口 < 登录 >          依赖字段 < token >
+    1.获取图片：  依赖接口 < 登录 >         依赖字段 < token >
     2.依赖get：  依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id >
     3.依赖post： 依赖接口 < 登录,获取图片 >  依赖字段 < token,image_id,Content_Type >
 """
