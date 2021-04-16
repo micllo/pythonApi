@@ -455,12 +455,14 @@
                     </div>
 
                     <div class="modal-body">
-
                         {% for host_dict in host_list %}
-                            <label style="margin-left:100px;font-size:20px;">{{ host_dict["host_name"] }}&nbsp;&nbsp;&nbsp;->&nbsp;&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
-                            <p></p>
+                            <div class="form-group" style="margin-top:5px">
+                                <label style="margin-left:5px;font-size:20px;">{{ host_dict["host_name"] }}&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
+                                <button style="margin-left:10px" class="btn" type="button" onclick="del_host('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ host_dict["host_id"] }}')">
+                                    <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
+                                </button>
+                            </div>
                         {% endfor %}
-
                         <div class="form-group" style="margin-top:30px">
                             <label>host_name：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="host_name_config">

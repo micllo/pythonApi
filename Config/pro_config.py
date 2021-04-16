@@ -7,6 +7,7 @@ from Common.com_func import mongo_exception_send_DD
 # 配置 项目对应的 HOST
 # pro_host_dict = {}
 # pro_demo_1_host = {"local": "http://127.0.0.1:7060/api_local",
+#                    "local_error": "http://192.168.31.111:1180/api_local",
 #                    "docker": "http://192.168.31.9:1180/api",
 #                    "google": "http://www.google.com.hk"}
 
@@ -60,5 +61,5 @@ def get_pro_name(test_url):
 
 
 if __name__ == "__main__":
-    print(get_pro_name("http://192.168.31.9:1180/api"))
+    print(get_pro_name("http://192.168.31.111:1180/api_local"))
     # print(get_pro_ip_dict())

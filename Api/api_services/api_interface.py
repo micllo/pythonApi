@@ -179,6 +179,18 @@ def operation_case(pro_name, mode):
     return json.dumps(res_info, ensure_ascii=False)
 
 
+@flask_app.route("/API/del_host/<pro_name>", methods=["DELETE"])
+def del_host(pro_name):
+    """
+    删除HOST
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = get_host_del_result(request_json=request.json, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
 @flask_app.route("/API/del_case/<pro_name>", methods=["DELETE"])
 def del_case(pro_name):
     """

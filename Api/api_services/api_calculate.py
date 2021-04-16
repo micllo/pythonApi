@@ -171,7 +171,8 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
         # 执行测试，获取测试结果列表
         id_result_dict = {}   # {"_id":{"test_result":"success", "":""}, "_id":{}, }
 
-        # host = "http://www.google.com.hk"  # 测试重试次数使用
+        # 测试重试次数使用
+        # host = "http://192.168.31.111:1180/api_local"
 
         for test_interface in test_interface_list:
             result_dict = VerifyInterface(interface_name=test_interface.get("interface_name"),
@@ -529,6 +530,7 @@ def get_host_list(pro_name):
             results_cursor = pro_db.find({})
             for res in results_cursor:
                 host_dict = dict()
+                host_dict["host_id"] = str(res.get("_id"))
                 host_dict["host_name"] = str(res.get("host_name"))
                 host_dict["host_url"] = str(res.get("host_url"))
                 host_list.append(host_dict)
@@ -898,6 +900,34 @@ def get_case_operation_result(request_json, pro_name, mode):
             mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目'" + mode + "'测试用例")
             return "mongo error"
     return mode == "add" and "新增成功 ！" or "更新成功 ！"
+
+
+def get_host_del_result(request_json, pro_name):
+    """
+    获取HOST删除结果
+    :param request_json:
+    :param pro_name:
+    :return:
+    """
+    # 判断是否在运行中
+    if pro_is_running(pro_name):
+        return "当前项目正在运行中"
+
+    # 获取请求中的参数
+    host_id = request_json.get("host_id", "").strip()
+    query_dict = {"_id": ObjectId(host_id)}
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_host") as pro_db:
+        try:
+            remove_case = pro_db.find_one(query_dict)
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目删除HOST")
+            return "mongo error"
+
+    if remove_case:
+        pro_db.remove(query_dict)
+        return "该HOST删除成功 ！"
+    else:
+        return "要删除的HOST不存在 ！ "
 
 
 def get_case_del_result(request_json, pro_name):

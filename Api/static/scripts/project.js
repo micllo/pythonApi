@@ -472,6 +472,45 @@ function add_case(pro_name, nginx_api_proxy) {
 }
 
 
+
+/**
+ *  删除HOST
+ */
+function del_host(pro_name, nginx_api_proxy, host_id) {
+    swal({
+        title: "确定要删除该条HOST吗？",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            var del_dict = {"host_id": host_id}
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/del_host/" + pro_name
+            var response_info = request_interface_url_v2(url=request_url, method="DELETE", data=del_dict, async=false);
+            if(response_info == "请求失败") {
+                swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+            }else{
+                var msg = response_info.msg;
+                if (msg.search("成功") != -1){
+                    swal({text: response_info.msg, type: "success", confirmButtonText: "知道了"});
+                    setTimeout(function(){location.reload();}, 1500);
+                }else {
+                    swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
+                    if (msg.search("运行中") != -1){
+                        setTimeout(function(){location.reload();}, 2000);
+                    }
+                }
+            }
+        }
+    }).catch(() => {
+        console.log("cancel");
+    });
+}
+
+
 /**
  *  删除用例
  */
