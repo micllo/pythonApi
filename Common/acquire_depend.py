@@ -245,7 +245,7 @@ class AcquireDependField(object):
         （2）depend_field_value_list：依赖字段值列表
         :return:
         """
-        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=self.pro_name) as pro_db:
+        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=self.pro_name + "_case") as pro_db:
             try:
                 for index, depend_interface_dict in enumerate(self.depend_interface_list):
                     query_dict = {"_id": depend_interface_dict["_id"]}
@@ -268,7 +268,7 @@ class AcquireDependField(object):
         wang_result = [result for result in self.depend_interface_result_list if "error" in result or "fail" in result]
         if wang_result:
             self.verify_flag = False
-            with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=self.pro_name) as pro_db:
+            with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=self.pro_name + "_case") as pro_db:
                 try:
                     for index, test_interface_dict in enumerate(self.test_interface_list):
                         query_dict = {"_id": test_interface_dict["_id"]}

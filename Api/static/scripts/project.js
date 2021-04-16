@@ -313,7 +313,7 @@ function search_case(pro_name, nginx_api_proxy) {
             var actual_field_name_list = test_case_list[i]["actual_field_name_list"];
             var case_status = test_case_list[i]["case_status"];
             var test_result = test_case_list[i]["test_result"];
-            var update_time = test_case_list[i]["update_time"];
+            var exec_time = test_case_list[i]["exec_time"];
 
             var tr_html = "<tr>";
 
@@ -379,8 +379,8 @@ function search_case(pro_name, nginx_api_proxy) {
                     tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-info\"></span></td>";
                 }
             }
-            // 更新时间（实际的响应字段列表）
-            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + update_time + "</td>";
+            // 上次执行时间（实际的响应字段列表）
+            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + exec_time + "</td>";
 
             // 操作
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
@@ -401,6 +401,34 @@ function search_case(pro_name, nginx_api_proxy) {
     }
 }
 
+
+
+/**
+ *  配置HOST
+ */
+function config_host(pro_name, nginx_api_proxy) {
+
+    // 获取相应的添加内容
+    var host_name = $("#host_name_config").val().trim();
+    var host_url = $("#host_url_config").val().trim();
+
+    var config_host_dict = {"host_name": host_name, "host_url": host_url};
+
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/config_host/" + pro_name
+    var response_info = request_interface_url_v2(url=request_url, method="POST", data=config_host_dict, async=false);
+    if(response_info == "请求失败") {
+        swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+    }else{
+        var msg = response_info.msg;
+        if (msg.search("成功") != -1){
+            swal({text: response_info.msg, type: "success", confirmButtonText: "知道了"});
+            setTimeout(function(){location.reload();}, 2000);
+        }else {
+            swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
+        }
+    }
+}
 
 /**
  *  新增用例

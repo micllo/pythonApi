@@ -6,6 +6,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         {% set pro_name = tasks['pro_name'] %}
         {% set nginx_api_proxy = tasks['nginx_api_proxy'] %}
+        {% set host_list = tasks['host_list'] %}
         {% set test_case_list = tasks['test_case_list'] %}
         {% set is_run = tasks['is_run'] %}
         {% set current_report_url = tasks['current_report_url'] %}
@@ -25,20 +26,25 @@
                <div class="row">
                   <div class="col-lg-12">
 
-                      <div class="col-xs-12 col-md-7" style="margin-left:5%">
+                      <div class="col-xs-12 col-md-5" style="margin-left:5%">
                           <div class="panel panel-default">
                              <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
-                                 导&nbsp;&nbsp;&nbsp;入&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
+                                 批&nbsp;&nbsp;&nbsp;量&nbsp;&nbsp;&nbsp;导&nbsp;&nbsp;&nbsp;入&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
+                                 <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"
+                                    onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
+                                    onMouseOut="this.style.color='#006699'"> 点击下载 测 试 用 例 模 板
+                                </a>
                              </div>
                              <div class="panel-body">
                                  <form id="import_action_form" class="form-horizontal" enctype="multipart/form-data">
                                     <div class="col-sm-12">
-                                        <div class="col-sm-4">
-                                            <label style="color: #B8860B; font-weight: bold;">选 择 用 例 文 件（.xls .xlsx .csv）</label>
+                                        <div class="col-sm-5">
+                                            <label style="color: #B8860B; font-weight: bold; margin-left:10%;">选 择 用 例 文 件（.xls .xlsx .csv）</label>
                                             <input class="form-control" id="file" type="file" name="file"/>
                                         </div>
-                                        <div class="col-sm-3" style="margin-left:5%;">
-                                            <label style="color: #B8860B; font-weight: bold;">选 择 导 入 方 式</label>
+
+                                        <div class="col-sm-4" style="margin-left:10%;">
+                                            <label style="color: #B8860B; font-weight: bold; margin-left:20%;">选 择 导 入 方 式</label>
                                             <select class="form-control" name="import_method" id="import_method" style="text-align: center; text-align-last: center;">
                                                 <option value="">请 选 择</option>
                                                 <option value="batch_insert">批 量 新 增</option>
@@ -46,36 +52,31 @@
                                                 <option value="batch_insert_and_replace">批 量 新 增 + 替 换</option>
                                             </select>
                                         </div>
-                                        <div class="col-sm-3" align="center" style="line-height:70px;">
-                                            <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"
-                                                onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'"> 点击下载 测 试 用 例 模 板
-                                            </a>
-                                        </div>
-                                        {# 新增 按钮 #}
-                                        <div class="col-sm-1" align="center" style="line-height:65px;">
-                                            <span class="input-group">
-                                                <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"><i class="fa fa-plus-circle fa-2x"></i></button>
-                                            </span>
-                                        </div>
+{#                                        <div class="col-sm-3" align="center" style="line-height:70px;">#}
+{#                                            <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"#}
+{#                                                onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"#}
+{#                                                onMouseOut="this.style.color='#006699'"> 点击下载 测 试 用 例 模 板#}
+{#                                            </a>#}
+{#                                        </div>#}
+
                                     </div>
                                     <div class="col-sm-10">
                                         {% if is_run %}
-                                            <div class="col-sm-3" align="center" style="line-height:45px;">
+                                            <div class="col-sm-2" align="center" style="line-height:45px; margin-top:1%;">
                                                 <button id="import_btn" name="import_btn" type="button" class="btn btn-primary" disabled="disabled"
-                                                        data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执 行 导 入
+                                                        data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
-                                            <div class="col-sm-3" align="center" style="line-height:45px; font-size:15px;">
+                                            <div class="col-sm-3" align="center" style="line-height:45px; font-size:15px; margin-left:5%;">
                                                 <span id="exec_result" style="font-size:15px" class="label label-warning">当前项目正在运行中</span>
                                             </div>
                                         {% else %}
-                                            <div class="col-sm-3" align="center" style="line-height:45px;">
+                                            <div class="col-sm-2" align="center" style="line-height:45px; margin-top:1%;">
                                                 <button id="import_btn" name="import_btn" type="button" class="btn btn-primary"
-                                                        data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执 行 导 入
+                                                        data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
-                                            <div class="col-sm-8" align="center" style="line-height:45px; font-size:15px;">
+                                            <div class="col-sm-8" align="center" style="line-height:45px; font-size:15px;margin-left:5%;">
                                                 <span id="exec_result" style="font-size:15px" class="label label-info"></span>
                                             </div>
                                         {% endif %}
@@ -86,7 +87,28 @@
                           </div>
                       </div>
 
-                      <div class="col-xs-12 col-md-3" style="margin-left:2%">
+                      <div class="col-xs-12 col-md-2" style="margin-left:1%">
+                          <div class="panel panel-default">
+                             <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
+                                 配&nbsp;&nbsp;&nbsp;置&nbsp;&nbsp;&nbsp;HOST&nbsp;&nbsp;&nbsp;和&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例
+                             </div>
+                             <div class="panel-body">
+                                 <div class="col-sm-12">
+                                     <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:20%;">
+                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
+                                     </div>
+                                 </div>
+                                 <div class="col-sm-12">
+                                     <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:20%;">
+                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button>
+                                     </div>
+                                 </div>
+                             </div>
+                          </div>
+                      </div>
+
+
+                      <div class="col-xs-12 col-md-3" style="margin-left:1%">
                           <div class="panel panel-default">
                              <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
                                  查 &nbsp;&nbsp;&nbsp; 看 &nbsp;&nbsp;&nbsp; 报 &nbsp;&nbsp;&nbsp; 告
@@ -187,13 +209,13 @@
                                             {# 选择 host #}
                                             <div class="col-sm-2" style="margin-left:20px">
                                                 <div class="input-group">
-                                                    <span class="input-group-addon">选择HOST：</span>
+                                                    <span class="input-group-addon">选择 HOST：</span>
                                                     <div class="fg-line">
                                                         <select class="form-control" id="host" name="host" style="text-align: center; text-align-last: center;">
                                                             <option value=""></option>
-                                                            <option value="local">local</option>
-                                                            <option value="docker">docker</option>
-                                                            <option value="1111">1111</option>
+                                                            {% for host_dict in host_list %}
+                                                                <option value="{{ host_dict["host_url"] }}">{{ host_dict["host_name"] }}</option>
+                                                            {% endfor %}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -218,8 +240,6 @@
                                                             onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 批 量 下 线 </button>
                                                 </div>
                                             {% endif %}
-
-
                                         </div>
 
                                         <div class="row" role="form" style="margin-top:10px">
@@ -419,7 +439,48 @@
             <a href="#"><span class="glyphicon glyphicon-eject" style = "font-size:30px;" aria-hidden="true"></span></a>
         </div>
 
-        <!-- 新增窗口 -->
+
+        <!-- 配置HOST窗口 -->
+        <div id="add_host_form" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                        <div class="modal-title">
+                            <h2 class="text-center">配 置 HOST</h2>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+
+                        {% for host_dict in host_list %}
+                            <label style="margin-left:100px;font-size:20px;">{{ host_dict["host_name"] }}&nbsp;&nbsp;&nbsp;->&nbsp;&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
+                            <p></p>
+                        {% endfor %}
+
+                        <div class="form-group" style="margin-top:30px">
+                            <label>host_name：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="host_name_config">
+                        </div>
+                        <div class="form-group">
+                            <label>host_url：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="host_url_config">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="config_host" onclick="config_host('{{ pro_name }}','{{ nginx_api_proxy }}')"></span> 新增 or 更新 </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 新增用例窗口 -->
         <div id="add_case_form" class="modal fade" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -532,7 +593,7 @@
             </div>
         </div>
 
-        <!-- 编辑窗口 -->
+        <!-- 编辑用例窗口 -->
         <div id="edit_case_form" class="modal fade" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">

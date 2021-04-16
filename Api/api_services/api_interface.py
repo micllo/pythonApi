@@ -28,6 +28,7 @@ def get_test_case_list(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
+    result_dict["host_list"] = get_host_list(pro_name)
     result_dict["test_case_list"], result_dict["case_num"], result_dict["is_run"] = get_test_case(pro_name)
     result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
     result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
@@ -80,8 +81,8 @@ def run_test(pro_name):
     :return:
     """
     res_info = dict()
-    host_name = request.json.get("host", "").strip()
-    res_info["msg"] = run_test_by_pro(host_name=host_name, pro_name=pro_name, run_type="manual")
+    host = request.json.get("host", "").strip()
+    res_info["msg"] = run_test_by_pro(host=host, pro_name=pro_name, run_type="manual")
     return json.dumps(res_info, ensure_ascii=False)
 
 
@@ -150,6 +151,18 @@ def search_case(pro_name):
     """
     res_info = dict()
     res_info["test_case_list"], res_info["case_num"], res_info["is_run"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/config_host/<pro_name>", methods=["POST"])
+def config_host(pro_name):
+    """
+    配置HOST （ 添加 | 编辑 ）
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = get_config_host_result(request_json=request.json, pro_name=pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 
