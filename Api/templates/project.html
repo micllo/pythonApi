@@ -1,3 +1,4 @@
+{#{% include 'header.html' %}#}
 <!DOCTYPE html>
 <html>
     <head>
@@ -434,11 +435,14 @@
             </div>
         </div>
 
-        <div id='ending'>&nbsp;</div>
-        <div style=" position:fixed;right:50px; bottom:30px; width:20px; height:20px;cursor:pointer">
-            <a href="#"><span class="glyphicon glyphicon-eject" style = "font-size:30px;" aria-hidden="true"></span></a>
+        <div style="position:fixed;right:50px; top:30px; width:20px; height:20px;cursor:pointer">
+            <a href="../index">首页</a>
         </div>
 
+        <!-- 回到顶部 -->
+        <div style="position:fixed;right:50px; bottom:30px; width:20px; height:20px;cursor:pointer">
+            <a href="#"><span class="glyphicon glyphicon-eject" style = "font-size:30px;" aria-hidden="true"></span></a>
+        </div>
 
         <!-- 配置HOST窗口 -->
         <div id="add_host_form" class="modal fade" tabindex="-1">

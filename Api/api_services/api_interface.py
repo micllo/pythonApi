@@ -7,6 +7,7 @@ from Api.api_services.api_template import interface_template
 from Api.api_services.api_calculate import *
 from Common.com_func import is_null
 from Env import env_config as cfg
+from Config.pro_config import pro_name_list
 
 """
 api 服务接口
@@ -19,6 +20,8 @@ def show_index():
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["api_addr"] = cfg.API_ADDR
+    result_dict["pro_name_list"] = pro_name_list
+    result_dict["pro_num"] = len(pro_name_list)
     return render_template('index.html', tasks=result_dict)
 
 

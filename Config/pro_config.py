@@ -11,7 +11,7 @@ from Common.com_func import mongo_exception_send_DD
 #                    "google": "http://www.google.com.hk"}
 
 # 配置 项目名称列表（ 目的：关联页面中动态添加的HOST ）
-pro_name_list = ["pro_demo_1", "google"]
+pro_name_list = ["pro_demo_1", "pro_demo_2"]
 
 
 # 通过项目名称从数据库中查出对应的host
