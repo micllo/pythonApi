@@ -218,7 +218,7 @@ def update_case_status_all(pro_name, case_status=False):
         try:
             update_dict = {"$set": {"case_status": case_status}}
             pro_db.update({}, update_dict, multi=True)
-            return "done"
+            return "更新成功"
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="更新'" + pro_name + "'项目所有测试用例状态")
             return "mongo error"
@@ -867,9 +867,9 @@ def get_case_operation_result(request_json, pro_name, mode):
                 if interface_name != old_interface_name:
                     interface_name_case = pro_db.find_one({"interface_name": interface_name})
                     if interface_name_case: return "接口名称 已存在 ！"
-                if request_method != old_request_method or interface_url != old_interface_url:
-                    method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
-                    if method_and_url_case: return "请求方式 + 接口地址 已存在 ！"
+                # if request_method != old_request_method or interface_url != old_interface_url:
+                #     method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
+                #     if method_and_url_case: return "请求方式 + 接口地址 已存在 ！"
                 if is_depend and depend_level != old_depend_level:
                     depend_level_case = pro_db.find_one({"depend_level": depend_level})
                     if depend_level_case: return "依赖等级 已存在 ！"
@@ -878,8 +878,8 @@ def get_case_operation_result(request_json, pro_name, mode):
             else:  # add
                 interface_name_case = pro_db.find_one({"interface_name": interface_name})
                 if interface_name_case: return "接口名称 已存在 ！"
-                method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
-                if method_and_url_case: return "请求方式 + 接口地址 已存在 ！"
+                # method_and_url_case = pro_db.find_one({"request_method": request_method, "interface_url": interface_url})
+                # if method_and_url_case: return "请求方式 + 接口地址 已存在 ！"
                 if is_depend:
                     depend_level_case = pro_db.find_one({"depend_level": depend_level})
                     if depend_level_case: return "依赖等级 已存在 ！"

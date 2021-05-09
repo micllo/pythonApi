@@ -77,13 +77,14 @@ function generate_report(pro_name, nginx_api_proxy) {
             var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
             if(response_info != "请求失败"){
                 var msg = response_info.msg;
-                if (msg.search("运行中") != -1) {
+                if (msg.search("完毕") != -1){
+                    swal({text: msg, type: "success", confirmButtonText: "知道了"});
                     setTimeout(function () { location.reload();}, 1000);
-                    $("#generate_result").html(msg);
-                     $("#generate_result").removeClass().addClass("label label-warning");
                 }else{
-                     $("#generate_result").html(msg);
-                     $("#generate_result").removeClass().addClass("label label-success");
+                    swal({text: msg, type: "error", confirmButtonText: "知道了"});
+                    if (msg.search("运行中") != -1){
+                            setTimeout(function(){location.reload();}, 2000);
+                        }
                 }
             }
         }
@@ -186,7 +187,13 @@ function update_case_status_all(pro_name, case_status, nginx_api_proxy) {
             var request_url = "/" + nginx_api_proxy + "/API/set_case_status_all/" + pro_name + "/" + case_status
             var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
             if(response_info != "请求失败"){
-                setTimeout(function(){location.reload();}, 500);
+                var msg = response_info.msg;
+                 if (msg.search("成功") != -1){
+                    swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                    setTimeout(function () { location.reload();}, 1000);
+                }else{
+                    swal({text: msg, type: "error", confirmButtonText: "知道了"});
+                }
             }
         }
     }).catch((e) => {
@@ -242,13 +249,9 @@ function stop_status(pro_name, nginx_api_proxy) {
                 var msg = response_info.msg;
                 if (msg.search("成功") != -1){
                     swal({text: msg, type: "success", confirmButtonText: "知道了"});
-                    $("#stop_info").html(msg);
-                    $("#stop_info").removeClass().addClass("label label-success");
                     setTimeout(function(){location.reload();}, 2000);
                 }else{
                     swal({text: msg, type: "error", confirmButtonText: "知道了"});
-                    $("#stop_info").html(msg);
-                    $("#stop_info").removeClass().addClass("label label-warning");
                 }
             }
         }
