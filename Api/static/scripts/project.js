@@ -225,6 +225,42 @@ function update_case_status(pro_name, nginx_api_proxy, _id) {
 }
 
 
+
+/**
+ * 检查依赖变量配置
+ */
+function check_depend_variable(pro_name, nginx_api_proxy) {
+    swal({
+        title: "检查依赖变量配置情况?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/check_depend_variable/" + pro_name
+            var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+            if(response_info == "请求失败"){
+                swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+            }else{
+                var msg = response_info.msg;
+                if (msg == "检查通过" || msg == "无依赖变量"){
+                    swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                }else{
+                    swal({text: msg, type: "error", confirmButtonText: "知道了"});
+                }
+            }
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
+}
+
+
+
 /**
  * 停止运行状态
  */
@@ -243,8 +279,6 @@ function stop_status(pro_name, nginx_api_proxy) {
             var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
             if(response_info == "请求失败"){
                 swal({text: response_info, type: "error", confirmButtonText: "知道了"});
-                $("#stop_info").html(response_info);
-                $("#stop_info").removeClass().addClass("label label-danger");
             }else{
                 var msg = response_info.msg;
                 if (msg.search("成功") != -1){
@@ -405,21 +439,22 @@ function search_case(pro_name, nginx_api_proxy) {
 }
 
 
-
 /**
- *  配置HOST
+ *  配置变量
+ *  HOST -> host
+ *  全局变量 -> global_variable
  */
-function config_host(pro_name, nginx_api_proxy) {
+function config_variable(pro_name, nginx_api_proxy, config_type) {
 
     // 获取相应的添加内容
-    var host_name = $("#host_name_config").val().trim();
-    var host_url = $("#host_url_config").val().trim();
+    var config_name = $("#" + config_type + "_name_config").val().trim();
+    var config_value = $("#" + config_type + "_value_config").val().trim();
 
-    var config_host_dict = {"host_name": host_name, "host_url": host_url};
+    var config_dict = {"config_name": config_name, "config_value": config_value};
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/config_host/" + pro_name
-    var response_info = request_interface_url_v2(url=request_url, method="POST", data=config_host_dict, async=false);
+    var request_url = "/" + nginx_api_proxy + "/API/config_variable/" + pro_name + "/" + config_type
+    var response_info = request_interface_url_v2(url=request_url, method="POST", data=config_dict, async=false);
     if(response_info == "请求失败") {
         swal({text: response_info, type: "error", confirmButtonText: "知道了"});
     }else{
@@ -432,6 +467,7 @@ function config_host(pro_name, nginx_api_proxy) {
         }
     }
 }
+
 
 /**
  *  新增用例
@@ -475,13 +511,12 @@ function add_case(pro_name, nginx_api_proxy) {
 }
 
 
-
 /**
- *  删除HOST
+ *  删除配置 （ HOST | 全局变量 ）
  */
-function del_host(pro_name, nginx_api_proxy, host_id) {
+function del_config(pro_name, nginx_api_proxy, config_id) {
     swal({
-        title: "确定要删除该条HOST吗？",
+        title: "确定要删除该条配置吗？",
         text: "",
         type: "warning",
         showCancelButton: true,
@@ -489,9 +524,9 @@ function del_host(pro_name, nginx_api_proxy, host_id) {
         cancelButtonText: "取消"
     }).then(function(isConfirm){
         if (isConfirm) {
-            var del_dict = {"host_id": host_id}
+            var del_dict = {"config_id": config_id}
             // 调用ajax请求(同步)
-            var request_url = "/" + nginx_api_proxy + "/API/del_host/" + pro_name
+            var request_url = "/" + nginx_api_proxy + "/API/del_config/" + pro_name
             var response_info = request_interface_url_v2(url=request_url, method="DELETE", data=del_dict, async=false);
             if(response_info == "请求失败") {
                 swal({text: response_info, type: "error", confirmButtonText: "知道了"});

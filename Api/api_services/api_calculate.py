@@ -86,10 +86,15 @@ def run_test_by_pro(host, pro_name, run_type):
          （1）上线的'依赖接口列表'
          （2）上线的'测试接口列表'
           <判断>是否存在 上线的'测试接口列表'
-        3.若 存在错误信息
+        3.<判断>是否存在需要替换的全局变量
+        （1）若不需要，直接下一步
+        （2）若需要 <判断>需要替换的全局变量是否存在
+             1）若不存在，则直接报错，终止流程
+             2）若都存在，替换相关变量后，进入下一步
+        4.若 存在错误信息
         （1）直接返回
         （2）若是 定时任务，则需要钉钉通知
-        4.异步执行 接口测试
+        5.异步执行 接口测试
     """
     error_msg = ""
 
@@ -518,27 +523,35 @@ def show_excel_list(excel_list):
             print("--------")
 
 
-def get_host_list(pro_name):
+def get_config_list(pro_name):
     """
-    获取 HOST
+    获取配置列表（ HOST 配置列表 | 全局变量配置列表 ）
     :param pro_name:
     :return:
     """
     host_list = []
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_host") as pro_db:
+    global_variable_list = []
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
         try:
-            results_cursor = pro_db.find({})
-            for res in results_cursor:
-                host_dict = dict()
-                host_dict["host_id"] = str(res.get("_id"))
-                host_dict["host_name"] = str(res.get("host_name"))
-                host_dict["host_url"] = str(res.get("host_url"))
-                host_list.append(host_dict)
+            host_results_cursor = pro_db.find({})
+            for res in host_results_cursor:
+                if res.get("config_type") == "host":
+                    host_dict = dict()
+                    host_dict["config_id"] = str(res.get("_id"))
+                    host_dict["host_name"] = str(res.get("config_name"))
+                    host_dict["host_url"] = str(res.get("config_value"))
+                    host_list.append(host_dict)
+                else:  # global_variable
+                    global_variable_dict = dict()
+                    global_variable_dict["config_id"] = str(res.get("_id"))
+                    global_variable_dict["global_variable_name"] = str(res.get("config_name"))
+                    global_variable_dict["global_variable_value"] = str(res.get("config_value"))
+                    global_variable_list.append(global_variable_dict)
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目HOST列表")
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目配置列表")
             return []
         finally:
-            return host_list
+            return host_list, global_variable_list
 
 
 def get_host_url(pro_name, host_name):
@@ -701,11 +714,12 @@ def get_case_search_result(request_args, pro_name):
     return test_case_list, case_num, pro_is_running(pro_name)
 
 
-def get_config_host_result(request_json, pro_name):
+def get_config_result(request_json, pro_name, config_type):
     """
-    配置HOST （ 添加 | 编辑 ）
+    配置 HOST 或 全局变量 （ 添加 | 编辑 ）
     :param request_json:
     :param pro_name:
+    :param config_type:  host | global_variable
     :return:
 
         < 逻 辑 >
@@ -714,33 +728,118 @@ def get_config_host_result(request_json, pro_name):
         2.若不存在，则新增
     """
     # 获取请求中的参数
-    host_name = request_json.get("host_name", "").strip()
-    host_url = request_json.get("host_url", "").strip()
+    config_name = request_json.get("config_name", "").strip()
+    config_value = request_json.get("config_value", "").strip()
 
     # 若项目在运行中，不能进行配置
     if pro_is_running(pro_name):
         return "当前项目正在运行中"
 
     # 检查必填项
-    if is_null(host_name) or is_null(host_url):
+    if is_null(config_name) or is_null(config_value):
         return "必填项 不能为空"
 
-    # 检查host_url
-    if host_url[-1] == "/":
+    # 若配置host，则需要检查 host_url
+    if config_type == "host" and config_value[-1] == "/":
         return "host_url 最后不能带有 /"
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_host") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
         try:
-            host_data = pro_db.find_one({"host_name": host_name})
-            if host_data:
-                pro_db.update({"host_name": host_name}, {"$set": {"host_url": host_url}})
-                return "HOST 更新成功 !"
+            config_data = pro_db.find_one({"config_type": config_type, "config_name": config_name})
+            if config_data:
+                pro_db.update({"config_name": config_name}, {"$set": {"config_value": config_value}})
+                return "配置 更新成功 !"
             else:
-                pro_db.insert({"host_name": host_name, "host_url": host_url})
-                return "HOST 新增成功 !"
+                pro_db.insert({"config_type": config_type, "config_name": config_name, "config_value": config_value})
+                return "配置 新增成功 !"
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目配置HOST")
+            mongo_exception_send_DD(e=e, msg="为'" + pro_name + "'项目配置'" + config_type + "'")
             return "mongo error"
+
+
+def get_check_depend_variable_result(pro_name):
+    """
+    检查依赖变量配置是否正确
+    < 步 骤 >
+    1.获取所有上线的"依赖接口列表"和"测试接口列表"
+    2.获取'依赖接口列表'中的'依赖字段名列表'（去重、排序）
+    3.获取'测试接口列表'中的'依赖字段名字典' { "接口名称"：[依赖字段名列表] }
+    4.判断 是否使用了依赖变量
+    5.判断'测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
+    """
+    # 1.获取所有上线的"依赖接口列表"和"测试接口列表"
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+        try:
+            depend_interface_list = pro_db.find({"case_status": True, "is_depend": True})
+            test_interface_list = pro_db.find({"case_status": True, "is_depend": False})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目上线接口列表")
+            return "mongo error"
+    depend_interface_list = list(depend_interface_list)
+    test_interface_list = list(test_interface_list)
+
+    # 2.获取'依赖接口列表'中的'依赖字段名列表'（去重、排序）
+    depend_field_list = []
+    for index, depend_interface_dict in enumerate(depend_interface_list):
+        depend_field_list += depend_interface_dict["depend_field_name_list"]
+    depend_field_list = list(set(depend_field_list))
+    depend_field_list.sort()
+
+    # 3.获取'测试接口列表'中的'依赖字段名字典' { "接口名称"：[依赖字段名列表] }
+    test_depend_field_dict = {}
+    for index, test_interface_dict in enumerate(test_interface_list):
+        params_depend_field_list = []
+        for key, value in test_interface_dict.items():
+            if key in ["interface_url", "request_header", "request_params"]:
+                num = value.count('{{')  # 统计参数的依赖字段数量
+                pattern = r'.*{{(.*)}}' * num  # 整理匹配模式（捕获数量）
+                if pattern:  # 若存在 则进行捕获
+                    match_obj = re.match(pattern, value)
+                    for i in range(num):
+                        params_depend_field_list.append(match_obj.group(i + 1))
+        if params_depend_field_list:
+            test_depend_field_dict[test_interface_dict.get("interface_name")] = params_depend_field_list
+
+    log.info("depend_field_list  ->  " + str(depend_field_list))
+    log.info("test_depend_field_dict  ->  " + str(test_depend_field_dict))
+
+    # 4.判断 是否使用了依赖变量
+    if not test_depend_field_dict:
+        return "无依赖变量"
+    else:  # 5.判断'测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
+        for interface_name, field_list in test_depend_field_dict.items():
+            no_contain_list = [field for field in field_list if field not in depend_field_list]
+            if no_contain_list:
+                return "'" + interface_name + "' 含有的依赖变量 " + str(no_contain_list) + " 没有配置"
+        return "检查通过"
+
+# def replace_global_variable(depend_interface_list, test_interface_list):
+#     """
+#     替换接口中配置的全局变量
+#     < 步骤 >
+#     1.获取'依赖接口'和'测试接口'中带有<>标记的变量列表（去重、排序）
+#     2.获取数据库中已经配置的'global_variable'字典
+#     3.替换相关的变量后，返回已经替换的接口列表
+#     :return:
+#     """
+#     interface_list = depend_interface_list + test_interface_list
+#     variable_field_list = []
+#     for index, interface_dict in enumerate(interface_list):
+#         for key, value in interface_dict.items():
+#             if key in ["interface_url", "request_header", "request_params"]:
+#                 num = value.count('<')  # 统计参数的依赖字段数量
+#                 pattern = r'.*<(.*)>' * num  # 整理匹配模式（捕获数量）
+#                 if pattern:  # 若存在 则进行捕获
+#                     match_obj = re.match(pattern, value)
+#                     variable_field_list = [match_obj.group(i + 1) for i in range(num)]
+#     variable_field_list = list(set(variable_field_list))
+#     variable_field_list.sort()
+#
+#     if variable_field_list:
+#         pass
+#
+#     return depend_interface_list, test_interface_list
+
 
 
 def get_case_operation_result(request_json, pro_name, mode):
@@ -902,9 +1001,9 @@ def get_case_operation_result(request_json, pro_name, mode):
     return mode == "add" and "新增成功 ！" or "更新成功 ！"
 
 
-def get_host_del_result(request_json, pro_name):
+def get_config_del_result(request_json, pro_name):
     """
-    获取HOST删除结果
+    获取配置删除结果 （ HOST | 全局变量 ）
     :param request_json:
     :param pro_name:
     :return:
@@ -914,9 +1013,9 @@ def get_host_del_result(request_json, pro_name):
         return "当前项目正在运行中"
 
     # 获取请求中的参数
-    host_id = request_json.get("host_id", "").strip()
-    query_dict = {"_id": ObjectId(host_id)}
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_host") as pro_db:
+    config_id = request_json.get("config_id", "").strip()
+    query_dict = {"_id": ObjectId(config_id)}
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
         try:
             remove_case = pro_db.find_one(query_dict)
         except Exception as e:
@@ -925,9 +1024,9 @@ def get_host_del_result(request_json, pro_name):
 
     if remove_case:
         pro_db.remove(query_dict)
-        return "该HOST删除成功 ！"
+        return "该配置删除成功 ！"
     else:
-        return "要删除的HOST不存在 ！ "
+        return "要删除的配置不存在 ！ "
 
 
 def get_case_del_result(request_json, pro_name):

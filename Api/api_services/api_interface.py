@@ -31,7 +31,7 @@ def get_test_case_list(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
-    result_dict["host_list"] = get_host_list(pro_name)
+    result_dict["host_list"], result_dict["global_variable_list"] = get_config_list(pro_name)
     result_dict["test_case_list"], result_dict["case_num"], result_dict["is_run"] = get_test_case(pro_name)
     result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
     result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
@@ -157,15 +157,28 @@ def search_case(pro_name):
     return json.dumps(res_info, ensure_ascii=False)
 
 
-@flask_app.route("/API/config_host/<pro_name>", methods=["POST"])
-def config_host(pro_name):
+@flask_app.route("/API/config_variable/<pro_name>/<config_type>", methods=["POST"])
+def config_variable(pro_name, config_type):
     """
-    配置HOST （ 添加 | 编辑 ）
+    配置变量（ HOST | 全局变量 ） （ 添加 | 编辑 ）
     :param pro_name
+    :param config_type：host | global_variable
     :return:
     """
     res_info = dict()
-    res_info["msg"] = get_config_host_result(request_json=request.json, pro_name=pro_name)
+    res_info["msg"] = get_config_result(request_json=request.json, pro_name=pro_name, config_type=config_type)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/check_depend_variable/<pro_name>", methods=["GET"])
+def check_depend_variable(pro_name):
+    """
+    检测依赖变量 是否配置正确
+    :param pro_name:
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = get_check_depend_variable_result(pro_name=pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 
@@ -182,15 +195,15 @@ def operation_case(pro_name, mode):
     return json.dumps(res_info, ensure_ascii=False)
 
 
-@flask_app.route("/API/del_host/<pro_name>", methods=["DELETE"])
-def del_host(pro_name):
+@flask_app.route("/API/del_config/<pro_name>", methods=["DELETE"])
+def del_config(pro_name):
     """
-    删除HOST
+    删除配置 （ HOST | 全局变量 ）
     :param pro_name
     :return:
     """
     res_info = dict()
-    res_info["msg"] = get_host_del_result(request_json=request.json, pro_name=pro_name)
+    res_info["msg"] = get_config_del_result(request_json=request.json, pro_name=pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 

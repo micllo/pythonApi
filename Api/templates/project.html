@@ -8,6 +8,7 @@
         {% set pro_name = tasks['pro_name'] %}
         {% set nginx_api_proxy = tasks['nginx_api_proxy'] %}
         {% set host_list = tasks['host_list'] %}
+        {% set global_variable_list = tasks['global_variable_list'] %}
         {% set test_case_list = tasks['test_case_list'] %}
         {% set is_run = tasks['is_run'] %}
         {% set current_report_url = tasks['current_report_url'] %}
@@ -88,58 +89,52 @@
                           </div>
                       </div>
 
-                      <div class="col-xs-12 col-md-2">
+                      <div class="col-xs-12 col-md-4">
                           <div class="panel panel-default">
                              <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
-                                 配&nbsp;&nbsp;&nbsp;置&nbsp;&nbsp;&nbsp;HOST&nbsp;&nbsp;&nbsp;和&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例
+                                 相 关 配 置 与 操 作
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
-                                     <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:25%;">
-                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
+                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
+                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 配 置 全 局 变 量 </button>
                                      </div>
-                                 </div>
-                                 <div class="col-sm-12">
-                                     <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:25%;">
-                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button>
-                                     </div>
-                                 </div>
-                             </div>
-                          </div>
-                      </div>
-
-                      <div class="col-xs-12 col-md-2">
-                          <div class="panel panel-default">
-                             <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
-                                 配 置 上 下 线 状 态
-                             </div>
-                             <div class="panel-body">
-                                 <div class="col-sm-12">
-                                     <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:25%;">
+                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
                                          {% if is_run %}
                                              <button id="on_line_all" type="button" class="btn btn-success" disabled="disabled"
-                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 批 量 上 线 </button>
+                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 用 例 批 量 上 线 </button>
                                          {% else %}
                                              <button id="on_line_all" type="button" class="btn btn-success"
-                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 批 量 上 线 </button>
+                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 用 例 批 量 上 线 </button>
                                          {% endif %}
                                      </div>
-                                 </div>
-                                 <div class="col-sm-12">
-                                     <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:25%;">
+                                    <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
                                          {% if is_run %}
                                              <button id="off_line_all" type="button" class="btn btn-danger" disabled="disabled"
-                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 批 量 下 线 </button>
+                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 用 例 批 量 下 线 </button>
                                          {% else %}
                                              <button id="off_line_all" type="button" class="btn btn-danger"
-                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 批 量 下 线 </button>
+                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 用 例 批 量 下 线 </button>
                                          {% endif %}
                                      </div>
                                  </div>
+
+                                 <div class="col-sm-12">
+                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
+                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 检 测 全 局 变 量 </button>
+                                     </div>
+                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
+                                         <button id="check_depend_variable_btn" type="button" class="btn btn-primary" onclick="check_depend_variable('{{ pro_name }}','{{ nginx_api_proxy }}')"> 检 测 依 赖 变 量 </button>
+                                     </div>
+                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
+                                         <button id="stop_status_btn" type="button" class="btn btn-primary" onclick="stop_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 停 止 运 行 状 态</button>
+                                     </div>
+
+                                 </div>
+
                              </div>
                           </div>
                       </div>
-
 
                       <div class="col-xs-12 col-md-2">
                           <div class="panel panel-default">
@@ -148,7 +143,7 @@
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
-                                     <div class="col-sm-6" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:20%;">
+                                     <div class="col-sm-8" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
                                          <a id="history_report_url" onclick="window.open('{{history_report_path}}')"
                                                 onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
                                                 onMouseOut="this.style.color='#006699'"> 历 史 报 告
@@ -157,13 +152,13 @@
                                  </div>
                                  <div class="col-sm-12">
                                      {% if is_run %}
-                                         <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:20%;">
+                                         <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:20%;">
                                              <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"  disabled="disabled"
                                                     onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 报 告
                                              </button>
                                          </div>
                                      {% else %}
-                                         <div class="col-sm-3" align="center" style="margin-left:6%; line-height:55px; font-size:15px; margin-left:20%;">
+                                         <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:20%;">
                                              <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
                                                     onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 报 告
                                              </button>
@@ -244,16 +239,16 @@
                                                 </div>
                                             </div>
 
+                                            {# 配置HOST #}
+                                            <div class="col-sm-1" align="center" style="margin-left:40px">
+                                                 <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
+                                            </div>
+
                                             {# 新增用例 #}
-                                            <div class="col-sm-1" align="center" style="margin-left:60px">
+                                            <div class="col-sm-1" align="center" style="margin-left:25px">
                                                  <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button>
                                             </div>
 
-                                            {# 终止运行状态 #}
-                                            <div class="col-sm-1" align="center" style="margin-left:10px">
-                                                <button id="stop_status_btn" type="button" class="btn btn-primary" onclick="stop_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 停止运行状态
-                                                </button>
-                                            </div>
 
                                         </div>
 
@@ -468,7 +463,7 @@
                         {% for host_dict in host_list %}
                             <div class="form-group" style="margin-top:5px">
                                 <label style="margin-left:5px;font-size:20px;">{{ host_dict["host_name"] }}&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
-                                <button style="margin-left:10px" class="btn" type="button" onclick="del_host('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ host_dict["host_id"] }}')">
+                                <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ host_dict["config_id"] }}')">
                                     <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
                                 </button>
                             </div>
@@ -478,14 +473,55 @@
                             <input class="form-control" type="text" id="host_name_config">
                         </div>
                         <div class="form-group">
-                            <label>host_url：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="host_url_config">
+                            <label>host_value：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="host_value_config">
                         </div>
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="config_host" onclick="config_host('{{ pro_name }}','{{ nginx_api_proxy }}')"></span> 新增 or 更新 </button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="config_host" onclick="config_variable('{{ pro_name }}','{{ nginx_api_proxy }}', 'host')"></span> 新增 or 更新 </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置全局变量窗口 -->
+        <div id="add_global_variable_form" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                        <div class="modal-title">
+                            <h2 class="text-center">配 置 全 局 变 量</h2>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+                        {% for global_variable_dict in global_variable_list %}
+                            <div class="form-group" style="margin-top:5px">
+                                <label style="margin-left:5px;font-size:20px;">{{ global_variable_dict["global_variable_name"] }}&nbsp;&nbsp;->&nbsp;&nbsp;{{ global_variable_dict["global_variable_value"] }}</label>
+                                <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ global_variable_dict["config_id"] }}')">
+                                    <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                        <div class="form-group" style="margin-top:30px">
+                            <label>global_variable_name：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="global_variable_name_config">
+                        </div>
+                        <div class="form-group">
+                            <label>global_variable_value：<font color="#DC143C">(必填)</font></label>
+                            <input class="form-control" type="text" id="global_variable_value_config">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="config_global_variable" onclick="config_variable('{{ pro_name }}','{{ nginx_api_proxy }}','global_variable')"></span> 新增 or 更新 </button>
                     </div>
                 </div>
             </div>
