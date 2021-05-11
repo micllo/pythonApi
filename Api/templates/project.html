@@ -10,6 +10,7 @@
         {% set host_list = tasks['host_list'] %}
         {% set global_variable_list = tasks['global_variable_list'] %}
         {% set test_case_list = tasks['test_case_list'] %}
+        {% set statist_data = tasks['statist_data'] %}
         {% set is_run = tasks['is_run'] %}
         {% set current_report_url = tasks['current_report_url'] %}
         {% set history_report_path = tasks['history_report_path'] %}
@@ -69,7 +70,7 @@
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
-                                            <div class="col-sm-3" align="center" style="line-height:45px; font-size:15px; margin-left:5%;">
+                                            <div class="col-sm-3" align="center" style="line-height:45px; font-size:15px; margin-left:5%; margin-top:1%;">
                                                 <span id="exec_result" style="font-size:15px" class="label label-warning">当前项目正在运行中</span>
                                             </div>
                                         {% else %}
@@ -78,7 +79,7 @@
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
-                                            <div class="col-sm-8" align="center" style="line-height:45px; font-size:15px;margin-left:5%;">
+                                            <div class="col-sm-8" align="center" style="line-height:45px; font-size:15px;margin-left:5%; margin-top:1%;">
                                                 <span id="exec_result" style="font-size:15px" class="label label-info"></span>
                                             </div>
                                         {% endif %}
@@ -121,7 +122,7 @@
 
                                  <div class="col-sm-12">
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
-                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 检 测 全 局 变 量 </button>
+                                         <button id="check_global_variable_btn" type="button" class="btn btn-primary" onclick="check_global_variable('{{ pro_name }}','{{ nginx_api_proxy }}')"> 检 测 全 局 变 量 </button>
                                      </div>
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
                                          <button id="check_depend_variable_btn" type="button" class="btn btn-primary" onclick="check_depend_variable('{{ pro_name }}','{{ nginx_api_proxy }}')"> 检 测 依 赖 变 量 </button>
@@ -139,14 +140,14 @@
                       <div class="col-xs-12 col-md-2">
                           <div class="panel panel-default">
                              <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
-                                 查 &nbsp;&nbsp;&nbsp; 看 &nbsp;&nbsp;&nbsp; 报 &nbsp;&nbsp;&nbsp; 告
+                                 查 看 测 试 结 果 Excel
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
                                      <div class="col-sm-8" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
                                          <a id="history_report_url" onclick="window.open('{{history_report_path}}')"
                                                 onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'"> 历 史 报 告
+                                                onMouseOut="this.style.color='#006699'"> 历 史 结 果
                                          </a>
                                      </div>
                                  </div>
@@ -154,13 +155,13 @@
                                      {% if is_run %}
                                          <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:20%;">
                                              <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"  disabled="disabled"
-                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 报 告
+                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
                                              </button>
                                          </div>
                                      {% else %}
                                          <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:20%;">
                                              <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
-                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 报 告
+                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
                                              </button>
                                          </div>
                                      {% endif %}
@@ -180,9 +181,13 @@
                   <div class="col-lg-12">
                      <div class="col-xs-12 col-md-11" style="margin-left:3%">
                         <div class="panel panel-default">
-                            <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
-                                API&nbsp;&nbsp;&nbsp;接&nbsp;&nbsp;&nbsp;口&nbsp;&nbsp;&nbsp;查&nbsp;&nbsp;&nbsp;询
-                             </div>
+                            <div id="statist_data" class="panel-heading" align="left" style="font-size:20px; font-weight: bold;">
+                                用 例 总 数（ <font color="#5B00AE">依 赖 : {{ statist_data['depend'] }} &nbsp;&nbsp; 测 试 : {{ statist_data['test'] }}</font> )  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                最 新 测 试 结 果  <  <font color="#5B4B00">总 计 : {{ statist_data['success'] + statist_data['fail'] + statist_data['error'] }}</font>&nbsp;&nbsp;&nbsp;
+                                                    <font color="#008000">成 功 : {{ statist_data['success'] }}</font>&nbsp;&nbsp;&nbsp;&nbsp;
+                                                    <font color="#FF0000">失 败 : {{ statist_data['fail'] }}</font>&nbsp;&nbsp;&nbsp;&nbsp;
+                                                    <font color="#AE8F00">错 误 : {{ statist_data['error'] }}</font>&nbsp;&nbsp;&nbsp;>
+                            </div>
                             <div class="panel-body">
                                 <div class="card">
                                     <div class="card-body card-padding">
@@ -240,15 +245,15 @@
                                             </div>
 
                                             {# 配置HOST #}
-                                            <div class="col-sm-1" align="center" style="margin-left:40px">
+                                            <div class="col-sm-1" align="center" style="margin-left:60px">
                                                  <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
                                             </div>
 
                                             {# 新增用例 #}
-                                            <div class="col-sm-1" align="center" style="margin-left:25px">
-                                                 <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button>
+                                            <div class="col-sm-1" align="center" style="margin-left:40px">
+                                                <button class="btn btn-default" type="button" data-toggle="modal" data-target="#add_case_form"><i class="fa fa-plus-circle fa-2x" style="color: #FFA07A"></i></button>
+                                               {# <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button> #}
                                             </div>
-
 
                                         </div>
 
@@ -284,7 +289,7 @@
                                                 </div>
                                             </div>
                                             {# 搜索 条数 #}
-                                            <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:15px;" id="search_case_num">共 {{ tasks['case_num'] }} 条</div>
+                                            <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:15px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
                                             {# 测试 按钮 #} {# 执行 结果 #}
                                             {% if is_run %}
                                                 <div class="col-sm-1" align="center" style="margin-left:20px">
@@ -292,14 +297,14 @@
                                                             data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
                                                     </button>
                                                 </div>
-                                                <div class="col-sm-1" align="center" style="line-height:35px; font-size:15px;"><span id="result_info" class="label label-warning">当前项目正在运行中</span></div>
+                                                <div class="col-sm-1" align="center" style="line-height:35px; font-size:20px;"><span id="result_info" class="label label-warning">当前项目正在运行中</span></div>
                                             {% else %}
                                                 <div class="col-sm-1" align="center" style="margin-left:20px">
                                                     <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
                                                             data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
                                                     </button>
                                                 </div>
-                                                <div class="col-sm-1" align="center" style="line-height:35px; font-size:15px;"><span id="result_info" class="label label-info"></span></div>
+                                                <div class="col-sm-1" align="center" style="line-height:35px; font-size:20px;"><span id="result_info" class="label label-info"></span></div>
                                             {% endif %}
 
                                         </div>
@@ -462,7 +467,7 @@
                     <div class="modal-body">
                         {% for host_dict in host_list %}
                             <div class="form-group" style="margin-top:5px">
-                                <label style="margin-left:5px;font-size:20px;">{{ host_dict["host_name"] }}&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
+                                <label style="margin-left:5px;font-size:20px;"><font color="#5B00AE">{{ host_dict["host_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
                                 <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ host_dict["config_id"] }}')">
                                     <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
                                 </button>
@@ -503,7 +508,7 @@
                     <div class="modal-body">
                         {% for global_variable_dict in global_variable_list %}
                             <div class="form-group" style="margin-top:5px">
-                                <label style="margin-left:5px;font-size:20px;">{{ global_variable_dict["global_variable_name"] }}&nbsp;&nbsp;->&nbsp;&nbsp;{{ global_variable_dict["global_variable_value"] }}</label>
+                                <label style="margin-left:5px;font-size:20px;"><font color="#5B00AE">{{ global_variable_dict["global_variable_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ global_variable_dict["global_variable_value"] }}</label>
                                 <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ global_variable_dict["config_id"] }}')">
                                     <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
                                 </button>

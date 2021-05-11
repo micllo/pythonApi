@@ -63,7 +63,7 @@ function exec_import(pro_name, nginx_api_proxy){
  */
 function generate_report(pro_name, nginx_api_proxy) {
     swal({
-        title: "确定要生成报告吗?",
+        title: "确定要生成测试结果Excel吗?",
         text: "",
         type: "warning",
         showCancelButton: true,
@@ -222,6 +222,40 @@ function update_case_status(pro_name, nginx_api_proxy, _id) {
             }
         }
     }
+}
+
+
+/**
+ * 检查全局变量配置
+ */
+function check_global_variable(pro_name, nginx_api_proxy) {
+    swal({
+        title: "检查全局变量配置情况?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/check_global_variable/" + pro_name
+            var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+            if(response_info == "请求失败"){
+                swal({text: response_info, type: "error", confirmButtonText: "知道了"});
+            }else{
+                var msg = response_info.msg;
+                if (msg == "检查通过" || msg == "未使用全局变量"){
+                    swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                }else{
+                    swal({text: msg, type: "error", confirmButtonText: "知道了"});
+                }
+            }
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
 }
 
 

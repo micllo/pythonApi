@@ -13,7 +13,7 @@ from Config.case_field_config import get_case_field_name
 from Common.verify_interface import VerifyInterface
 from Common.acquire_depend import AcquireDependField
 from Tools.decorator_tools import async
-import xlwt
+import xlwt, pymongo
 # sys.path.append("./")
 
 
@@ -94,7 +94,8 @@ def run_test_by_pro(host, pro_name, run_type):
         4.若 存在错误信息
         （1）直接返回
         （2）若是 定时任务，则需要钉钉通知
-        5.异步执行 接口测试
+        5.检查全局变量配置是否正确
+        6.异步执行 接口测试
     """
     error_msg = ""
 
@@ -127,48 +128,63 @@ def run_test_by_pro(host, pro_name, run_type):
     test_interface_list = list(test_interface_list)
 
     if is_null(test_interface_list):
+        text = "#### '" + pro_name + "'项目 没有上线的用例"
+        send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
         return"没有上线的用例"
 
+    # 检查全局变量配置是否正确
+    check_result, global_variable_dict = get_check_global_variable_result(pro_name)
+    if check_result not in ["检查通过", "未使用全局变量"]:
+        text = "#### '" + pro_name + "'项目 全局变量配置有误"
+        send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
+        return "全局变量配置有误"
+
     test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
-                   test_interface_list=test_interface_list)
+                   test_interface_list=test_interface_list, global_variable_dict=global_variable_dict)
     return "测试进行中"
 
 
 @async
-def test_interface(pro_name, host, depend_interface_list, test_interface_list):
+def test_interface(pro_name, host, depend_interface_list, test_interface_list, global_variable_dict):
     """
     【 测 试 接 口 】（根据项目名）
     :param pro_name:
     :param host:
     :param depend_interface_list:
     :param test_interface_list:
+    :param global_variable_dict:
     :return:
 
         【 测 试 流 程 】
         1.将项目'运行状态'设置为开启
-        2.获取依赖字段值
+        2.替换所有接口中的全局变量 ( 接口地址、请求头文件、请求参数 )
+        3.获取依赖字段值
            < 判断 > 是否需要执行依赖（测试类型接口中是否需要引用依赖字段）：
          （1）若不需要 则 直接进入'验证接口'步骤
          （2）若需要 则获取依赖字段：
               1）若获取成功，则替换测试接口中的相应变量、进入'验证接口'步骤
               2）若获取失败，则不进行接口验证
               （ 备注：通过 'verify_flag' 标记进行控制 ）
-        3.验证接口
+        4.验证接口
         （1）执行测试，获取测试结果列表
         （2）更新测试结果
-        4.将项目'运行状态'设置为停止
-        5.若存在'失败'或'错误'则发送钉钉
+        5.将项目'运行状态'设置为停止
+        6.若存在'失败'或'错误'则发送钉钉
     """
     # 1.将项目'运行状态'设置为开启
     set_pro_run_status(pro_name=pro_name, run_status=True)
 
-    # 2.获取依赖字段值
+    # 2.替换所有接口中的全局变量 ( 接口地址、请求头文件、请求参数 )
+    depend_interface_list = replace_global_variable(depend_interface_list, global_variable_dict)
+    test_interface_list = replace_global_variable(test_interface_list, global_variable_dict)
+
+    # 3.获取依赖字段值
     adf = AcquireDependField(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
                              test_interface_list=test_interface_list)
     if adf.is_need_depend():
         test_interface_list = adf.acquire()
 
-    # 3.验证接口
+    # 4.验证接口
     error_list = []
     fail_list = []
     if adf.verify_flag:
@@ -202,14 +218,29 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list):
                 if "error" in test_info["test_result"]: error_list.append(test_info["test_result"])
                 if "fail" in test_info["test_result"]: fail_list.append(test_info["test_result"])
 
-    # 4.将项目'运行状态'设置为停止
+    # 5.将项目'运行状态'设置为停止
     set_pro_run_status(pro_name=pro_name, run_status=False)
 
-    # 5.若存在'失败'或'错误'则发送钉钉
+    # 6.若存在'失败'或'错误'则发送钉钉
     if fail_list:
         api_monitor_send_DD(pro_name=pro_name, wrong_type="fail")
     elif error_list:
         api_monitor_send_DD(pro_name=pro_name, wrong_type="error")
+
+
+def replace_global_variable(interface_list, global_variable_dict):
+    """
+    替换接口列表中的全局变量 ( 接口地址、请求头文件、请求参数 )
+    :param interface_list:
+    :param global_variable_dict:
+    :return:
+    """
+    for index, interface_dict in enumerate(interface_list):
+        for key, value in interface_dict.items():
+            if key in ["interface_url", "request_header", "request_params"]:
+                for v_name in global_variable_dict.keys():
+                    interface_dict[key] = interface_dict[key].replace("<" + v_name + ">", global_variable_dict[v_name])
+    return interface_list
 
 
 def update_case_status_all(pro_name, case_status=False):
@@ -569,7 +600,7 @@ def get_test_case(pro_name):
     """
     根据项目获取测试用例列表（上线的依赖接口排在前面）
     :param pro_name:
-    :return: 用例列表、用例数量、是否存在运行的用例
+    :return: 用例列表、是否存在运行的用例
 
       < 备注 >
       页面显示的上次执行时间  exec_time
@@ -580,13 +611,11 @@ def get_test_case(pro_name):
     on_line_list_with_depend = []
     on_line_list_with_test = []
     off_line_list = []
-    case_num = 0
     run_case_list = []
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
         try:
             results_cursor = pro_db.find({})
             for res in results_cursor:
-                case_num += 1
                 test_case_dict = dict()
                 test_case_dict["_id"] = str(res.get("_id"))
                 test_case_dict["interface_name"] = res.get("interface_name")
@@ -620,10 +649,60 @@ def get_test_case(pro_name):
             test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试用例列表")
-            return [], 0, False
+            return [], False
         finally:
             is_run = len(run_case_list) != 0
-            return test_case_list, case_num, is_run
+            return test_case_list, is_run
+
+
+def get_statist_data(pro_name):
+    """
+    获取用例统计数据
+    （1）总计：依赖、测试
+    （2）最新测试结果：成功、失败、错误
+        < 注：根据最新测试时间进行统计，排除依赖接口 >
+    :param pro_name:
+    :return:
+    """
+    statist_data = {"depend": 0, "test": 0, "success": 0, "fail": 0, "error": 0}
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+        try:
+            depend_results_cursor = pro_db.find({"is_depend": True})
+            test_results_cursor = pro_db.find({"is_depend": False})
+            statist_data["depend"] = len(list(depend_results_cursor))
+            statist_data["test"] = len(list(test_results_cursor))
+
+            # 按照"update_time"降序排列后，取第一条记录的"update_time"值
+            # new_update_time = pro_db.find().sort("update_time", -1)[0].get("update_time")
+
+            pipline = []
+            # 筛选条件
+            # pipline.append({"$match": {"is_depend": False, "update_time": {"$in": [new_update_time]}}})
+            pipline.append({"$match": {"is_depend": False}})  # 排除依赖接口
+            # 分组查询 ( _id 为必填的分组字段 )
+            pipline.append({"$group": {"_id": "$update_time", "case_num": {"$sum": 1}, "更新时间": {"$first": "$update_time"}}})
+            pipline.append({"$sort": {"更新时间": -1}})
+            pipline.append({"$limit": 1})
+            # 连表查询
+            pipline.append({"$lookup": {"from": pro_name + "_case", "localField": "更新时间", "foreignField": "update_time", "as": "case_db"}})
+            # 拆分行（ 将连表后 新表数据列表，拆分成行 ）
+            pipline.append({"$unwind": "$case_db"})
+            pipline.append({"$match": {"case_db.is_depend": False}})  # 排除依赖接口
+            # 投影字段
+            pipline.append({"$project": {"_id": 0, "更新时间": "$更新时间", "接口名称": "$case_db.interface_name", "测试结果": "$case_db.test_result"}})
+            statist_result = pro_db.aggregate(pipline, allowDiskUse=True)
+
+            for index, data in enumerate(statist_result):
+                print(data)
+                res = data.get("测试结果")
+                statist_data["success"] = "success" in res and statist_data["success"] + 1 or statist_data["success"]
+                statist_data["fail"] = "fail" in res and statist_data["fail"] + 1 or statist_data["fail"]
+                statist_data["error"] = "error" in res and statist_data["error"] + 1 or statist_data["error"]
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据")
+        finally:
+            return statist_data
 
 
 def get_case_search_result(request_args, pro_name):
@@ -800,8 +879,10 @@ def get_check_depend_variable_result(pro_name):
         if params_depend_field_list:
             test_depend_field_dict[test_interface_dict.get("interface_name")] = params_depend_field_list
 
+    log.info("\n")
     log.info("depend_field_list  ->  " + str(depend_field_list))
     log.info("test_depend_field_dict  ->  " + str(test_depend_field_dict))
+    log.info("\n")
 
     # 4.判断 是否使用了依赖变量
     if not test_depend_field_dict:
@@ -810,36 +891,70 @@ def get_check_depend_variable_result(pro_name):
         for interface_name, field_list in test_depend_field_dict.items():
             no_contain_list = [field for field in field_list if field not in depend_field_list]
             if no_contain_list:
-                return "'" + interface_name + "' 含有的依赖变量 " + str(no_contain_list) + " 没有配置"
+                return "'" + interface_name + "' 接口含有的依赖变量 " + str(no_contain_list) + " 没有配置"
         return "检查通过"
 
-# def replace_global_variable(depend_interface_list, test_interface_list):
-#     """
-#     替换接口中配置的全局变量
-#     < 步骤 >
-#     1.获取'依赖接口'和'测试接口'中带有<>标记的变量列表（去重、排序）
-#     2.获取数据库中已经配置的'global_variable'字典
-#     3.替换相关的变量后，返回已经替换的接口列表
-#     :return:
-#     """
-#     interface_list = depend_interface_list + test_interface_list
-#     variable_field_list = []
-#     for index, interface_dict in enumerate(interface_list):
-#         for key, value in interface_dict.items():
-#             if key in ["interface_url", "request_header", "request_params"]:
-#                 num = value.count('<')  # 统计参数的依赖字段数量
-#                 pattern = r'.*<(.*)>' * num  # 整理匹配模式（捕获数量）
-#                 if pattern:  # 若存在 则进行捕获
-#                     match_obj = re.match(pattern, value)
-#                     variable_field_list = [match_obj.group(i + 1) for i in range(num)]
-#     variable_field_list = list(set(variable_field_list))
-#     variable_field_list.sort()
-#
-#     if variable_field_list:
-#         pass
-#
-#     return depend_interface_list, test_interface_list
 
+def get_check_global_variable_result(pro_name):
+    """
+    检查全局变量配置是否正确
+    < 步 骤 >
+    1.获取所有上线的"接口列表"
+    2.获取"接口列表"中带有<>标记的"全局变量字典" { "接口名称"：[全局变量字段名列表] }
+    3.获取数据库中已经配置的'global_variable'字典
+    4.判断 是否使用了未配置的全局变量
+    """
+    # 1.获取所有上线的"接口列表"
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+        try:
+            interface_list = pro_db.find({"case_status": True})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目上线接口列表")
+            return "mongo error"
+        interface_list = list(interface_list)
+
+    # 2.获取"接口列表"中带有<>标记的"全局变量字典" { "接口名称"：[全局变量字段名列表] }
+    interface_variable_dict = {}
+    for index, interface_dict in enumerate(interface_list):
+        variable_field_list = []
+        for key, value in interface_dict.items():
+            if key in ["interface_url", "request_header", "request_params"]:
+                num = value.count('<')  # 统计参数的依赖字段数量
+                pattern = r'.*<(.*)>' * num  # 整理匹配模式（捕获数量）
+                if pattern:  # 若存在 则进行捕获
+                    match_obj = re.match(pattern, value)
+                    for i in range(num):
+                        variable_field_list.append(match_obj.group(i + 1))
+
+        if variable_field_list:
+            interface_variable_dict[interface_dict.get("interface_name")] = variable_field_list
+
+    # 判断是否使用了全局变量
+    if not interface_variable_dict:
+        return "未使用全局变量", {}
+    else:
+        # 3.获取数据库中已经配置的'global_variable'字典
+        global_variable_dict = {}
+        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+            try:
+                results_cursor = pro_db.find({"config_type": "global_variable"})
+                for res in results_cursor:
+                    global_variable_dict[res.get("config_name")] = res.get("config_value")
+            except Exception as e:
+                mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目配置")
+                return "mongo error", {}
+
+        log.info("\n")
+        log.info("global_variable_dict  ->  " + str(global_variable_dict))
+        log.info("interface_variable_dict  ->  " + str(interface_variable_dict))
+        log.info("\n")
+
+        # 4.判断 是否使用了未配置的全局变量
+        for interface_name, variable_list in interface_variable_dict.items():
+            for variable in variable_list:
+                if variable not in global_variable_dict.keys():
+                    return "'" + interface_name + "' 接口含有的全局变量 " + variable + " 没有配置", {}
+        return "检查通过", global_variable_dict
 
 
 def get_case_operation_result(request_json, pro_name, mode):
@@ -1209,6 +1324,27 @@ def case_info_save_excel(excel_file, statis_dict):
     :param excel_file:
     :param statis_dict:
     :return:
+
+    < 备注 >
+    1.标记 fail 和 error 工作表中的表头颜色
+    （1）期望的关键字段值列表：第8列 （蓝色：12）
+    （2）期望的响应字段列表：  第9列 （蓝色：12）
+    （3）实际的关键字段值列表：第16列（紫色：20）
+    （4）实际的响应字段列表：  第17列（紫色：20）
+    （5）测试结果：          第20列（红色：2）
+
+    2.标记 success 工作表中的表头颜色
+    （1）期望的关键字段值列表：第8列 （蓝色：12）
+    （2）期望的响应字段列表：  第9列 （蓝色：12）
+    （3）实际的关键字段值列表：第16列（绿色：17）
+    （4）实际的响应字段列表：  第17列（绿色：17）
+    （5）测试结果：          第20列（绿色：17）
+
+    3.标记 depend 工作表中的表头颜色
+    （1）依赖字段名列表：第11列 （蓝色：12）
+    （2）依赖字段值列表：第15列 （蓝色：12）
+    （5）测试结果：     第20列 （绿色：17）
+
     """
     # 获取 excel head 数据
     field_name_dict = get_case_field_name()
@@ -1227,8 +1363,15 @@ def case_info_save_excel(excel_file, statis_dict):
         sheet = workbook.add_sheet(category_name + "(" + category_num + ")", cell_overwrite_ok=True)
 
         # 工作表 添加 head 数据
+        colour = 0
         for cn_col_i in range(len(field_cn_list)):
-            sheet.write(0, cn_col_i, field_cn_list[cn_col_i], set_style(name=u"宋体", bold=True, colour=0, size=300))
+            if category_name in ["fail", "error"]:
+                colour = cn_col_i in [7, 8] and 12 or (cn_col_i in [15, 16] and 20 or (cn_col_i == 19 and 2 or 0))
+            elif category_name == "success":
+                colour = cn_col_i in [7, 8] and 12 or (cn_col_i in [15, 16, 19] and 17 or 0)
+            elif category_name == "depend":
+                colour = cn_col_i in [10, 14] and 12 or (cn_col_i == 19 and 17 or 0)
+            sheet.write(0, cn_col_i, field_cn_list[cn_col_i], set_style(name=u"宋体", bold=True, colour=colour, size=300))
         for zn_col_i in range(len(field_zn_list)):
             sheet.write(1, zn_col_i, field_zn_list[zn_col_i], set_style(name=u"宋体", bold=True, colour=23, size=300))
 
@@ -1243,11 +1386,12 @@ def case_info_save_excel(excel_file, statis_dict):
 
 if __name__ == "__main__":
     pass
-    verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
-    print(verify_result)
-    print(excel_list)
+    # verify_result, excel_list = verify_excel_and_transfer_format(cfg.UPLOAD_CASE_FILE)
+    # print(verify_result)
+    # print(excel_list)
 
     # generate_report_with_statis_case("pro_demo_1")
+    print(get_statist_data("pro_demo_1"))
 
 
 

@@ -32,7 +32,8 @@ def get_test_case_list(pro_name):
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
     result_dict["host_list"], result_dict["global_variable_list"] = get_config_list(pro_name)
-    result_dict["test_case_list"], result_dict["case_num"], result_dict["is_run"] = get_test_case(pro_name)
+    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name)
+    result_dict["statist_data"] = get_statist_data(pro_name)
     result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
     result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
     return render_template('project.html', tasks=result_dict)
@@ -179,6 +180,18 @@ def check_depend_variable(pro_name):
     """
     res_info = dict()
     res_info["msg"] = get_check_depend_variable_result(pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/check_global_variable/<pro_name>", methods=["GET"])
+def check_global_variable(pro_name):
+    """
+    检测全局变量 是否配置正确
+    :param pro_name:
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"], global_variable_dict = get_check_global_variable_result(pro_name=pro_name)
     return json.dumps(res_info, ensure_ascii=False)
 
 
