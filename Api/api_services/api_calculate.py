@@ -352,7 +352,7 @@ def import_mongodb(pro_name, excel_list, import_method):
                     # 更新数据
                     if not is_null(update_list):
                         for line_dict in update_list:
-                            line_dict["update_time"] = get_current_iso_date()
+                            # line_dict["update_time"] = get_current_iso_date()
                             query_dict = {"interface_name": line_dict["interface_name"]}
                             update_dict = {"$set": line_dict}
                             pro_db.update(query_dict, update_dict)
@@ -717,38 +717,34 @@ def get_case_search_result(request_args, pro_name):
     3.依赖等级小的排在前面
     """
     search_pattern = {}
-    if request_args:
-        interface_name = request_args.get("interface_name", "").strip()
-        interface_url = request_args.get("interface_url", "").strip()
-        request_method = request_args.get("request_method", "").strip()
-        case_status = request_args.get("case_status", "").strip()
-        test_result = request_args.get("test_result", "").strip()
-        is_depend = request_args.get("is_depend", "").strip()
-        if interface_name:
-            search_pattern["interface_name"] = re.compile(interface_name)
-        if interface_url:
-            search_pattern["interface_url"] = re.compile(interface_url)
-        if test_result:
-            search_pattern["test_result"] = re.compile(test_result)
-        if request_method:
-            search_pattern["request_method"] = request_method
-        if case_status:
-            if case_status in ["true", "TRUE", "True"]:
-                search_pattern["case_status"] = True
-            else:
-                search_pattern["case_status"] = False
-        if is_depend:
-            if is_depend in ["true", "TRUE", "True"]:
-                search_pattern["is_depend"] = True
-            else:
-                search_pattern["is_depend"] = False
+    interface_name = request_args.get("interface_name", "").strip()
+    interface_url = request_args.get("interface_url", "").strip()
+    request_method = request_args.get("request_method", "").strip()
+    case_status = request_args.get("case_status", "").strip()
+    test_result = request_args.get("test_result", "").strip()
+    is_depend = request_args.get("is_depend", "").strip()
+    relate_run_time = request_args.get("relate_run_time", "").strip()
+    if interface_name:
+        search_pattern["interface_name"] = re.compile(interface_name)
+    if interface_url:
+        search_pattern["interface_url"] = re.compile(interface_url)
+    if test_result:
+        search_pattern["test_result"] = re.compile(test_result)
+    if request_method:
+        search_pattern["request_method"] = request_method
+    if case_status:
+        search_pattern["case_status"] = case_status in ["true", "TRUE", "True"] and True or False
+    if is_depend:
+        search_pattern["is_depend"] = is_depend in ["true", "TRUE", "True"] and True or False
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
         try:
-            if search_pattern:  # 判断是否存在搜索内容
-                results = pro_db.find(search_pattern)
-            else:
-                results = pro_db.find({})
+            # 判断是否需要获取最新执行时间加入搜索条件
+            relate_run_time = relate_run_time in ["true", "TRUE", "True"] and True or False
+            if relate_run_time:
+                search_pattern["update_time"] = pro_db.find().sort("update_time", -1)[0].get("update_time")
+            # 判断是否存在搜索内容
+            results = search_pattern and pro_db.find(search_pattern) or pro_db.find({})
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目用例搜索结果")
             return []
@@ -886,7 +882,7 @@ def get_check_depend_variable_result(pro_name):
 
     # 4.判断 是否使用了依赖变量
     if not test_depend_field_dict:
-        return "无依赖变量"
+        return "未使用依赖变量"
     else:  # 5.判断'测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
         for interface_name, field_list in test_depend_field_dict.items():
             no_contain_list = [field for field in field_list if field not in depend_field_list]

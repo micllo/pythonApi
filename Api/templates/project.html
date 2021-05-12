@@ -223,14 +223,25 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            {# 搜索 按钮 #}
-                                            <div class="col-sm-1" align="center">
-                                                <div class="input-group" id="search_btn">
-                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>
+                                            <div class="col-sm-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">最新执行时间：</span>
+                                                    <div class="fg-line">
+                                                        <select class="form-control" id="relate_run_time" name="relate_run_time" style="text-align: center; text-align-last: center;">
+                                                            <option value="False">不关联</option>
+                                                            <option value="True">关联</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            {# 配置HOST #}
+                                            <div class="col-sm-1" align="center" style="margin-left:70px">
+                                                 <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
+                                            </div>
+
                                             {# 选择 host #}
-                                            <div class="col-sm-2" style="margin-left:20px">
+                                            <div class="col-sm-2" style="margin-left:35px">
                                                 <div class="input-group">
                                                     <span class="input-group-addon">选择 HOST：</span>
                                                     <div class="fg-line">
@@ -242,17 +253,6 @@
                                                         </select>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {# 配置HOST #}
-                                            <div class="col-sm-1" align="center" style="margin-left:60px">
-                                                 <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
-                                            </div>
-
-                                            {# 新增用例 #}
-                                            <div class="col-sm-1" align="center" style="margin-left:40px">
-                                                <button class="btn btn-default" type="button" data-toggle="modal" data-target="#add_case_form"><i class="fa fa-plus-circle fa-2x" style="color: #FFA07A"></i></button>
-                                               {# <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button> #}
                                             </div>
 
                                         </div>
@@ -288,18 +288,33 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {# 搜索 按钮 #}
+                                            <div class="col-sm-1" align="center">
+                                                <div class="input-group" id="search_btn">
+                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>#}
+                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"> 搜 索 </button>
+                                                </div>
+                                            </div>
                                             {# 搜索 条数 #}
-                                            <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:15px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
+                                            <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:20px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
+
+                                            {# 新增用例 #}
+                                            <div class="col-sm-1" align="center" style="margin-left:70px">
+                                                <button class="btn btn-default" type="button" data-toggle="modal" data-target="#add_case_form"><i class="fa fa-plus-circle fa-2x" style="color: #BB5E00"></i></button>
+                                               {# <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_case_form"> 新 增 用 例 </button> #}
+                                            </div>
+
                                             {# 测试 按钮 #} {# 执行 结果 #}
                                             {% if is_run %}
-                                                <div class="col-sm-1" align="center" style="margin-left:20px">
+                                                <div class="col-sm-1" align="center" style="margin-left:25px">
                                                     <button id="test_btn" name="test_btn" type="button" class="btn btn-primary" disabled="disabled"
                                                             data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
                                                     </button>
                                                 </div>
                                                 <div class="col-sm-1" align="center" style="line-height:35px; font-size:20px;"><span id="result_info" class="label label-warning">当前项目正在运行中</span></div>
                                             {% else %}
-                                                <div class="col-sm-1" align="center" style="margin-left:20px">
+                                                <div class="col-sm-1" align="center" style="margin-left:25px">
                                                     <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
                                                             data-loading-text="Running..." onclick="exec_test('{{ pro_name }}','{{ nginx_api_proxy }}')"> 执行测试
                                                     </button>
@@ -515,12 +530,15 @@
                             </div>
                         {% endfor %}
                         <div class="form-group" style="margin-top:30px">
-                            <label>global_variable_name：<font color="#DC143C">(必填)</font></label>
+                            <label>global_variable_name：<font color="#DC143C">(必填)</font><font color="#B8860B">  调 用 时 使 用 < > 标 记 </font></label>
                             <input class="form-control" type="text" id="global_variable_name_config">
                         </div>
                         <div class="form-group">
                             <label>global_variable_value：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="global_variable_value_config">
+                        </div>
+                        <div class="form-group">
+                            <label><font color="#DC143C"> 注意：在 { } 中 使用时需要带上双引号，比如 "< test >" </font></label>
                         </div>
                     </div>
 

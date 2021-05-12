@@ -280,7 +280,7 @@ function check_depend_variable(pro_name, nginx_api_proxy) {
                 swal({text: response_info, type: "error", confirmButtonText: "知道了"});
             }else{
                 var msg = response_info.msg;
-                if (msg == "检查通过" || msg == "无依赖变量"){
+                if (msg == "检查通过" || msg == "未使用依赖变量"){
                     swal({text: msg, type: "success", confirmButtonText: "知道了"});
                 }else{
                     swal({text: msg, type: "error", confirmButtonText: "知道了"});
@@ -348,9 +348,11 @@ function search_case(pro_name, nginx_api_proxy) {
     var case_status = $("#case_status").val().trim();
     var is_depend = $("#is_depend").val().trim();
     var test_result = $("#test_result").val().trim();
+    var relate_run_time = $("#relate_run_time").val().trim();
 
     var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
-        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result
+        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result +
+        "&relate_run_time=" + relate_run_time
 
     // 调用ajax请求(同步)
     var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "?" + get_pramas

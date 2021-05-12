@@ -155,7 +155,7 @@ class AcquireDependField(object):
                 # 由于没有进行请求,所以需要给每个用例的"response_info"设置为空
                 # 将需要整体记录的'response_info'，按照依赖列表个数赋值给'response_info_list'
                 self.response_info_list = self.response_info_list * len(self.depend_interface_list)
-                self.depend_interface_result_list = ["error:depend_field_list(all)"]
+                self.depend_interface_result_list = ["error:依赖字段名配置有遗漏(all)"]
             else:
                 # 4.'依赖接口列表'按照依赖等级排序
                 self.depend_interface_list = sorted(self.depend_interface_list, key=lambda keys: keys['depend_level'])

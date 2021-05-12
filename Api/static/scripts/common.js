@@ -60,7 +60,7 @@ function request_interface_url_v2(url, method, data="", async=false, is_file=fal
         }else {
             if(is_file){  // 上传文件的类型
                 parameter_ajax["data"] = data;
-                parameter_ajax["contentType"] = false;
+                parameter_ajax["contentType"] = false;  // "multipart/form-data;"
                 parameter_ajax["processData"] = false;
             }else{ // typeof data == dict()
                 parameter_ajax["data"] = JSON.stringify(data);

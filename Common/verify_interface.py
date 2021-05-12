@@ -163,12 +163,41 @@ class VerifyInterface(object):
         if request_method == "GET":
             response_info = requests.get(url=interface_url+request_params, headers=request_header, timeout=5)
         elif request_method == "POST":
-            response_info = requests.post(url=interface_url, data=request_params, headers=request_header, timeout=5)
+            request_params, files = VerifyInterface.judge_file_request(request_params)
+            if files:
+                response_info = requests.post(url=interface_url, data=request_params, files=files, headers=request_header, timeout=5)
+            else:
+                response_info = requests.post(url=interface_url, data=request_params, headers=request_header,timeout=5)
         elif request_method == "PUT":
             response_info = requests.put(url=interface_url, data=request_params, headers=request_header, timeout=5)
         else:
             response_info = requests.delete(url=interface_url, data=request_params, headers=request_header, timeout=5)
         return response_info
+
+    @staticmethod
+    def judge_file_request(request_params):
+        """
+        从请求参数中判断是否是上传文件的请求
+        < 步 骤 >
+        1.将'request_params'类型从 json(str) 转成 dict
+        2.判断是否存在'file'的字段key
+        （1）若不存在，则 不需要区分 data字典 和 file字典
+        （2）若存在
+            1）则将该字段的键值对提取出来存放入 file字典中
+            2）将文件路径配置成相应格式 ->  files = {'file': (file_name, open(file_path, 'rb'))}
+            3）还需要判断提取后的'request_params'字典是否为空，若为空则直接赋空值
+        """
+        request_params = eval(request_params)
+        files = {}
+        if "file" in request_params.keys():
+            files["file"] = request_params.get("file")
+            del request_params["file"]
+        if files:
+            file_path = files["file"]
+            file_name = file_path.split("/")[-1]
+            files["file"] = (file_name, open(file_path, 'rb'))
+        request_params = request_params and json.dumps(request_params) or ""
+        return request_params, files
 
     def get_response_field_list_and_dict(self):
         """

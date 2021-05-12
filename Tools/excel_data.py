@@ -43,9 +43,9 @@ def set_style(name, bold, colour, size):
     font.colour_index = colour
     font.height = size
     style.font = font
-    al_style = xlwt.Alignment()  # 设置：水平居中、垂直居中
-    al_style.horz = 0x02
-    al_style.vert = 0x01
+    al_style = xlwt.Alignment()  # 设置
+    al_style.horz = 0x01  # 左对齐 （ 0x02 水平居中 ）
+    al_style.vert = 0x01  # 垂直居中
     style.alignment = al_style
     return style
 
