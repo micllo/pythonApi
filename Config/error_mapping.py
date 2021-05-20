@@ -29,6 +29,7 @@ SIN_ID_WRONG = u"没有该id数据"
 CT_WRONG = u"没有该ct数据"
 PENDING_WRONG = u"任务还在计算中"
 VERSION_WRONG = u"版本错误"
+CONTENT_TYPE_WRONT = u"请求头参数有误"
 
 # 504
 MONGO_CONNECT_FAIL = u"mongo数据库连接失败"
@@ -87,6 +88,7 @@ def get_error_code(code_msg):
         SIN_ID_WRONG: 31400,
         PENDING_WRONG: 31400,
         VERSION_WRONG: 31400,
+        CONTENT_TYPE_WRONT: 31400,
 
         # 204
         NO_ONLINE_CASE: 31200,

@@ -304,17 +304,21 @@ def test_post_request():
 @flask_app.route("/test/login", methods=["POST"])
 def test_login():
     """
-    登录接口
+    登录接口 - < 入参格式：json >
      返回依赖参数
       1.token
       2.Content_Type
     :return:
     """
-    params = request.json
-    name = params.get("name")  # str
-    passwd = params.get("passwd")   # int
-    result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "content-type": "application/json"}
-    msg = REQUEST_SUCCESS
+    if request.content_type != "application/json":
+        result_dict = {"content_type": request.content_type}
+        msg = CONTENT_TYPE_WRONT
+    else:
+        params = request.json
+        name = params.get("name")  # str
+        passwd = params.get("passwd")   # int
+        result_dict = {"name": name, "passwd": passwd, "token": "tokenid_112233445566", "content-type": "application/json"}
+        msg = REQUEST_SUCCESS
     re_dict = interface_template(msg, result_dict)
     return json.dumps(re_dict, ensure_ascii=False)
 
@@ -396,3 +400,40 @@ def test_depend_post():
     msg = REQUEST_SUCCESS
     re_dict = interface_template(msg, result_dict)
     return json.dumps(re_dict, ensure_ascii=False)
+
+
+@flask_app.route("/test/form_post", methods=["POST", "PUT", "DELETE"])
+def test_form_post():
+    """
+    form_post接口- < 入参格式：form >
+    :return:
+    """
+    if request.content_type != "application/x-www-form-urlencoded":
+        result_dict = {"content_type": request.content_type}
+        msg = CONTENT_TYPE_WRONT
+    else:
+        params = request.form
+        form_name = params.get("form_name", "")
+        result_dict = {"form_name": form_name}
+        msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+@flask_app.route("/test/json_post", methods=["POST", "PUT", "DELETE"])
+def test_json_post():
+    """
+    json_post接口- < 入参格式：json >
+    :return:
+    """
+    if request.content_type != "application/json":
+        result_dict = {"content_type": request.content_type}
+        msg = CONTENT_TYPE_WRONT
+    else:
+        params = request.json
+        json_name = params.get("json_name", "")
+        result_dict = {"json_name": json_name}
+        msg = REQUEST_SUCCESS
+    re_dict = interface_template(msg, result_dict)
+    return json.dumps(re_dict, ensure_ascii=False)
+

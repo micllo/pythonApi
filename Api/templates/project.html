@@ -30,8 +30,8 @@
                   <div class="col-lg-12">
 
                       <div class="col-xs-12 col-md-5" style="margin-left:3%">
-                          <div class="panel panel-default">
-                             <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
+                          <div class="panel panel-success">
+                             <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
                                  批&nbsp;&nbsp;&nbsp;量&nbsp;&nbsp;&nbsp;导&nbsp;&nbsp;&nbsp;入&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
                                  <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"
                                     onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
@@ -42,12 +42,12 @@
                                  <form id="import_action_form" class="form-horizontal" enctype="multipart/form-data">
                                     <div class="col-sm-12">
                                         <div class="col-sm-5">
-                                            <label style="color: #B8860B; font-weight: bold; margin-left:10%;">选 择 用 例 文 件（.xls .xlsx .csv）</label>
+                                            <label style="font-size:15px; margin-left:10%;" class="text-success">选 择 用 例 文 件（.xls .xlsx .csv）</label>
                                             <input class="form-control" id="file" type="file" name="file"/>
                                         </div>
 
                                         <div class="col-sm-4" style="margin-left:10%;">
-                                            <label style="color: #B8860B; font-weight: bold; margin-left:20%;">选 择 导 入 方 式</label>
+                                            <label style="font-size:15px; margin-left:20%;" class="text-success">选 择 导 入 方 式</label>
                                             <select class="form-control" name="import_method" id="import_method" style="text-align: center; text-align-last: center;">
                                                 <option value="">请 选 择</option>
                                                 <option value="batch_insert">批 量 新 增</option>
@@ -91,14 +91,14 @@
                       </div>
 
                       <div class="col-xs-12 col-md-4">
-                          <div class="panel panel-default">
-                             <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
+                          <div class="panel panel-primary">
+                             <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
                                  相 关 配 置 与 操 作
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
-                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 配 置 全 局 变 量 </button>
+                                         <button class="btn btn-info btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 配 置 全 局 变 量 </button>
                                      </div>
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:5%;">
                                          {% if is_run %}
@@ -138,29 +138,29 @@
                       </div>
 
                       <div class="col-xs-12 col-md-2">
-                          <div class="panel panel-default">
-                             <div class="panel-heading" align="center" style="font-size:15px; color: #B8860B; font-weight: bold;">
+                          <div class="panel panel-warning">
+                             <div class="panel-heading" align="center" style="font-size:18px; font-weight: bold;">
                                  查 看 测 试 结 果 Excel
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
                                      <div class="col-sm-8" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
                                          <a id="history_report_url" onclick="window.open('{{history_report_path}}')"
-                                                onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'"> 历 史 结 果
+                                                onMouseOver="this.style.cursor='hand'; this.style.color='#FF0000'"
+                                                onMouseOut="this.style.color='#006699'" class="text-warning"> 历 史 结 果
                                          </a>
                                      </div>
                                  </div>
                                  <div class="col-sm-12">
                                      {% if is_run %}
                                          <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:20%;">
-                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"  disabled="disabled"
+                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-info"  disabled="disabled"
                                                     onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
                                              </button>
                                          </div>
                                      {% else %}
                                          <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:20%;">
-                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-primary"
+                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-info"
                                                     onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
                                              </button>
                                          </div>
@@ -180,7 +180,7 @@
                <div class="row">
                   <div class="col-lg-12">
                      <div class="col-xs-12 col-md-11" style="margin-left:3%">
-                        <div class="panel panel-default">
+                        <div class="panel panel-info">
                             <div id="statist_data" class="panel-heading" align="left" style="font-size:20px; font-weight: bold;">
                                 用 例 总 数（ <font color="#5B00AE">依 赖 : {{ statist_data['depend'] }} &nbsp;&nbsp; 测 试 : {{ statist_data['test'] }}</font> )  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 最 新 测 试 结 果  <  <font color="#5B4B00">总 计 : {{ statist_data['success'] + statist_data['fail'] + statist_data['error'] }}</font>&nbsp;&nbsp;&nbsp;
@@ -237,7 +237,7 @@
 
                                             {# 配置HOST #}
                                             <div class="col-sm-1" align="center" style="margin-left:70px">
-                                                 <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
+                                                 <button class="btn btn-info btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
                                             </div>
 
                                             {# 选择 host #}
@@ -363,7 +363,7 @@
                                                     <tr>
                                                         {# 接口名称（测试信息） #}
                                                         {% if is_depend %}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#DC143C">(依赖)</font></td>
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#BB5E00">(依赖)</font></td>
                                                         {% else %}
                                                             <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_test_response_info">{{ interface_name }}</td>
                                                         {% endif %}
@@ -482,7 +482,7 @@
                     <div class="modal-body">
                         {% for host_dict in host_list %}
                             <div class="form-group" style="margin-top:5px">
-                                <label style="margin-left:5px;font-size:20px;"><font color="#5B00AE">{{ host_dict["host_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
+                                <label style="margin-left:5px;font-size:20px;" class="text-info"><font color="#5B00AE">{{ host_dict["host_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
                                 <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ host_dict["config_id"] }}')">
                                     <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
                                 </button>
@@ -523,7 +523,7 @@
                     <div class="modal-body">
                         {% for global_variable_dict in global_variable_list %}
                             <div class="form-group" style="margin-top:5px">
-                                <label style="margin-left:5px;font-size:20px;"><font color="#5B00AE">{{ global_variable_dict["global_variable_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ global_variable_dict["global_variable_value"] }}</label>
+                                <label style="margin-left:5px;font-size:20px;" class="text-info"><font color="#5B00AE">{{ global_variable_dict["global_variable_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ global_variable_dict["global_variable_value"] }}</label>
                                 <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ global_variable_dict["config_id"] }}')">
                                     <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
                                 </button>
@@ -538,7 +538,7 @@
                             <input class="form-control" type="text" id="global_variable_value_config">
                         </div>
                         <div class="form-group">
-                            <label><font color="#DC143C"> 注意：在 { } 中 使用时需要带上双引号，比如 "< test >" </font></label>
+                            <label><font color="#DC143C"> 注意：全局变量 在 { } 中 使用时需要带上双引号，比如 "< test >" ，同理 依赖变量 也是如此 </font></label>
                         </div>
                     </div>
 
@@ -567,15 +567,15 @@
 
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>接口名称：<font color="#DC143C">(必填)</font></label>
+                            <label class="text-info">接口名称：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="interface_name_add" placeholder="接口名称">
                         </div>
                         <div class="form-group">
-                            <label>接口地址：<font color="#DC143C">(必填)</font></label>
+                            <label class="text-info">接口地址：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="interface_url_add" placeholder="接口地址">
                         </div>
                         <div class="form-group">
-                            <label>请求方式：<font color="#DC143C">(必选)</font></label>
+                            <label class="text-info">请求方式：<font color="#DC143C">(必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="request_method_add">
                                     <option value=""></option>
@@ -587,15 +587,15 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>请求头文件：<font color="#B8860B">eg: &nbsp;{"Content-Type": "application/json"}</font></label>
+                            <label class="text-info">请求头文件：<font color="#796400">eg: &nbsp;{"Content-Type": "application/json"} 或 x-www-form-urlencoded</font></label>
                             <input class="form-control" type="text" id="request_header_add" placeholder="请求头文件">
                         </div>
                         <div class="form-group">
-                            <label>请求参数：<font color="#B8860B">eg: &nbsp;?name=测试&token=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
+                            <label class="text-info">请求参数：<font color="#796400">eg: &nbsp;?name=测试&token=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
                             <input class="form-control" type="text" id="request_params_add" placeholder="请求参数">
                         </div>
                         <div class="form-group">
-                            <label>验证模式：<font color="#DC143C">(测试必选)</font></label>
+                            <label class="text-info">验证模式：<font color="#DC143C">(测试必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="verify_mode_add">
                                     <option value=""></option>
@@ -605,20 +605,20 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <label class="text-info">待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;msg,code</font></label>
                             <input class="form-control" type="text" id="compare_core_field_name_list_add" placeholder="待比较关键字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <label class="text-info">期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;请求成功,31200</font></label>
                             <input class="form-control" type="text" id="expect_core_field_value_list_add" placeholder="期望的关键字段值列表">
                         </div>
 
                         <div class="form-group">
-                            <label>期望的响应字段列表：</font><font color="#B8860B">eg: &nbsp;status,msg,code</font></label>
+                            <label class="text-info">期望的响应字段列表：</font><font color="#796400">eg: &nbsp;status,msg,code</font></label>
                             <input class="form-control" type="text" id="expect_field_name_list_add" placeholder="期望的响应字段列表">
                         </div>
                         <div class="form-group">
-                            <label>是否为依赖接口：<font color="#DC143C">(必选)</font></label>
+                            <label class="text-info">是否为依赖接口：<font color="#DC143C">(必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="is_depend_add">
                                     <option value=""></option>
@@ -628,11 +628,11 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
+                            <label class="text-info">依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#796400">eg: &nbsp;token,sms_code</font></label>
                             <input class="form-control" type="text" id="depend_field_name_list_add" placeholder="依赖字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>依赖等级：<font color="#DC143C">(依赖必选)</font></label>
+                            <label class="text-info">依赖等级：<font color="#DC143C">(依赖必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="depend_level_add">
                                     <option value=""></option>
@@ -645,7 +645,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>用例状态：</label>
+                            <label class="text-info">用例状态：</label>
                             <div class="fg-line">
                                 <select class="form-control" id="case_status_add">
                                     <option value="False">下线</option>
@@ -680,19 +680,19 @@
 
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>ID：</label>
+                            <label class="text-info">ID：</label>
                             <label id="case_id_edit"></label>
                         </div>
                         <div class="form-group">
-                            <label>接口名称：<font color="#DC143C">(必填)</font></label>
+                            <label class="text-info">接口名称：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="interface_name_edit" placeholder="接口名称">
                         </div>
                         <div class="form-group">
-                            <label>接口地址：<font color="#DC143C">(必填)</font></label>
+                            <label class="text-info">接口地址：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="interface_url_edit" placeholder="接口地址">
                         </div>
                         <div class="form-group">
-                            <label>请求方式：<font color="#DC143C">(必选)</font></label>
+                            <label class="text-info">请求方式：<font color="#DC143C">(必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="request_method_edit">
                                     <option value=""></option>
@@ -704,15 +704,15 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>请求头文件：<font color="#B8860B">eg: &nbsp;{"Content-Type": "application/json"}</font></label>
+                            <label class="text-info">请求头文件：<font color="#796400">eg: &nbsp;{"Content-Type": "application/json"} 或 x-www-form-urlencoded</font></label>
                             <input class="form-control" type="text" id="request_header_edit" placeholder="请求头文件">
                         </div>
                         <div class="form-group">
-                            <label>请求参数：<font color="#B8860B">eg: &nbsp;?name=测试&age=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
+                            <label class="text-info">请求参数：<font color="#796400">eg: &nbsp;?name=测试&age=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
                             <input class="form-control" type="text" id="request_params_edit" placeholder="请求参数">
                         </div>
                         <div class="form-group">
-                            <label>验证模式：<font color="#DC143C">(测试必选)</font></label>
+                            <label class="text-info">验证模式：<font color="#DC143C">(测试必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="verify_mode_edit">
                                     <option value=""></option>
@@ -722,29 +722,29 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;msg,code</font></label>
+                            <label class="text-info">待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;msg,code</font></label>
                             <input class="form-control" type="text" id="compare_core_field_name_list_edit" placeholder="待比较关键字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#B8860B">eg：&nbsp;请求成功,301200</font></label>
+                            <label class="text-info">期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;请求成功,31200</font></label>
                             <input class="form-control" type="text" id="expect_core_field_value_list_edit" placeholder="期望的关键字段值列表">
                         </div>
 
                         <div class="form-group">
-                            <label>期望的响应字段列表：</font><font color="#B8860B">eg: &nbsp;status,msg,code</font></label>
+                            <label class="text-info">期望的响应字段列表：</font><font color="#796400">eg: &nbsp;status,msg,code</font></label>
                             <input class="form-control" type="text" id="expect_field_name_list_edit" placeholder="期望的响应字段列表">
                         </div>
                         <div class="form-group">
-                            <label style="color: #B8860B; font-weight: bold;">当 前 接 口 </label>
+                            <label class="text-info">当 前 </label>
                             <label id="is_depend_edit" style="color: #DC143C; font-weight: bold;"></label>
-                            <label style="color: #B8860B; font-weight: bold;"> 依 赖 接 口 </label>
+                            <label class="text-info"> 依 赖 接 口 </label>
                         </div>
                         <div class="form-group">
-                            <label>依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#B8860B">eg: &nbsp;token,sms_code</font></label>
+                            <label class="text-info">依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#796400">eg: &nbsp;token,sms_code</font></label>
                             <input class="form-control" type="text" id="depend_field_name_list_edit" placeholder="依赖字段名列表">
                         </div>
                         <div class="form-group">
-                            <label>依赖等级：<font color="#DC143C">(依赖必选)</font></label>
+                            <label class="text-info">依赖等级：<font color="#DC143C">(依赖必选)</font></label>
                             <div class="fg-line">
                                 <select class="form-control" id="depend_level_edit">
                                     <option value=""></option>
@@ -757,7 +757,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>用例状态：</label>
+                            <label class="text-info">用例状态：</label>
                             <div class="fg-line">
                                 <select class="form-control" id="case_status_edit">
                                     <option value="False">下线</option>
@@ -1001,6 +1001,11 @@
                     background_polling('{{pro_name}}', '{{nginx_api_proxy}}');
                 }
             });
+        </script>
+
+        <!-- 设置埋点，控制台显示页面的 '白屏时间' -->
+        <script type="text/JavaScript">
+            console.log("页面白屏时间 : " + (performance.timing['responseStart'] - performance.timing['navigationStart']).toString())
         </script>
 
     </body>

@@ -2,9 +2,9 @@
 import requests
 import json
 from Common.com_func import is_null, log
-import re
+import re, copy
 from Tools.decorator_tools import retry_request
-
+from Config import pro_config
 
 class VerifyInterface(object):
     """
@@ -40,13 +40,25 @@ class VerifyInterface(object):
         05.fail:关键字段验证失败,响应字段列表验证通过
         06.fail:测试接口错误,http_code<500>,原因解析(Internal Server Error)
         07.error:'请求参数'或'请求头文件'格式有误
+        08.error:上传的文件不存在
+        09.error:上传的文件不能为空
+        10.error:请求头不能为空
+        11.error:请求头中的'Content-Type'类型暂不支持
+        12.error:请求头中的'Content-Type'字段不存在
+        13.error:上传文件接口的请求头不能包含'Content-Type'
 
-        08.fail:依赖接口无响应
-        09.fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
-        10.error:依赖接口'请求参数'或'请求头文件'格式有误
-        11.error:依赖字段值没有全部获取到(all)
-        12.error:依赖字段名配置有遗漏(all)
-        13.error:依赖接口不存在(all)
+
+        01.fail:依赖接口无响应
+        02.fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
+        03.error:依赖接口'请求参数'或'请求头文件'格式有误
+        04.error:依赖接口上传的文件不存在
+        05.error:依赖接口上传的文件不能为空
+        06.error:依赖接口请求头不能为空
+        07.error:依赖接口请求头中的'Content-Type'类型暂不支持
+        08.error:依赖接口请求头中的'Content-Type'字段不存在
+        09.error:依赖字段值没有全部获取到(all)
+        10.error:依赖字段名配置有遗漏(all)
+        11.error:依赖接口不存在(all)
 
     """
 
@@ -86,14 +98,15 @@ class VerifyInterface(object):
     def verify(self):
 
         # 1.转换 参数 格式类型
-        transform_fail, self.request_params, self.request_header = \
-            self.transform_params_format(request_params=self.request_params, request_header=self.request_header)
-        if transform_fail:
-            self.test_result = "error:'请求参数'或'请求头文件'格式有误"
+        error_msg, file, self.request_params, self.request_header = \
+            self.transform_params_format(request_params=self.request_params, request_header=self.request_header,
+                                         request_method=self.request_method)
+        if error_msg:
+            self.test_result = "error:" + error_msg
         else:
             # 2.发送请求，验证response响应
             response = self.send_request(request_method=self.request_method, interface_url=self.host+self.interface_url,
-                                         request_params=self.request_params, request_header=self.request_header)
+                                         request_params=self.request_params, request_header=self.request_header, file=file)
             if response == 31500:
                 self.test_result = "fail:测试接口无响应"
             elif response.status_code != 200:
@@ -119,41 +132,110 @@ class VerifyInterface(object):
         return self.update_result_dict
 
     @staticmethod
-    def transform_params_format(request_params, request_header):
+    def transform_params_format(request_params, request_header, request_method):
         """
         转换 参数 格式类型（ 将 mongo 中的 str 类型 转成 需要的类型 ）
-        :param request_params:
-        :param request_header:
-        :return:
-        """
-        transform_fail = False
-        try:
-            # 若 request_header = ""，则保持不变，否则 string -> dict
-            request_header = request_header and eval(request_header)
+        1.'请求头'格式转换：
+            若非空，则 str -> dict
+        2.'GET'请求的参数转换方式：
+             转成字典类型 ：?key=value&key=value' -> {"key": "value"}
+        3.'POST,PUT,DELETE'请求的参数转换方式：
+            先 转成字典类型（方便判断）
+        （1）判断当前是否为上传文件的请求 < 是否存在'file'字段 >
+            1）若是：
+                将该字段的键值对提取出来存放入 file字典中
+                请求头中不能包含 Content-Type 字段
+            2）若不是
+                判断'请求头'中的'Content-Type'
+                  请求头是否存在
+                  请求头中的'Content-Type'是否存在
+                  请求头中的'Content-Type'是否为支持的类型
+        （2）判断 入参格式
+            1）若 Content-Type = application/json，则请求参数转换成 字符串
+            2）若 Content-Type = application/x-www-form-urlencoded，则请求参数转换成 字典
 
-            # 若 request_params 是以"{"开头的，则 string -> dict -> json，否则 保持不变（ "" 或 '?xx=xx' ）
-            if request_params and request_params.startswith("{"):
-                request_params = json.dumps(eval(request_params))  # string -> dict -> json
-            else:  # "" 或 '?xx=xx'
-                request_params = request_params
+
+         < files 字典的三种情况 >
+          files = {}
+          files = {"file": ""}
+          files = {'file': (file_name, open(file_path, 'rb'))}
+
+        < 当前仅支持 请求头的 Content-Type 的类型 >
+        （1）application/json
+        （2）application/x-www-form-urlencoded
+
+        """
+        error_msg = None
+        files = {}
+        try:
+            # 1.'请求头'格式转换：若非空，则 str -> dict
+            request_header = request_header and eval(request_header)
+            if request_method == "GET":
+                if request_params:  # '?key=value&key=value' -> {"key": "value"}
+                    params = copy.copy(request_params)
+                    params = params[1:]
+                    params = params.split("&")
+                    request_params = {}
+                    for each in params:
+                        each_list = each.split("=")
+                        request_params[each_list[0]] = each_list[1]
+                else:
+                    request_params = {}
+            else:  # "POST", "PUT", "DELETE"
+                # 请求参数 先统一改成 字典 格式
+                request_params = eval(request_params)
+                # 判断当前是否为上传文件的请求
+                if "file" in request_params.keys():
+                    if "Content-Type" in request_header.keys():
+                        error_msg = "上传文件接口的请求头不能包含'Content-Type'"
+                    else:
+                        files["file"] = request_params.get("file")
+                        del request_params["file"]
+                        if files["file"]:
+                            file_path = files["file"]
+                            file_name = file_path.split("/")[-1]
+                            try:
+                                # 提取 file 字典
+                                files["file"] = (file_name, open(file_path, 'rb'))
+                            except Exception as e:
+                                log.error(e)
+                                error_msg = "上传的文件不存在"
+                        else:
+                            error_msg = "上传的文件不能为空"
+                else:
+                    if not request_header:
+                        error_msg = "请求头不能为空"
+                    elif not request_header.get("Content-Type", ""):
+                        error_msg = "请求头中的'Content-Type'字段不存在"
+                    elif request_header["Content-Type"] not in pro_config.get_content_type_list():
+                        error_msg = "请求头中的'Content-Type'类型暂不支持"
+                    # 判断 入参格式
+                    request_params = "json" in request_header["Content-Type"] and json.dumps(request_params) or request_params
+
         except Exception as e:
             log.error(e)  # "invalid syntax"
-            transform_fail = True
-        finally:
-            return transform_fail, request_params, request_header
+            error_msg = "'请求参数'或'请求头文件'格式有误"
+        return error_msg, files, request_params, request_header
 
     # try_func = retry_request(try_limit=3,interval_time=1,send_dd=True)
     # send_request = try_func(send_request)
     @staticmethod
     @retry_request(try_limit=3, interval_time=1, send_dd=True)
-    def send_request(request_method, interface_url, request_params, request_header):
+    def send_request(request_method, interface_url, request_params, request_header, file):
         """
         【 发 送 请 求 】
         :param request_method:
         :param interface_url:
         :param request_params:
         :param request_header:
+        :param file:  上传文件接口
         :return:
+
+            【 注 意 事 项 】
+            1."POST、PUT、DELETE"请求，必须要包含有 'Content-Type' 字段
+            2."Content-Type"：目前支持的类型
+            （1）application/json
+            （2）application/x-www-form-urlencoded
 
             【 备 注 】
             1.请求默认超时时间，设置 5 秒
@@ -161,43 +243,17 @@ class VerifyInterface(object):
             3.一个请求最长用时：5 * 3 + 2 = 17 秒
         """
         if request_method == "GET":
-            response_info = requests.get(url=interface_url+request_params, headers=request_header, timeout=5)
+            response_info = requests.get(url=interface_url, params=request_params, headers=request_header, timeout=5)
         elif request_method == "POST":
-            request_params, files = VerifyInterface.judge_file_request(request_params)
-            if files:
-                response_info = requests.post(url=interface_url, data=request_params, files=files, headers=request_header, timeout=5)
+            if file:
+                response_info = requests.post(url=interface_url, data=request_params, files=file, headers=request_header, timeout=5)
             else:
-                response_info = requests.post(url=interface_url, data=request_params, headers=request_header,timeout=5)
+                response_info = requests.post(url=interface_url, data=request_params, headers=request_header, timeout=5)
         elif request_method == "PUT":
             response_info = requests.put(url=interface_url, data=request_params, headers=request_header, timeout=5)
-        else:
+        else:  # DELETE
             response_info = requests.delete(url=interface_url, data=request_params, headers=request_header, timeout=5)
         return response_info
-
-    @staticmethod
-    def judge_file_request(request_params):
-        """
-        从请求参数中判断是否是上传文件的请求
-        < 步 骤 >
-        1.将'request_params'类型从 json(str) 转成 dict
-        2.判断是否存在'file'的字段key
-        （1）若不存在，则 不需要区分 data字典 和 file字典
-        （2）若存在
-            1）则将该字段的键值对提取出来存放入 file字典中
-            2）将文件路径配置成相应格式 ->  files = {'file': (file_name, open(file_path, 'rb'))}
-            3）还需要判断提取后的'request_params'字典是否为空，若为空则直接赋空值
-        """
-        request_params = eval(request_params)
-        files = {}
-        if "file" in request_params.keys():
-            files["file"] = request_params.get("file")
-            del request_params["file"]
-        if files:
-            file_path = files["file"]
-            file_name = file_path.split("/")[-1]
-            files["file"] = (file_name, open(file_path, 'rb'))
-        request_params = request_params and json.dumps(request_params) or ""
-        return request_params, files
 
     def get_response_field_list_and_dict(self):
         """

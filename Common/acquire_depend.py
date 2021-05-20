@@ -51,19 +51,33 @@ class AcquireDependField(object):
         05.error:依赖字段名配置有遗漏(all)
         06.error:依赖字段值没有全部获取到(all)
         07.error:依赖接口'请求参数'或'请求头文件'格式有误
+        08.error:依赖接口上传的文件不存在
+        09.error:依赖接口上传的文件不能为空
+        00.error:依赖接口请求头不能为空
+        11.error:依赖接口请求头中的'Content-Type'类型暂不支持
+        12.error:依赖接口请求头中的'Content-Type'字段不存在
+        13.error:依赖接口上传文件接口的请求头不能包含'Content-Type'
+
 
         [ 备 注 ]
         1.'error:依赖接口不存在(all)'不记录在'依赖接口 test_result'中，而是记录在'测试接口 test_result'中
         2.依赖接口列表 整体记录 的 'test_result'
-        （1）error:依赖接口不存在(all)
-        （2）error:依赖字段名配置有遗漏(all)
-        （3）error:依赖字段值没有全部获取到(all)
+        （01）error:依赖接口不存在(all)
+        （02）error:依赖字段名配置有遗漏(all)
+        （03）error:依赖字段值没有全部获取到(all)
         3.依赖接口列表 分开记录 的 'test_result':
-        （1）success:依赖通过
-        （2）fail:依赖接口无响应
-        （3）fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
-        （4）error:依赖接口'请求参数'或'请求头文件'格式有误
-        （5）error:依赖字段没有获取到
+        （01）success:依赖通过
+        （02）fail:依赖接口无响应
+        （03）fail:依赖接口错误,http_code<500>,原因解析(Internal Server Error)
+        （04）error:依赖接口'请求参数'或'请求头文件'格式有误
+        （05）error:依赖字段没有获取到
+        （06）error:依赖接口上传的文件不存在
+        （07）error:依赖接口上传的文件不能为空
+        （08）error:依赖接口请求头不能为空
+        （09）error:依赖接口请求头中的'Content-Type'类型暂不支持
+        （10）error:依赖接口请求头中的'Content-Type'字段不存在
+        （11）error:依赖接口上传文件接口的请求头不能包含'Content-Type'
+
 
         举例：
         1.整体记录：["error:依赖字段名配置有遗漏(all)", "error:依赖字段名配置有遗漏(all)"]
@@ -167,17 +181,19 @@ class AcquireDependField(object):
                     self.replace_params(depend_interface_dict)
 
                     # 转换 '请求参数'或'请求头文件' 格式类型（ 将 mongo 中的 str 类型 转成 需要的类型 ）
-                    transform_fail, depend_interface_dict["request_params"], depend_interface_dict["request_header"] = \
+                    error_msg, file, depend_interface_dict["request_params"], depend_interface_dict["request_header"] = \
                         VerifyInterface.transform_params_format(request_params=depend_interface_dict["request_params"],
-                                                                request_header=depend_interface_dict["request_header"])
-                    if transform_fail:
+                                                                request_header=depend_interface_dict["request_header"],
+                                                                request_method=depend_interface_dict["request_method"])
+                    if error_msg:
                         self.response_info_list.append("")
-                        self.depend_interface_result_list.append("error:依赖接口'请求参数'或'请求头文件'格式有误")
+                        self.depend_interface_result_list.append("error:依赖接口" + error_msg)
                     else:
                         response = VerifyInterface.send_request(request_method=depend_interface_dict["request_method"],
                                                                 interface_url=self.host + depend_interface_dict["interface_url"],
                                                                 request_params=depend_interface_dict["request_params"],
-                                                                request_header=depend_interface_dict["request_header"])
+                                                                request_header=depend_interface_dict["request_header"],
+                                                                file=file)
                         if response == 31500:
                             self.response_info_list.append("")
                             self.depend_interface_result_list.append("fail:依赖接口无响应")

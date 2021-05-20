@@ -22,7 +22,7 @@ function exec_import(pro_name, nginx_api_proxy){
             }else if(import_method == ""){
                 swal({text: "导入方式不能为空！", type: "error", confirmButtonText: "知道了"});
             }else{
-                // 获取file文件
+                // 获取第一个file文件（默认可以上传多个文件）
                 var file_data = new FormData($("#import_action_form")[0]);
                 // 调用ajax请求(同步)
                 var request_url = "/" + nginx_api_proxy + "/API/import_action/" + pro_name + "/" + import_method
@@ -392,7 +392,7 @@ function search_case(pro_name, nginx_api_proxy) {
 
             // 接口名称（测试信息）
             if(is_depend){
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#DC143C\"> (依赖) </font></td>";
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#BB5E00\"> (依赖) </font></td>";
             }else{
                 tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_test_response_info\">" + interface_name + "</td>";
             }

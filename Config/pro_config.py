@@ -59,6 +59,17 @@ def get_pro_name(test_url):
     return pro_name, server_ip
 
 
+def get_content_type_list():
+    """
+    目前支持的 Content-Type 类型
+      （1）application/x-www-form-urlencoded
+      （2）application/json
+    :return:
+    """
+    content_type_list = ['application/json', 'application/x-www-form-urlencoded']
+    return content_type_list
+
+
 if __name__ == "__main__":
     print(get_pro_name("http://192.168.31.111:1180/api_local"))
     # print(get_pro_ip_dict())
