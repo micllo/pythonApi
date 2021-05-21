@@ -1168,6 +1168,38 @@ def get_case_del_result(request_json, pro_name):
         return "要删除的用例不存在 ！ "
 
 
+def get_case_by_name(request_json, pro_name):
+    """
+    获取已有用例
+    :param request_json:
+    :param pro_name:
+    :return:
+    """
+    interface_name = request_json.get("interface_name", "").strip()
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+        try:
+            exist_case_dict = pro_db.find_one({"interface_name": interface_name})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="通过id获取'" + pro_name + "'项目的测试用例")
+            return "mongo error"
+
+    if exist_case_dict:
+        # 将所有字段转换成 string 类型
+        for field, value in exist_case_dict.items():
+            # 若"验证模式、依赖等级"为0，则赋空值 传递给编辑弹层显示
+            if field in ["verify_mode", "depend_level"]:
+                exist_case_dict[field] = value != 0 and str(value) or ""
+
+            if field in ["_id", "case_status", "is_depend", "create_time", "update_time", "run_status"]:
+                exist_case_dict[field] = str(value)
+
+            if field in get_list_field():
+                exist_case_dict[field] = ",".join(value)
+
+    return exist_case_dict
+
+
 def get_case_by_id(request_args, pro_name):
     """
     通过id获取用例（填充编辑弹层）

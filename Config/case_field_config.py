@@ -49,20 +49,22 @@ def get_case_special_field_list():
     03.请求方式：request_method（ 必填 ）
     04.请求头文件：request_header
     05.请求参数：request_params
-    06.验证模式：verify_mode    （ 测试必填 ）       < (Excel)float  -> (Mongo)int >
+    06.验证模式：verify_mode    （ 测试必填 ） < (Excel)float  -> (Mongo)int >
+
     07.待比较关键字段名列表：compare_core_field_name_list （ 测试必填 ）< (Excel)string -> (Mongo)list >（以","分割）
     08.期望的关键字段值列表：expect_core_field_value_list （ 测试必填 ）< (Excel)string -> (Mongo)list >（以","分割）
     09.期望的响应字段列表：expect_field_name_list                   < (Excel)string -> (Mongo)list >（以","分割）
-    10.是否为依赖接口：is_depend              （ 必填 ）    < (Excel)int|string -> (Mongo)bool >
+
+    10.是否为依赖接口：is_depend              （ 必填 ）     < (Excel)int|string -> (Mongo)bool >
     11.依赖等级：depend_level                （ 依赖必填 ）  < (Excel)float  -> (Mongo)int >
     12.依赖字段名列表：depend_field_name_list （ 依赖必填 ）  < (Excel)string -> (Mongo)list >（以","分割）
-    13.用例状态：case_status  （ 默认：FALSE ）            < (Excel)int|string -> (Mongo)bool >
+    13.用例状态：case_status  （ 默认：FALSE ）             < (Excel)int|string -> (Mongo)bool >
 
     < 以下字段不显示在导入Excel中>
     14.响应信息：response_info
-    15.依赖字段值列表：depend_field_value_list            < (Mongo)list -> (Excel)string >
-    16.实际的关键字段值列表：actual_core_field_value_list  < (Mongo)list -> (Excel)string >
-    17.实际的响应字段列表：actual_field_name_list          < (Mongo)list -> (Excel)string >
+    15.依赖字段值列表：depend_field_value_list             < (Mongo)list -> (Excel)string >
+    16.实际的关键字段值列表：actual_core_field_value_list   < (Mongo)list -> (Excel)string >
+    17.实际的响应字段列表：actual_field_name_list           < (Mongo)list -> (Excel)string >
     18.关键字段值比较结果：result_core_field_value
     19.响应字段列表比较结果：result_field_name_list
     20.测试结果：test_result

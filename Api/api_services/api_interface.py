@@ -232,6 +232,17 @@ def del_case(pro_name):
     return json.dumps(res_info, ensure_ascii=False)
 
 
+@flask_app.route("/API/get_current_case/<pro_name>", methods=["POST"])
+def get_current_case(pro_name):
+    """
+    获取已有用例（填充新增弹层）
+    :return:
+    """
+    res_info = dict()
+    res_info["test_case"] = get_case_by_name(request_json=request.json, pro_name=pro_name)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
 @flask_app.route("/API/get_case_by_id/<pro_name>", methods=["GET"])
 def get_case(pro_name):
     """

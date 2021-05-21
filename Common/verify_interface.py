@@ -154,11 +154,10 @@ class VerifyInterface(object):
             1）若 Content-Type = application/json，则请求参数转换成 字符串
             2）若 Content-Type = application/x-www-form-urlencoded，则请求参数转换成 字典
 
-
          < files 字典的三种情况 >
           files = {}
           files = {"file": ""}
-          files = {'file': (file_name, open(file_path, 'rb'))}
+          files = {'file': open(file_path, 'rb')}
 
         < 当前仅支持 请求头的 Content-Type 的类型 >
         （1）application/json
@@ -169,7 +168,7 @@ class VerifyInterface(object):
         files = {}
         try:
             # 1.'请求头'格式转换：若非空，则 str -> dict
-            request_header = request_header and eval(request_header)
+            request_header = request_header and eval(request_header) or {}
             if request_method == "GET":
                 if request_params:  # '?key=value&key=value' -> {"key": "value"}
                     params = copy.copy(request_params)
@@ -186,34 +185,33 @@ class VerifyInterface(object):
                 request_params = eval(request_params)
                 # 判断当前是否为上传文件的请求
                 if "file" in request_params.keys():
-                    if "Content-Type" in request_header.keys():
+                    if "Content-Type" in request_header.keys() or "content-type" in request_header.keys():
                         error_msg = "上传文件接口的请求头不能包含'Content-Type'"
                     else:
                         files["file"] = request_params.get("file")
                         del request_params["file"]
                         if files["file"]:
-                            file_path = files["file"]
-                            file_name = file_path.split("/")[-1]
                             try:
-                                # 提取 file 字典
-                                files["file"] = (file_name, open(file_path, 'rb'))
+                                files["file"] = open(files["file"], 'rb')
                             except Exception as e:
-                                log.error(e)
+                                log.error("\n===============\n" + str(e) + "\n================\n")
                                 error_msg = "上传的文件不存在"
                         else:
                             error_msg = "上传的文件不能为空"
                 else:
                     if not request_header:
                         error_msg = "请求头不能为空"
-                    elif not request_header.get("Content-Type", ""):
+                    elif not request_header.get("Content-Type", "") and not request_header.get("content-type", ""):
                         error_msg = "请求头中的'Content-Type'字段不存在"
-                    elif request_header["Content-Type"] not in pro_config.get_content_type_list():
+                    elif request_header.get("Content-Type", "") not in pro_config.get_content_type_list() and \
+                            request_header.get("content-type", "") not in pro_config.get_content_type_list():
                         error_msg = "请求头中的'Content-Type'类型暂不支持"
                     # 判断 入参格式
-                    request_params = "json" in request_header["Content-Type"] and json.dumps(request_params) or request_params
-
+                    if "json" in request_header.get("Content-Type", "") or \
+                            "json" in request_header.get("content-type", ""):
+                        request_params = json.dumps(request_params)
         except Exception as e:
-            log.error(e)  # "invalid syntax"
+            log.error("\n===============\n" + str(e) + "\n================\n")
             error_msg = "'请求参数'或'请求头文件'格式有误"
         return error_msg, files, request_params, request_header
 

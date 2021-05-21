@@ -496,6 +496,12 @@
                             <label>host_value：<font color="#DC143C">(必填)</font></label>
                             <input class="form-control" type="text" id="host_value_config">
                         </div>
+                        <div class="form-group">
+                            <label><font color="#DC143C"> 目前支持测试的请求正文格式（Body） </font></label>
+                            <label><font color="#DC143C"> 1. 表单格式：请求头 {"Content-Type":"application/x-www-form-urlencoded"}</font></label>
+                            <label><font color="#DC143C"> 2. Json格式：请求头 {"Content-Type":"application/json"}</font></label>
+                            <label><font color="#DC143C"> 3. 文件格式：请求头 不能含有"Content-Type"字段，请求参数里面必须要包含"file"字段 </font></label>
+                        </div>
                     </div>
 
                     <div class="modal-footer">
@@ -567,12 +573,16 @@
 
                     <div class="modal-body">
                         <div class="form-group">
-                            <label class="text-info">接口名称：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_name_add" placeholder="接口名称">
+                            <label class="text-info">接口名称：<font color="#DC143C">(必填)</font>
+                                <button type="button" class="btn btn-primary btn-xs" style="margin-left:50px" onclick="get_current_case('{{ pro_name }}','{{ nginx_api_proxy }}')">获取已有用例</button>
+                                <button type="button" class="btn btn-info btn-xs" style="margin-left:30px" onclick="clear_current_case()">清除</button>
+                                <span id="get_current_case_info" style="margin-left:30px;font-size:12px;"></span>
+                            </label>
+                            <input class="form-control" type="text" id="interface_name_add"> <!-- placeholder="接口名称" -->
                         </div>
                         <div class="form-group">
                             <label class="text-info">接口地址：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_url_add" placeholder="接口地址">
+                            <input class="form-control" type="text" id="interface_url_add">
                         </div>
                         <div class="form-group">
                             <label class="text-info">请求方式：<font color="#DC143C">(必选)</font></label>
@@ -588,11 +598,11 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">请求头文件：<font color="#796400">eg: &nbsp;{"Content-Type": "application/json"} 或 x-www-form-urlencoded</font></label>
-                            <input class="form-control" type="text" id="request_header_add" placeholder="请求头文件">
+                            <input class="form-control" type="text" id="request_header_add">
                         </div>
                         <div class="form-group">
                             <label class="text-info">请求参数：<font color="#796400">eg: &nbsp;?name=测试&token=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
-                            <input class="form-control" type="text" id="request_params_add" placeholder="请求参数">
+                            <input class="form-control" type="text" id="request_params_add">
                         </div>
                         <div class="form-group">
                             <label class="text-info">验证模式：<font color="#DC143C">(测试必选)</font></label>
@@ -606,16 +616,16 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;msg,code</font></label>
-                            <input class="form-control" type="text" id="compare_core_field_name_list_add" placeholder="待比较关键字段名列表">
+                            <input class="form-control" type="text" id="compare_core_field_name_list_add">
                         </div>
                         <div class="form-group">
                             <label class="text-info">期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;请求成功,31200</font></label>
-                            <input class="form-control" type="text" id="expect_core_field_value_list_add" placeholder="期望的关键字段值列表">
+                            <input class="form-control" type="text" id="expect_core_field_value_list_add">
                         </div>
 
                         <div class="form-group">
                             <label class="text-info">期望的响应字段列表：</font><font color="#796400">eg: &nbsp;status,msg,code</font></label>
-                            <input class="form-control" type="text" id="expect_field_name_list_add" placeholder="期望的响应字段列表">
+                            <input class="form-control" type="text" id="expect_field_name_list_add">
                         </div>
                         <div class="form-group">
                             <label class="text-info">是否为依赖接口：<font color="#DC143C">(必选)</font></label>
@@ -629,7 +639,7 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#796400">eg: &nbsp;token,sms_code</font></label>
-                            <input class="form-control" type="text" id="depend_field_name_list_add" placeholder="依赖字段名列表">
+                            <input class="form-control" type="text" id="depend_field_name_list_add">
                         </div>
                         <div class="form-group">
                             <label class="text-info">依赖等级：<font color="#DC143C">(依赖必选)</font></label>
@@ -685,11 +695,11 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">接口名称：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_name_edit" placeholder="接口名称">
+                            <input class="form-control" type="text" id="interface_name_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">接口地址：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_url_edit" placeholder="接口地址">
+                            <input class="form-control" type="text" id="interface_url_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">请求方式：<font color="#DC143C">(必选)</font></label>
@@ -705,11 +715,11 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">请求头文件：<font color="#796400">eg: &nbsp;{"Content-Type": "application/json"} 或 x-www-form-urlencoded</font></label>
-                            <input class="form-control" type="text" id="request_header_edit" placeholder="请求头文件">
+                            <input class="form-control" type="text" id="request_header_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">请求参数：<font color="#796400">eg: &nbsp;?name=测试&age=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
-                            <input class="form-control" type="text" id="request_params_edit" placeholder="请求参数">
+                            <input class="form-control" type="text" id="request_params_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">验证模式：<font color="#DC143C">(测试必选)</font></label>
@@ -723,16 +733,16 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;msg,code</font></label>
-                            <input class="form-control" type="text" id="compare_core_field_name_list_edit" placeholder="待比较关键字段名列表">
+                            <input class="form-control" type="text" id="compare_core_field_name_list_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;请求成功,31200</font></label>
-                            <input class="form-control" type="text" id="expect_core_field_value_list_edit" placeholder="期望的关键字段值列表">
+                            <input class="form-control" type="text" id="expect_core_field_value_list_edit">
                         </div>
 
                         <div class="form-group">
                             <label class="text-info">期望的响应字段列表：</font><font color="#796400">eg: &nbsp;status,msg,code</font></label>
-                            <input class="form-control" type="text" id="expect_field_name_list_edit" placeholder="期望的响应字段列表">
+                            <input class="form-control" type="text" id="expect_field_name_list_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">当 前 </label>
@@ -741,7 +751,7 @@
                         </div>
                         <div class="form-group">
                             <label class="text-info">依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#796400">eg: &nbsp;token,sms_code</font></label>
-                            <input class="form-control" type="text" id="depend_field_name_list_edit" placeholder="依赖字段名列表">
+                            <input class="form-control" type="text" id="depend_field_name_list_edit">
                         </div>
                         <div class="form-group">
                             <label class="text-info">依赖等级：<font color="#DC143C">(依赖必选)</font></label>

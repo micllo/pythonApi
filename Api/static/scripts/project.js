@@ -624,6 +624,69 @@ function del_case(pro_name, nginx_api_proxy, _id) {
 
 
 /**
+ *  清空弹层中的内容（新增弹层）
+ */
+function clear_current_case() {
+
+    // 清除内容
+    $("#get_current_case_info").text("")
+    $("#get_current_case_info").removeClass();
+
+    $("#interface_name_add").val("");
+    $("#interface_url_add").val("");
+    $("#request_method_add").val("");
+    $("#request_header_add").val("");
+    $("#request_params_add").val("");
+    $("#verify_mode_add").val("");
+    $("#compare_core_field_name_list_add").val("");
+    $("#expect_core_field_value_list_add").val("");
+    $("#expect_field_name_list_add").val("");
+    $("#is_depend_add").val("");
+    $("#depend_field_name_list_add").val("");
+    $("#depend_level_add").val("");
+    $("#case_status_add").val("");
+}
+
+
+/**
+ *  获取已有用例（ 填充新增弹层 ）
+ */
+function get_current_case(pro_name, nginx_api_proxy) {
+
+    // 获取相应的添加内容
+    var interface_name = $("#interface_name_add").val().trim();
+    var check_dict = {"interface_name": interface_name};
+    // 调用ajax请求(同步)
+    var request_url = "/" + nginx_api_proxy + "/API/get_current_case/" + pro_name
+    var response_info = request_interface_url_v2(url=request_url, method="POST", data=check_dict, async=false);
+    if(response_info != "请求失败"){
+        var test_case = response_info.test_case
+        if(test_case == null){
+            $("#get_current_case_info").text("接口名称不存在")
+            $("#get_current_case_info").removeClass().addClass("label label-warning");
+        }else{
+            $("#get_current_case_info").text("获取成功")
+            $("#get_current_case_info").removeClass().addClass("label label-success");
+            // 填充内容
+            $("#interface_name_add").val(test_case.interface_name);
+            $("#interface_url_add").val(test_case.interface_url);
+            $("#request_method_add").val(test_case.request_method);
+            $("#request_header_add").val(test_case.request_header);
+            $("#request_params_add").val(test_case.request_params);
+            $("#verify_mode_add").val(test_case.verify_mode);
+            $("#compare_core_field_name_list_add").val(test_case.compare_core_field_name_list);
+            $("#expect_core_field_value_list_add").val(test_case.expect_core_field_value_list);
+            $("#expect_field_name_list_add").val(test_case.expect_field_name_list);
+            $("#is_depend_add").val(test_case.is_depend);
+            $("#depend_field_name_list_add").val(test_case.depend_field_name_list);
+            $("#depend_level_add").val(test_case.depend_level);
+            $("#case_status_add").val(test_case.case_status);
+        }
+    }
+}
+
+
+/**
  *  填充编辑弹框（ 编辑之前 ）
  */
 function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
