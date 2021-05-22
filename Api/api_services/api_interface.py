@@ -25,13 +25,13 @@ def show_index():
     return render_template('index.html', tasks=result_dict)
 
 
-# http://127.0.0.1:7060/api_local/API/get_project_case_list/pro_demo_1
-@flask_app.route("/API/get_project_case_list/<pro_name>", methods=["GET"])
-def get_test_case_list(pro_name):
+# http://127.0.0.1:7060/api_local/API/get_project_case_info/pro_demo_1
+@flask_app.route("/API/get_project_case_info/<pro_name>", methods=["GET"])
+def get_test_case_info(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
-    result_dict["host_list"], result_dict["global_variable_list"] = get_config_list(pro_name)
+    result_dict["host_list"], result_dict["global_variable_list"], result_dict["cron_status"] = get_config_info(pro_name)
     result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name)
     result_dict["statist_data"] = get_statist_data(pro_name)
     result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
@@ -130,6 +130,23 @@ def set_case_status(pro_name, _id):
         msg = new_case_status == "mongo error" and MONGO_CONNECT_FAIL or UPDATE_SUCCESS
     re_dict = interface_template(msg, {"pro_name": pro_name, "_id": _id,
                                        "new_case_status": new_case_status})
+    return json.dumps(re_dict, ensure_ascii=False)
+
+
+@flask_app.route("/API/set_cron_status/<pro_name>", methods=["GET"])
+def set_cron_status(pro_name):
+    """
+    修改定时任务状态
+    :param pro_name:
+    :return:
+    """
+    new_cron_status = None
+    if is_null(pro_name):
+        msg = PARAMS_NOT_NONE
+    else:
+        new_cron_status = update_cron_status(pro_name)
+        msg = new_cron_status == "mongo error" and MONGO_CONNECT_FAIL or UPDATE_SUCCESS
+    re_dict = interface_template(msg, {"pro_name": pro_name, "new_case_status": new_cron_status})
     return json.dumps(re_dict, ensure_ascii=False)
 
 

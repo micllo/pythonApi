@@ -330,7 +330,43 @@ function stop_status(pro_name, nginx_api_proxy) {
 }
 
 
-
+/**
+ * 启停定时任务
+ */
+function update_cron_status(pro_name, nginx_api_proxy) {
+    swal({
+        title: "改变定时任务状态?",
+        text: "",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+    }).then(function(isConfirm){
+        if (isConfirm) {
+            // 调用ajax请求(同步)
+            var request_url = "/" + nginx_api_proxy + "/API/set_cron_status/" + pro_name
+            var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+            if(response_info != "请求失败"){
+                var msg = response_info.msg;
+                if (msg.search("成功") != -1){
+                    if(response_info.data.new_cron_status == true){
+                        $("#cron_status_btn").html("定 时 已 开 启");
+                        $("#cron_status_btn").attr('class', "btn btn-success");
+                    }else{
+                        swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                        $("#cron_status_btn").html("定 时 已 关 闭");
+                        $("#cron_status_btn").attr('class', "btn btn-danger");
+                    }
+                    swal({text: msg, type: "success", confirmButtonText: "知道了"});
+                    setTimeout(function(){location.reload();}, 1000);
+                }
+            }
+        }
+    }).catch((e) => {
+        console.log(e)
+        console.log("cancel");
+    });
+}
 
 
 /**

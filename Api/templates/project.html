@@ -9,6 +9,7 @@
         {% set nginx_api_proxy = tasks['nginx_api_proxy'] %}
         {% set host_list = tasks['host_list'] %}
         {% set global_variable_list = tasks['global_variable_list'] %}
+        {% set cron_status = tasks['cron_status'] %}
         {% set test_case_list = tasks['test_case_list'] %}
         {% set statist_data = tasks['statist_data'] %}
         {% set is_run = tasks['is_run'] %}
@@ -33,10 +34,6 @@
                           <div class="panel panel-success">
                              <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
                                  批&nbsp;&nbsp;&nbsp;量&nbsp;&nbsp;&nbsp;导&nbsp;&nbsp;&nbsp;入&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
-{#                                 <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"#}
-{#                                    onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"#}
-{#                                    onMouseOut="this.style.color='#006699'"> 点击下载 测 试 用 例 模 板#}
-{#                                </a>#}
                              </div>
                              <div class="panel-body">
                                  <form id="import_action_form" class="form-horizontal" enctype="multipart/form-data">
@@ -104,19 +101,19 @@
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
                                          {% if is_run %}
                                              <button id="on_line_all" type="button" class="btn btn-info" disabled="disabled"
-                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> <font color="#006000">上 线 </font> 所 有 用 例 </button>
+                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 上 线 所 有 用 例 </button>
                                          {% else %}
                                              <button id="on_line_all" type="button" class="btn btn-info"
-                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> <font color="#006000"> 上 线 </font> 所 有 用 例 </button>
+                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 上 线 所 有 用 例 </button>
                                          {% endif %}
                                      </div>
                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
                                          {% if is_run %}
                                              <button id="off_line_all" type="button" class="btn btn-info" disabled="disabled"
-                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> <font color="#DC143C">下 线 </font>所 有 用 例 </button>
+                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 下 线 所 有 用 例 </button>
                                          {% else %}
                                              <button id="off_line_all" type="button" class="btn btn-info"
-                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> <font color="#DC143C">下 线 </font>所 有 用 例 </button>
+                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 下 线 所 有 用 例 </button>
                                          {% endif %}
                                      </div>
                                  </div>
@@ -133,7 +130,11 @@
                                      </div>
 
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button id="stop_status_btn" type="button" class="btn btn-primary" onclick="stop_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 定 时 任 务 开 启</button>
+                                         {% if cron_status %}
+                                            <button id="cron_status_btn" type="button" class="btn btn-success" onclick="update_cron_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 定 时 已 开 启</button>
+                                         {% else %}
+                                            <button id="cron_status_btn" type="button" class="btn btn-danger" onclick="update_cron_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 定 时 已 关 闭</button>
+                                         {% endif %}
                                      </div>
 
                                  </div>

@@ -73,6 +73,23 @@ def set_pro_run_status(pro_name, run_status=False):
             return "mongo error"
 
 
+def get_cron_status(pro_name):
+    """
+    获取定时任务状态
+    :param pro_name:
+    :return:
+    """
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+        try:
+            query_dict = {"config_name": "cron_status"}
+            result = pro_db.find_one(query_dict)
+            cron_status = result.get("config_value")
+            return cron_status
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目定时任务状态")
+            return "mongo error"
+
+
 def run_test_by_pro(host, pro_name, run_type):
     """
     运行测试
@@ -100,7 +117,11 @@ def run_test_by_pro(host, pro_name, run_type):
     error_msg = ""
 
     if run_type == "cron":
-        host, error_msg = get_host_url(pro_name, host)
+        if get_cron_status(pro_name):
+            host, error_msg = get_host_url(pro_name, host)
+        else:
+            log.info("\n\n========================== 定 时 任 务 已 关 闭 ==========================\n\n")
+            return "定时任务已关闭"
     if is_null(pro_name):
         error_msg = "项目名不能为空"
     elif is_null(host):
@@ -278,6 +299,27 @@ def update_case_status(pro_name, _id):
             return new_case_status
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="更新'" + pro_name + "'项目测试用例状态(单个)")
+            return "mongo error"
+
+
+def update_cron_status(pro_name):
+    """
+    更新定时任务状态
+    :param pro_name:
+    :param _id:
+    :return:
+    """
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+        try:
+            query_dict = {"config_name": "cron_status"}
+            result = pro_db.find_one(query_dict)
+            old_cron_status = result.get("config_value")
+            new_cron_status = bool(1 - old_cron_status)  # 布尔值取反
+            update_dict = {"$set": {"config_value": new_cron_status}}
+            pro_db.update_one(query_dict, update_dict)
+            return new_cron_status
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="更新'" + pro_name + "'项目定时任务状态")
             return "mongo error"
 
 
@@ -554,14 +596,15 @@ def show_excel_list(excel_list):
             print("--------")
 
 
-def get_config_list(pro_name):
+def get_config_info(pro_name):
     """
-    获取配置列表（ HOST 配置列表 | 全局变量配置列表 ）
+    获取配置信息（ HOST 配置列表 | 全局变量配置列表 | 定时任务状态 ）
     :param pro_name:
     :return:
     """
     host_list = []
     global_variable_list = []
+    cron_status = False
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
         try:
             host_results_cursor = pro_db.find({})
@@ -572,17 +615,20 @@ def get_config_list(pro_name):
                     host_dict["host_name"] = str(res.get("config_name"))
                     host_dict["host_url"] = str(res.get("config_value"))
                     host_list.append(host_dict)
-                else:  # global_variable
+                elif res.get("config_type") == "global_variable":
                     global_variable_dict = dict()
                     global_variable_dict["config_id"] = str(res.get("_id"))
                     global_variable_dict["global_variable_name"] = str(res.get("config_name"))
                     global_variable_dict["global_variable_value"] = str(res.get("config_value"))
                     global_variable_list.append(global_variable_dict)
+                else:  # status
+                    if res.get("config_name") == "cron_status":
+                        cron_status = res.get("config_value")
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目配置列表")
             return []
         finally:
-            return host_list, global_variable_list
+            return host_list, global_variable_list, cron_status
 
 
 def get_host_url(pro_name, host_name):
