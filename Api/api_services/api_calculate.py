@@ -586,10 +586,10 @@ def get_config_list(pro_name):
 
 
 def get_host_url(pro_name, host_name):
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_host") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
         try:
-            host_dict = pro_db.find_one({"host_name":host_name})
-            host_url = host_dict.get("host_url")
+            host_dict = pro_db.find_one({"config_type": "host", "config_name": host_name})
+            host_url = host_dict.get("config_value")
             return host_url, ""
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目 host_url")
