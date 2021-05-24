@@ -190,7 +190,8 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
         （1）执行测试，获取测试结果列表
         （2）更新测试结果
         5.将项目'运行状态'设置为停止
-        6.若存在'失败'或'错误'则发送钉钉
+        6.将测试结果保存入 _result 数据库（仅上线用例）
+        7.若存在'失败'或'错误'则发送钉钉
     """
     # 1.将项目'运行状态'设置为开启
     set_pro_run_status(pro_name=pro_name, run_status=True)
@@ -242,11 +243,33 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     # 5.将项目'运行状态'设置为停止
     set_pro_run_status(pro_name=pro_name, run_status=False)
 
-    # 6.若存在'失败'或'错误'则发送钉钉
+    # 6.将测试结果保存入 _result 数据库（仅上线用例）
+    save_test_result(pro_name)
+
+    # 7.若存在'失败'或'错误'则发送钉钉
     if fail_list:
         api_monitor_send_DD(pro_name=pro_name, wrong_type="fail")
     elif error_list:
         api_monitor_send_DD(pro_name=pro_name, wrong_type="error")
+
+
+def save_test_result(pro_name):
+    """
+    将测试结果保存入 _result 数据库（仅上线用例）
+    :return:
+    """
+    online_case_cursor = None
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+        try:
+            online_case_cursor = pro_db.find({"case_status": True}, {"_id": 0})
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目所有是上线的用例")
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+        try:
+            pro_db.insert_many(online_case_cursor)
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="新增'" + pro_name + "'项目所有是上线的用例")
 
 
 def replace_global_variable(interface_list, global_variable_dict):
@@ -642,25 +665,28 @@ def get_host_url(pro_name, host_name):
             return "", "获取host_url失败"
 
 
-def get_test_case(pro_name):
+def get_test_case(pro_name, db_tag, last_test_time=None):
     """
     根据项目获取测试用例列表（上线的依赖接口排在前面）
     :param pro_name:
     :return: 用例列表、是否存在运行的用例
+    :param db_tag:  _case | _result
 
-      < 备注 >
-      页面显示的上次执行时间  exec_time
+      < 备 注 >
+      1.用例页面 - 页面显示的上次执行时间  exec_time
       （1）若 update_time - create_time > 0 则 exec_time = update_time
       （2）若 update_time - create_time = 0 则 exec_time = "--------"
+      2.报告页面 - 默认显示最新一次测试时间的用例
+
     """
     test_case_list = []
     on_line_list_with_depend = []
     on_line_list_with_test = []
     off_line_list = []
     run_case_list = []
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
         try:
-            results_cursor = pro_db.find({})
+            results_cursor = last_test_time and pro_db.find({"update_time": last_test_time}) or pro_db.find({})
             for res in results_cursor:
                 test_case_dict = dict()
                 test_case_dict["_id"] = str(res.get("_id"))
@@ -701,18 +727,41 @@ def get_test_case(pro_name):
             return test_case_list, is_run
 
 
-def get_statist_data(pro_name):
+def get_test_time_list(pro_name):
+    """
+    获取 测试执行时间 列表（倒序排列）
+    :param pro_name:
+    :return:
+    """
+    test_time_list = []
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+        try:
+            pipline = []
+            # 分组查询 ( _id 为必填的分组字段 )
+            pipline.append({"$group": {"_id": "$update_time", "case_num": {"$sum": 1}, "更新时间": {"$first": "$update_time"}}})
+            pipline.append({"$sort": {"更新时间": -1}})
+            statist_result = pro_db.aggregate(pipline, allowDiskUse=True)
+            for index, data in enumerate(statist_result):
+                test_time_list.append(data.get("更新时间"))
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目测试时间列表")
+        finally:
+            return test_time_list
+
+
+def get_statist_data(pro_name, db_tag):
     """
     获取用例统计数据
     （1）总计：依赖、测试
     （2）最新测试结果：成功、失败、错误
         < 注：根据最新测试时间进行统计，排除依赖接口 >
     :param pro_name:
+    :param db_tag:  _case | _result
     :return:
     """
     statist_data = {"depend": 0, "test": 0, "success": 0, "fail": 0, "error": 0}
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
         try:
             depend_results_cursor = pro_db.find({"is_depend": True})
             test_results_cursor = pro_db.find({"is_depend": False})
@@ -1375,7 +1424,7 @@ def generate_report_with_statis_case(pro_name):
         return "当前项目正在运行中"
     else:
         statis_dict = statis_case(pro_name)
-        now = time.strftime("%Y-%m-%d_%H_%M_%S", time.localtime(time.time()))
+        now = time.strftime("%Y_%m_%d-%H_%M_%S", time.localtime(time.time()))
         current_report_name = "[API_report]" + pro_name + "[" + now + "].xls"
         pro_report_path = cfg.REPORTS_DIR + pro_name + "/"
         history_report_path = pro_report_path + "/history/"
@@ -1465,7 +1514,6 @@ if __name__ == "__main__":
     # print(excel_list)
 
     # generate_report_with_statis_case("pro_demo_1")
-    print(get_statist_data("pro_demo_1"))
+    # print(get_statist_data("pro_demo_1"))
 
-
-
+    get_test_time_list("pro_demo_1")

@@ -17,6 +17,7 @@ api 服务接口
 # http://127.0.0.1:7060/api_local/API/index
 @flask_app.route("/API/index", methods=["GET"])
 def show_index():
+    """   跳转 首页   """
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["api_addr"] = cfg.API_ADDR
@@ -28,15 +29,45 @@ def show_index():
 # http://127.0.0.1:7060/api_local/API/get_project_case_info/pro_demo_1
 @flask_app.route("/API/get_project_case_info/<pro_name>", methods=["GET"])
 def get_test_case_info(pro_name):
+    """   跳转 用例页面   """
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
     result_dict["host_list"], result_dict["global_variable_list"], result_dict["cron_status"] = get_config_info(pro_name)
-    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name)
-    result_dict["statist_data"] = get_statist_data(pro_name)
+    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_case")
+    result_dict["statist_data"] = get_statist_data(pro_name, "_case")
     result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
     result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
     return render_template('project.html', tasks=result_dict)
+
+
+# http://127.0.0.1:7060/api_local/API/get_test_report/pro_demo_1
+@flask_app.route("/API/get_test_report/<pro_name>", methods=["GET"])
+def get_test_report(pro_name):
+    """   跳转 测试报告   """
+    result_dict = dict()
+    result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
+    result_dict["pro_name"] = pro_name
+    result_dict["host_list"], result_dict["global_variable_list"], result_dict["cron_status"] = get_config_info(pro_name)
+    result_dict["test_time_list"] = get_test_time_list(pro_name)
+    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_result",
+                                                                         last_test_time=result_dict.get("test_time_list")[0])
+    result_dict["statist_data"] = get_statist_data(pro_name, "_result")
+    return render_template('report.html', tasks=result_dict)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @flask_app.route("/API/import_action/<pro_name>/<import_method>", methods=["POST"])

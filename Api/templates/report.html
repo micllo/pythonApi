@@ -2,19 +2,16 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>API自动化测试用例</title>
+        <title>API自动化测试报告</title>
         <meta charset="utf-8">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         {% set pro_name = tasks['pro_name'] %}
         {% set nginx_api_proxy = tasks['nginx_api_proxy'] %}
         {% set host_list = tasks['host_list'] %}
         {% set global_variable_list = tasks['global_variable_list'] %}
-        {% set cron_status = tasks['cron_status'] %}
         {% set test_case_list = tasks['test_case_list'] %}
+        {% set test_time_list = tasks['test_time_list'] %}
         {% set statist_data = tasks['statist_data'] %}
-        {% set is_run = tasks['is_run'] %}
-        {% set current_report_url = tasks['current_report_url'] %}
-        {% set history_report_path = tasks['history_report_path'] %}
         <link href="/{{nginx_api_proxy}}/static/css/bootstrap.min.css" rel="stylesheet">
         <link href="/{{nginx_api_proxy}}/static/css/sweetalert.min.css" rel="stylesheet"/>
         <link href="/{{nginx_api_proxy}}/static/css/font-awesome.css" rel="stylesheet"/>
@@ -24,162 +21,7 @@
     <body>
         <div id="page-wrapper">
             <div class="header" align="center">
-                <h1 class="page-header"> API&nbsp;自&nbsp;动&nbsp;化&nbsp;测&nbsp;试&nbsp;用&nbsp;例&nbsp;-&nbsp;{{pro_name}}&nbsp;项&nbsp;目 </h1>
-            </div>
-            <div id="page-inner">
-               <div class="row">
-                  <div class="col-lg-12">
-
-                      <div class="col-xs-12 col-md-4" style="margin-left:3%">
-                          <div class="panel panel-success">
-                             <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
-                                 批&nbsp;&nbsp;&nbsp;量&nbsp;&nbsp;&nbsp;导&nbsp;&nbsp;&nbsp;入&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
-                             </div>
-                             <div class="panel-body">
-                                 <form id="import_action_form" class="form-horizontal" enctype="multipart/form-data">
-                                    <div class="col-sm-12">
-                                        <div class="col-sm-7">
-                                            <label style="font-size:15px; margin-left:10%;" class="text-success"> 用 例 文 件 格 式: xls xlsx csv</label>
-                                            <input class="form-control" id="file" type="file" name="file"/>
-                                        </div>
-                                        <div class="col-sm-5" align="center" style="line-height:70px;">
-                                            <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"
-                                                onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'"> 下 载 测 试 用 例 模 板
-                                            </a>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12">
-                                        <div class="col-sm-7" style="margin-top:1%;">
-                                            <select class="form-control" name="import_method" id="import_method" style="text-align: center; text-align-last: center;">
-                                                <option value="">请 选 择 导 入 方 式</option>
-                                                <option value="batch_insert">批 量 新 增</option>
-                                                <option value="all_replace">全 部 替 换</option>
-                                                <option value="batch_insert_and_replace">批 量 新 增 + 替 换</option>
-                                            </select>
-                                        </div>
-                                        {% if is_run %}
-                                            <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%;">
-                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-primary" disabled="disabled"
-                                                        data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
-                                                </button>
-                                            </div>
-{#                                            <div class="col-sm-3" align="center" style="line-height:45px; font-size:15px; margin-left:5%; margin-top:1%;">#}
-{#                                                <span id="exec_result" style="font-size:15px" class="label label-warning">当前项目正在运行中</span>#}
-{#                                            </div>#}
-                                        {% else %}
-                                            <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%;">
-                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-primary"
-                                                        data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
-                                                </button>
-                                            </div>
-{#                                            <div class="col-sm-8" align="center" style="line-height:45px; font-size:15px;margin-left:5%; margin-top:1%;">#}
-{#                                                <span id="exec_result" style="font-size:15px" class="label label-info"></span>#}
-{#                                            </div>#}
-                                        {% endif %}
-                                    </div>
-                                 </form>
-
-                             </div>
-                          </div>
-                      </div>
-
-                      <div class="col-xs-12 col-md-5">
-                          <div class="panel panel-primary">
-                             <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
-                                 相 关 配 置 与 操 作
-                             </div>
-                             <div class="panel-body">
-                                 <div class="col-sm-12">
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button class="btn btn-info btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 配 置 全 局 变 量 </button>
-                                     </div>
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button class="btn btn-info btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
-                                    </div>
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         {% if is_run %}
-                                             <button id="on_line_all" type="button" class="btn btn-info" disabled="disabled"
-                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 上 线 所 有 用 例 </button>
-                                         {% else %}
-                                             <button id="on_line_all" type="button" class="btn btn-info"
-                                                 onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 上 线 所 有 用 例 </button>
-                                         {% endif %}
-                                     </div>
-                                    <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         {% if is_run %}
-                                             <button id="off_line_all" type="button" class="btn btn-info" disabled="disabled"
-                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 下 线 所 有 用 例 </button>
-                                         {% else %}
-                                             <button id="off_line_all" type="button" class="btn btn-info"
-                                                     onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 下 线 所 有 用 例 </button>
-                                         {% endif %}
-                                     </div>
-                                 </div>
-
-                                 <div class="col-sm-12">
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button id="check_global_variable_btn" type="button" class="btn btn-primary" onclick="check_global_variable('{{ pro_name }}','{{ nginx_api_proxy }}')"> 检 测 全 局 变 量 </button>
-                                     </div>
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button id="check_depend_variable_btn" type="button" class="btn btn-primary" onclick="check_depend_variable('{{ pro_name }}','{{ nginx_api_proxy }}')"> 检 测 依 赖 变 量 </button>
-                                     </div>
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button id="stop_status_btn" type="button" class="btn btn-primary" onclick="stop_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 停 止 运 行 状 态</button>
-                                     </div>
-
-                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         {% if cron_status %}
-                                            <button id="cron_status_btn" type="button" class="btn btn-success" onclick="update_cron_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 定 时 已 开 启</button>
-                                         {% else %}
-                                            <button id="cron_status_btn" type="button" class="btn btn-danger" onclick="update_cron_status('{{ pro_name }}','{{ nginx_api_proxy }}')"> 定 时 已 关 闭</button>
-                                         {% endif %}
-                                     </div>
-
-                                 </div>
-
-                             </div>
-                          </div>
-                      </div>
-
-                      <div class="col-xs-12 col-md-2">
-                          <div class="panel panel-warning">
-                             <div class="panel-heading" align="center" style="font-size:18px; font-weight: bold;">
-                                 查 看 测 试 结 果 Excel
-                             </div>
-                             <div class="panel-body">
-                                 <div class="col-sm-12">
-                                     <div class="col-sm-8" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
-                                         <a id="history_report_url" onclick="window.open('{{history_report_path}}')"
-                                                onMouseOver="this.style.cursor='hand'; this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'" class="text-warning"> 历 史 结 果
-                                         </a>
-                                     </div>
-                                 </div>
-                                 <div class="col-sm-12">
-                                     {% if is_run %}
-                                         <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
-                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-info"  disabled="disabled"
-                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
-                                             </button>
-                                         </div>
-                                     {% else %}
-                                         <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
-                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-info"
-                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
-                                             </button>
-                                         </div>
-                                     {% endif %}
-                                 </div>
-                             </div>
-
-
-                          </div>
-                      </div>
-
-                  </div>
-               </div>
+                <h1 class="page-header"> API&nbsp;自&nbsp;动&nbsp;化&nbsp;测&nbsp;试&nbsp;报&nbsp;告&nbsp;-&nbsp;{{pro_name}}&nbsp;项&nbsp;目 </h1>
             </div>
 
             <div id="page-inner2">
@@ -234,8 +76,9 @@
                                                     <span class="input-group-addon">最新执行时间：</span>
                                                     <div class="fg-line">
                                                         <select class="form-control" id="relate_run_time" name="relate_run_time" style="text-align: center; text-align-last: center;">
-                                                            <option value="False">不关联</option>
-                                                            <option value="True">关联</option>
+                                                            {% for test_time in test_time_list %}
+                                                                <option value="{{ test_time }}">{{ test_time }}</option>
+                                                            {% endfor %}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -558,236 +401,6 @@
             </div>
         </div>
 
-
-        <!-- 新增用例窗口 -->
-        <div id="add_case_form" class="modal fade" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-
-                    <div class="modal-header">
-                        <button class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
-                        <div class="modal-title">
-                            <h2 class="text-center">新增测试用例</h2>
-                        </div>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="text-info">接口名称：<font color="#DC143C">(必填)</font>
-                                <button type="button" class="btn btn-primary btn-xs" style="margin-left:50px" onclick="get_current_case('{{ pro_name }}','{{ nginx_api_proxy }}')">获取已有用例</button>
-                                <button type="button" class="btn btn-info btn-xs" style="margin-left:30px" onclick="clear_current_case()">清除</button>
-                                <span id="get_current_case_info" style="margin-left:30px;font-size:12px;"></span>
-                            </label>
-                            <input class="form-control" type="text" id="interface_name_add"> <!-- placeholder="接口名称" -->
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">接口地址：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_url_add">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">请求方式：<font color="#DC143C">(必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="request_method_add">
-                                    <option value=""></option>
-                                    <option value="GET">GET</option>
-                                    <option value="POST">POST</option>
-                                    <option value="PUT">PUT</option>
-                                    <option value="DELETE">DELETE</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">请求头文件：<font color="#796400">eg: &nbsp;{"Content-Type": "application/json"} 或 x-www-form-urlencoded</font></label>
-                            <input class="form-control" type="text" id="request_header_add">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">请求参数：<font color="#796400">eg: &nbsp;?name=测试&token=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
-                            <input class="form-control" type="text" id="request_params_add">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">验证模式：<font color="#DC143C">(测试必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="verify_mode_add">
-                                    <option value=""></option>
-                                    <option value="1">仅验证关键字段</option>
-                                    <option value="2">同时验证关键字段和验证响应参数列表</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;msg,code</font></label>
-                            <input class="form-control" type="text" id="compare_core_field_name_list_add">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;请求成功,31200</font></label>
-                            <input class="form-control" type="text" id="expect_core_field_value_list_add">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="text-info">期望的响应字段列表：</font><font color="#796400">eg: &nbsp;status,msg,code</font></label>
-                            <input class="form-control" type="text" id="expect_field_name_list_add">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">是否为依赖接口：<font color="#DC143C">(必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="is_depend_add">
-                                    <option value=""></option>
-                                    <option value="False">否</option>
-                                    <option value="True">是</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#796400">eg: &nbsp;token,sms_code</font></label>
-                            <input class="form-control" type="text" id="depend_field_name_list_add">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">依赖等级：<font color="#DC143C">(依赖必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="depend_level_add">
-                                    <option value=""></option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">用例状态：</label>
-                            <div class="fg-line">
-                                <select class="form-control" id="case_status_add">
-                                    <option value="False">下线</option>
-                                    <option value="True">上线</option>
-                                </select>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="save" onclick="add_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><span class="glyphicon glyphicon-floppy-disk"></span>保存</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 编辑用例窗口 -->
-        <div id="edit_case_form" class="modal fade" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-
-                    <div class="modal-header">
-                        <button class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
-                        <div class="modal-title">
-                            <h2 class="text-center">编辑测试用例</h2>
-                        </div>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="text-info">ID：</label>
-                            <label id="case_id_edit"></label>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">接口名称：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_name_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">接口地址：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="interface_url_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">请求方式：<font color="#DC143C">(必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="request_method_edit">
-                                    <option value=""></option>
-                                    <option value="GET">GET</option>
-                                    <option value="POST">POST</option>
-                                    <option value="PUT">PUT</option>
-                                    <option value="DELETE">DELETE</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">请求头文件：<font color="#796400">eg: &nbsp;{"Content-Type": "application/json"} 或 x-www-form-urlencoded</font></label>
-                            <input class="form-control" type="text" id="request_header_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">请求参数：<font color="#796400">eg: &nbsp;?name=测试&age=30&nbsp;&nbsp;或&nbsp;&nbsp;{"name":"测试","age":30}</font></label>
-                            <input class="form-control" type="text" id="request_params_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">验证模式：<font color="#DC143C">(测试必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="verify_mode_edit">
-                                    <option value=""></option>
-                                    <option value="1">仅验证关键字段</option>
-                                    <option value="2">同时验证关键字段和验证响应参数列表</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">待比较关键字段名列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;msg,code</font></label>
-                            <input class="form-control" type="text" id="compare_core_field_name_list_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">期望的关键字段值列表：<font color="#DC143C">(测试必填)&nbsp;&nbsp;</font><font color="#796400">eg：&nbsp;请求成功,31200</font></label>
-                            <input class="form-control" type="text" id="expect_core_field_value_list_edit">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="text-info">期望的响应字段列表：</font><font color="#796400">eg: &nbsp;status,msg,code</font></label>
-                            <input class="form-control" type="text" id="expect_field_name_list_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">当 前 </label>
-                            <label id="is_depend_edit" style="color: #DC143C; font-weight: bold;"></label>
-                            <label class="text-info"> 依 赖 接 口 </label>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">依赖字段名列表：<font color="#DC143C">(依赖必填)&nbsp;&nbsp;</font></font><font color="#796400">eg: &nbsp;token,sms_code</font></label>
-                            <input class="form-control" type="text" id="depend_field_name_list_edit">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">依赖等级：<font color="#DC143C">(依赖必选)</font></label>
-                            <div class="fg-line">
-                                <select class="form-control" id="depend_level_edit">
-                                    <option value=""></option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-info">用例状态：</label>
-                            <div class="fg-line">
-                                <select class="form-control" id="case_status_edit">
-                                    <option value="False">下线</option>
-                                    <option value="True">上线</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="edit" onclick="edit_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><span class="glyphicon glyphicon-floppy-disk"></span>更新</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
         <!-- 显示测依赖口响应信息 -->
         <div id="show_depend_response_info" class="modal fade" tabindex="-1">
             <div class="modal-dialog">
@@ -1003,15 +616,6 @@
         <script type="text/JavaScript">
             $(function (){
                 $("[data-toggle='popover']").popover();
-            });
-        </script>
-
-        <!--若当前有用例在运行，则实时更新进度信息-->
-        <script language="javascript" type="text/javascript">
-            $(document).ready(function () {
-                if('{{is_run}}' == 'True'){
-                    background_polling('{{pro_name}}', '{{nginx_api_proxy}}');
-                }
             });
         </script>
 

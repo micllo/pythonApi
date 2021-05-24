@@ -116,9 +116,10 @@ sudo nginx -s reload
 
 4.访问地址（ uwsgi 启动 ）：
 （1）用例模板 -> http://localhost:7060/api_case_tmpl
-（2）测试报告 -> http://localhost:7060/test_report_local/<pro_name>/[API_report]<pro_name>.xls
+（2）Excel报告 -> http://localhost:7060/test_report_local/<pro_name>/[API_report]<pro_name>.xls
 （3）页面首页 -> http://localhost:7060/api_local/API/index
-（4）接口地址 -> http://localhost:7060/api_local/API/xxxxxxx
+（4）测试报告 -> http://localhost:7060/api_local/API/get_test_report/<pro_name>
+（5）接口地址 -> http://localhost:7060/api_local/API/xxxxxxx
    （ 备注：uwgsi 启动 7071 端口、nginx 配置 7060 反向代理 7071 ）
 
 5.本地相关服务的启动操作（ gulpfile.js 文件 ）
