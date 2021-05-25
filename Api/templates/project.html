@@ -256,6 +256,12 @@
                                                 </div>
                                             </div>
 
+                                            <div class="col-sm-1" align="center" style="margin-left:70px">
+                                                 <a id="history_report_url" onclick="window.open('/{{ nginx_api_proxy }}/API/get_test_report/{{ pro_name }}')"
+                                                        onMouseOver="this.style.cursor='hand'; this.style.color='#FF0000'"
+                                                        onMouseOut="this.style.color='#006699'" class="text-warning"> 测 试 报 告
+                                                 </a>
+                                            </div>
                                         </div>
 
                                         <div class="row" role="form" style="margin-top:10px">
@@ -293,8 +299,8 @@
                                             {# 搜索 按钮 #}
                                             <div class="col-sm-1" align="center">
                                                 <div class="input-group" id="search_btn">
-                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>#}
-                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"> 搜 索 </button>
+                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}', '_case')"><i class="fa fa-search"></i></button>#}
+                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}', '_case')"> 搜 索 </button>
                                                 </div>
                                             </div>
                                             {# 搜索 条数 #}
@@ -365,9 +371,9 @@
                                                     <tr>
                                                         {# 接口名称（测试信息） #}
                                                         {% if is_depend %}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#BB5E00">(依赖)</font></td>
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#BB5E00">(依赖)</font></td>
                                                         {% else %}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#show_test_response_info">{{ interface_name }}</td>
+                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#show_test_response_info">{{ interface_name }}</td>
                                                         {% endif %}
 
                                                         {# 请求方式（请求头文件）#}
@@ -430,10 +436,10 @@
                                                         {# 操作 #}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
                                                             {% if is_run %}
-                                                                <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#edit_case_form" disabled="disabled"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
+                                                                <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#edit_case_form" disabled="disabled"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
                                                                 <button class="btn btn-default" type="button" onclick="del_case('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" disabled="disabled"><i class="fa fa-trash-o fa-lg" style="color: #ff0000"></i></button>
                                                             {% else %}
-                                                                <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')" data-toggle="modal" data-target="#edit_case_form"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
+                                                                <button class="btn btn-default" type="button" onclick="fill_edit_frame('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#edit_case_form"><i class="fa fa-edit" style="color: #6A5ACD"></i></button>
                                                                 <button class="btn btn-default" type="button" onclick="del_case('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}')"><i class="fa fa-trash-o fa-lg" style="color: #ff0000"></i></button>
                                                             {% endif %}
 

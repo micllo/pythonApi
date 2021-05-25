@@ -215,10 +215,10 @@ if __name__ == "__main__":
     # print(os.path.split(os.path.realpath(__file__))[0].split('C'))
     # print(os.path.split(os.path.realpath(__file__))[0].split('C')[0])
 
-    # host = "http://127.0.0.11:7060/api_local/test"
-    host = "http://www.baidu.com"
+    host = "http://127.0.0.11:7060/api_local/test"
+    # host = "http://www.baidu.com"
     # host = "http://www.google.com.hk"
-    # is_pass = ping_host(host, 5)
+    is_pass = ping_host(host, 5)
     # print(is_pass)
 
 

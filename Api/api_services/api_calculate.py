@@ -14,6 +14,7 @@ from Common.verify_interface import VerifyInterface
 from Common.acquire_depend import AcquireDependField
 from Tools.decorator_tools import async
 import xlwt, pymongo
+from dateutil import parser
 # sys.path.append("./")
 
 
@@ -243,7 +244,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     # 5.将项目'运行状态'设置为停止
     set_pro_run_status(pro_name=pro_name, run_status=False)
 
-    # 6.将测试结果保存入 _result 数据库（仅上线用例）
+    # 6.将测试结果数据保存入 _result 数据库（仅上线用例）
     save_test_result(pro_name)
 
     # 7.若存在'失败'或'错误'则发送钉钉
@@ -255,19 +256,21 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
 
 def save_test_result(pro_name):
     """
-    将测试结果保存入 _result 数据库（仅上线用例）
+    将测试结果数据保存入 _result 数据库（仅上线用例）
     :return:
     """
-    online_case_cursor = None
+    last_update_time_case_cursor = None
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
         try:
-            online_case_cursor = pro_db.find({"case_status": True}, {"_id": 0})
+            # 获取最新更新时间
+            last_update_time = pro_db.find().sort("update_time", -1)[0].get("update_time")
+            last_update_time_case_cursor = pro_db.find({"update_time": last_update_time}, {"_id": 0})
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目所有是上线的用例")
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
         try:
-            pro_db.insert_many(online_case_cursor)
+            pro_db.insert_many(last_update_time_case_cursor)
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="新增'" + pro_name + "'项目所有是上线的用例")
 
@@ -673,9 +676,11 @@ def get_test_case(pro_name, db_tag, last_test_time=None):
     :param db_tag:  _case | _result
 
       < 备 注 >
+
       1.用例页面 - 页面显示的上次执行时间  exec_time
       （1）若 update_time - create_time > 0 则 exec_time = update_time
       （2）若 update_time - create_time = 0 则 exec_time = "--------"
+
       2.报告页面 - 默认显示最新一次测试时间的用例
 
     """
@@ -749,24 +754,23 @@ def get_test_time_list(pro_name):
             return test_time_list
 
 
-def get_statist_data(pro_name, db_tag):
+def get_statist_data_for_case(pro_name):
     """
-    获取用例统计数据
+    获取用例统计数据（ _case 表 ）
     （1）总计：依赖、测试
     （2）最新测试结果：成功、失败、错误
         < 注：根据最新测试时间进行统计，排除依赖接口 >
     :param pro_name:
-    :param db_tag:  _case | _result
     :return:
     """
     statist_data = {"depend": 0, "test": 0, "success": 0, "fail": 0, "error": 0}
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
         try:
-            depend_results_cursor = pro_db.find({"is_depend": True})
-            test_results_cursor = pro_db.find({"is_depend": False})
-            statist_data["depend"] = len(list(depend_results_cursor))
-            statist_data["test"] = len(list(test_results_cursor))
+            depend_cursor = pro_db.find({"is_depend": True})
+            test_cursor = pro_db.find({"is_depend": False})
+            statist_data["depend"] = len(list(depend_cursor))
+            statist_data["test"] = len(list(test_cursor))
 
             # 按照"update_time"降序排列后，取第一条记录的"update_time"值
             # new_update_time = pro_db.find().sort("update_time", -1)[0].get("update_time")
@@ -795,16 +799,48 @@ def get_statist_data(pro_name, db_tag):
                 statist_data["fail"] = "fail" in res and statist_data["fail"] + 1 or statist_data["fail"]
                 statist_data["error"] = "error" in res and statist_data["error"] + 1 or statist_data["error"]
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据")
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据(_case)")
         finally:
             return statist_data
 
 
-def get_case_search_result(request_args, pro_name):
+def get_statist_data_for_result(pro_name, test_time=None):
+    """
+    获取用例统计数据（ _result ）
+    （1）总计：依赖、测试
+    （2）当前测试结果：成功、失败、错误
+         报告页面 - 默认显示最新一次测试时间的用例
+         报告搜索 - 根据更新时间搜索
+    :param pro_name:
+    :return:
+    """
+    statist_data = {"depend": 0, "test": 0, "success": 0, "fail": 0, "error": 0}
+
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+        try:
+            # 转换 mongodb 时间格式
+            test_time = isinstance(test_time, str) and parser.parse(test_time) or test_time
+            depend_cursor = pro_db.find({"is_depend": True, "update_time": test_time})
+            test_cursor = pro_db.find({"is_depend": False, "update_time": test_time})
+            statist_data["depend"] = len(list(depend_cursor))
+            for data in test_cursor:
+                statist_data["test"] += 1
+                res = data.get("test_result")
+                statist_data["success"] = "success" in res and statist_data["success"] + 1 or statist_data["success"]
+                statist_data["fail"] = "fail" in res and statist_data["fail"] + 1 or statist_data["fail"]
+                statist_data["error"] = "error" in res and statist_data["error"] + 1 or statist_data["error"]
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据(_result)")
+        finally:
+            return statist_data
+
+
+def get_case_search_result(request_args, pro_name, db_tag):
     """
     获取用例搜索结果
     :param request_args: GET请求参数
     :param pro_name:
+    :param db_tag:  _case | _result
     :return:
     【 搜 索 用 例 的 排 序 】
     1.上线的排在前面
@@ -819,6 +855,7 @@ def get_case_search_result(request_args, pro_name):
     test_result = request_args.get("test_result", "").strip()
     is_depend = request_args.get("is_depend", "").strip()
     relate_run_time = request_args.get("relate_run_time", "").strip()
+    test_time = request_args.get("test_time", "").strip()
     if interface_name:
         search_pattern["interface_name"] = re.compile(interface_name)
     if interface_url:
@@ -832,12 +869,15 @@ def get_case_search_result(request_args, pro_name):
     if is_depend:
         search_pattern["is_depend"] = is_depend in ["true", "TRUE", "True"] and True or False
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
         try:
-            # 判断是否需要获取最新执行时间加入搜索条件
-            relate_run_time = relate_run_time in ["true", "TRUE", "True"] and True or False
-            if relate_run_time:
-                search_pattern["update_time"] = pro_db.find().sort("update_time", -1)[0].get("update_time")
+            if db_tag == "_case":
+                # 判断是否需要获取最新执行时间加入搜索条件
+                relate_run_time = relate_run_time in ["true", "TRUE", "True"] and True or False
+                if relate_run_time:
+                    search_pattern["update_time"] = pro_db.find().sort("update_time", -1)[0].get("update_time")
+            else:  # "_result"
+                search_pattern["update_time"] = parser.parse(test_time)
             # 判断是否存在搜索内容
             results = search_pattern and pro_db.find(search_pattern) or pro_db.find({})
         except Exception as e:
@@ -881,6 +921,11 @@ def get_case_search_result(request_args, pro_name):
                 off_line_list.append(test_case_dict)
         on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
         test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
+
+        for test_case in test_case_list:
+            log.info(test_case.get("_id", "无"))
+            log.info("\n")
+        log.info("==========================================")
     return test_case_list, case_num, pro_is_running(pro_name)
 
 
@@ -1295,11 +1340,12 @@ def get_case_by_name(request_json, pro_name):
     return exist_case_dict
 
 
-def get_case_by_id(request_args, pro_name):
+def get_case_by_id(request_args, pro_name, db_tag):
     """
     通过id获取用例（填充编辑弹层）
     :param request_args:
     :param pro_name:
+    :param db_tag:  _case | _result
     :return:
       【 字 段 格 式 】
       01.接口名称：interface_name（ 必填 ）
@@ -1331,7 +1377,7 @@ def get_case_by_id(request_args, pro_name):
     """
     _id = request_args.get("_id", "").strip()
     query_dict = {"_id": ObjectId(_id)}
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
         try:
             test_case_dict = pro_db.find_one(query_dict)
         except Exception as e:

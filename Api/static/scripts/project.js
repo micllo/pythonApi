@@ -372,7 +372,7 @@ function update_cron_status(pro_name, nginx_api_proxy) {
 /**
  * 搜索用例
  */
-function search_case(pro_name, nginx_api_proxy) {
+function search_case(pro_name, nginx_api_proxy, db_tag) {
 
     // 隐藏之前已经弹出的气泡弹层
     $("[data-toggle='popover']").popover('hide');
@@ -391,7 +391,7 @@ function search_case(pro_name, nginx_api_proxy) {
         "&relate_run_time=" + relate_run_time
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "?" + get_pramas
+    var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "/" + db_tag + "?" + get_pramas
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case_list = response_info.test_case_list;
@@ -428,9 +428,9 @@ function search_case(pro_name, nginx_api_proxy) {
 
             // 接口名称（测试信息）
             if(is_depend){
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#BB5E00\"> (依赖) </font></td>";
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#BB5E00\"> (依赖) </font></td>";
             }else{
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#show_test_response_info\">" + interface_name + "</td>";
+                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#show_test_response_info\">" + interface_name + "</td>";
             }
 
             // 请求方式（请求头文件）
@@ -488,16 +488,16 @@ function search_case(pro_name, nginx_api_proxy) {
                     tr_html += "<span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-info\"></span></td>";
                 }
             }
-            // 上次执行时间（实际的响应字段列表）
+            // 上次执行时间
             tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + exec_time + "</td>";
 
             // 操作
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
             if(is_run){
-                tr_html += "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\" disabled=\"disabled\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
+                tr_html += "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#edit_case_form\" disabled=\"disabled\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
                            "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" disabled=\"disabled\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>";
             }else{
-                tr_html += "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
+                tr_html += "<button class=\"btn btn-default\" type=\"button\" onclick=\"fill_edit_frame('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#edit_case_form\"><i class=\"fa fa-edit\" style=\"color: #6A5ACD\"></i></button>&nbsp;" +
                            "<button class=\"btn btn-default\" type=\"button\" onclick=\"del_case('"+ pro_name + "','" + nginx_api_proxy + "','" + _id + "')\"><i class=\"fa fa-trash-o fa-lg\" style=\"color: #ff0000\"></i></button>";
             }
             tr_html += "</td></tr>";
@@ -725,10 +725,10 @@ function get_current_case(pro_name, nginx_api_proxy) {
 /**
  *  填充编辑弹框（ 编辑之前 ）
  */
-function fill_edit_frame(pro_name, nginx_api_proxy, _id) {
+function fill_edit_frame(pro_name, nginx_api_proxy, _id, db_tag) {
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "?_id=" + _id
+    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "/" + db_tag + "?_id=" + _id
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case = response_info.test_case
@@ -831,10 +831,10 @@ function edit_case(pro_name, nginx_api_proxy) {
 /**
  *  显示接口响应信息
  */
-function show_response_info(pro_name, nginx_api_proxy, _id) {
+function show_response_info(pro_name, nginx_api_proxy, _id, db_tag) {
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "?_id=" + _id
+    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "/" + db_tag + "?_id=" + _id
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case = response_info.test_case

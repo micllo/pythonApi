@@ -35,7 +35,7 @@ def get_test_case_info(pro_name):
     result_dict["pro_name"] = pro_name
     result_dict["host_list"], result_dict["global_variable_list"], result_dict["cron_status"] = get_config_info(pro_name)
     result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_case")
-    result_dict["statist_data"] = get_statist_data(pro_name, "_case")
+    result_dict["statist_data"] = get_statist_data_for_case(pro_name)
     result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
     result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
     return render_template('project.html', tasks=result_dict)
@@ -48,26 +48,27 @@ def get_test_report(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
+    test_time_list = get_test_time_list(pro_name)
+    result_dict["test_time_list"] = test_time_list
     result_dict["host_list"], result_dict["global_variable_list"], result_dict["cron_status"] = get_config_info(pro_name)
-    result_dict["test_time_list"] = get_test_time_list(pro_name)
-    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_result",
-                                                                         last_test_time=result_dict.get("test_time_list")[0])
-    result_dict["statist_data"] = get_statist_data(pro_name, "_result")
+    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_result", last_test_time=test_time_list[0])
+    result_dict["statist_data"] = get_statist_data_for_result(pro_name, test_time_list[0])
     return render_template('report.html', tasks=result_dict)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+@flask_app.route("/API/query_statist_data/<pro_name>", methods=["GET"])
+def query_statist_data(pro_name):
+    """
+    获取统计数据
+    :param pro_name
+    :param
+    :return:
+    """
+    res_info = dict()
+    params = request.args
+    test_time = params.get("test_time", "")  # str
+    res_info["statist_data"] = get_statist_data_for_result(pro_name, test_time)
+    return json.dumps(res_info, ensure_ascii=False)
 
 
 @flask_app.route("/API/import_action/<pro_name>/<import_method>", methods=["POST"])
@@ -194,15 +195,17 @@ def stop_run_status(pro_name):
     return json.dumps(res_info, ensure_ascii=False)
 
 
-@flask_app.route("/API/search_case/<pro_name>", methods=["GET"])
-def search_case(pro_name):
+@flask_app.route("/API/search_case/<pro_name>/<db_tag>", methods=["GET"])
+def search_case(pro_name, db_tag):
     """
     搜到用例
     :param pro_name
+    :param db_tag:  _case | _result
     :return:
     """
     res_info = dict()
-    res_info["test_case_list"], res_info["case_num"], res_info["is_run"] = get_case_search_result(request_args=request.args, pro_name=pro_name)
+    res_info["test_case_list"], res_info["case_num"], res_info["is_run"] = \
+        get_case_search_result(request_args=request.args, pro_name=pro_name, db_tag=db_tag)
     return json.dumps(res_info, ensure_ascii=False)
 
 
@@ -291,15 +294,16 @@ def get_current_case(pro_name):
     return json.dumps(res_info, ensure_ascii=False)
 
 
-@flask_app.route("/API/get_case_by_id/<pro_name>", methods=["GET"])
-def get_case(pro_name):
+@flask_app.route("/API/get_case_by_id/<pro_name>/<db_tag>", methods=["GET"])
+def get_case(pro_name, db_tag):
     """
     通过id获取用例（填充编辑弹层）
     :param pro_name
+    :param db_tag:  _case | _result
     :return:
     """
     res_info = dict()
-    res_info["test_case"] = get_case_by_id(request_args=request.args, pro_name=pro_name)
+    res_info["test_case"] = get_case_by_id(request_args=request.args, pro_name=pro_name, db_tag=db_tag)
     return json.dumps(res_info, ensure_ascii=False)
 
 
