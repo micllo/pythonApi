@@ -211,8 +211,8 @@ class VerifyInterface(object):
                             "json" in request_header.get("content-type", ""):
                         request_params = json.dumps(request_params)
         except Exception as e:
-            log.error("\n===============\n" + str(e) + "\n================\n")
             error_msg = "'请求参数'或'请求头文件'格式有误"
+            log.error("\n===============\n" + str(e) + " -> " + error_msg + "\n================\n")
         return error_msg, files, request_params, request_header
 
     # try_func = retry_request(try_limit=3,interval_time=1,send_dd=True)

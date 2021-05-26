@@ -172,16 +172,18 @@ pip3 install -v flask==0.12 -i http://mirrors.aliyun.com/pypi/simple/ --trusted-
 
 6.访问地址（ Docker 内部 ）：
 （1）用例模板 -> http://127.0.0.1:80/api_case_tmpl
-（2）测试报告 -> http://127.0.0.1:80/test_report/<pro_name>/[API_report]<pro_name>.xls
+（2）Excel报告 -> http://127.0.0.1:80/test_report/<pro_name>/[API_report]<pro_name>.xls
 （3）页面首页 -> http://127.0.0.1:80/api/API/index
-（4）接口地址 -> http://127.0.0.1:80/api/API/xxxxxxx
+（4）测试报告 -> http://127.0.0.1:80/api_local/API/get_test_report/<pro_name>
+（5）接口地址 -> http://127.0.0.1:80/api/API/xxxxxxx
     ( 备注：uwgsi 启动 8081 端口、nginx 配置 80 反向代理 8081 )
 
 7.访问地址（ 外部访问 ）：
 （1）用例模板 -> http://192.168.31.9:1180/api_case_tmpl
-（2）测试报告 -> http://192.168.31.9:1180/test_report/<pro_name>/[API_report]<pro_name>.xls
+（2）Excel报告 -> http://192.168.31.9:1180/test_report/<pro_name>/[API_report]<pro_name>.xls
 （3）页面首页 -> http://192.168.31.9:1180/api/API/index
-（4）接口地址 -> http://192.168.31.9:1180/api/API/xxxxxxx
+（4）测试报告 -> http://192.168.31.9:1180/api_local/API/get_test_report/<pro_name>
+（5）接口地址 -> http://192.168.31.9:1180/api/API/xxxxxxx
     ( 备注：docker 配置 1180 映射 80 )
 
 8.关于部署

@@ -9,6 +9,8 @@
         {% set nginx_api_proxy = tasks['nginx_api_proxy'] %}
         {% set host_list = tasks['host_list'] %}
         {% set global_variable_list = tasks['global_variable_list'] %}
+        {% set host = tasks['host'] %}
+        {% set global_variable_dict = tasks['global_variable_dict'] %}
         {% set test_case_list = tasks['test_case_list'] %}
         {% set test_time_list = tasks['test_time_list'] %}
         {% set statist_data = tasks['statist_data'] %}
@@ -121,12 +123,20 @@
                                             {# 搜索 按钮 #}
                                             <div class="col-sm-1" align="center">
                                                 <div class="input-group" id="search_btn">
-                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}', '_result')"><i class="fa fa-search"></i></button>#}
-                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}', '_result')"> 搜 索 </button>
+                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>#}
+                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"> 搜 索 </button>
                                                 </div>
                                             </div>
                                             {# 搜索 条数 #}
                                             <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:20px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
+
+                                            <div class="col-sm-1" align="center" style="margin-left:70px">
+                                                <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#show_host"> 查看当前 HOST </button>
+                                            </div>
+
+                                            <div class="col-sm-1" align="center" style="margin-left:70px">
+                                                <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#show_global_variable"> 查看当前 全局变量 </button>
+                                            </div>
 
                                         </div>
 
@@ -259,8 +269,8 @@
             <a href="#"><span class="glyphicon glyphicon-eject" style = "font-size:30px;" aria-hidden="true"></span></a>
         </div>
 
-        <!-- 配置HOST窗口 -->
-        <div id="add_host_form" class="modal fade" tabindex="-1">
+        <!-- 查看当前 HOST 模态框-->
+        <div id="show_host" class="modal fade" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
 
@@ -269,45 +279,21 @@
                             <span>&times;</span>
                         </button>
                         <div class="modal-title">
-                            <h2 class="text-center">配 置 HOST</h2>
+                            <h3 class="text-center">当 前 HOST</h3>
                         </div>
                     </div>
 
                     <div class="modal-body">
-                        {% for host_dict in host_list %}
-                            <div class="form-group" style="margin-top:5px">
-                                <label style="margin-left:5px;font-size:20px;" class="text-info"><font color="#5B00AE">{{ host_dict["host_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ host_dict["host_url"] }}</label>
-                                <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ host_dict["config_id"] }}')">
-                                    <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
-                                </button>
-                            </div>
-                        {% endfor %}
-                        <div class="form-group" style="margin-top:30px">
-                            <label>host_name：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="host_name_config">
+                        <div class="text-center" style="margin-top:5px">
+                            <label id="current_host" style="margin-left:5px;font-size:20px;" class="text-info"><font color="#5B00AE">{{ host }} </font></label>
                         </div>
-                        <div class="form-group">
-                            <label>host_value：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="host_value_config">
-                        </div>
-                        <div class="form-group">
-                            <label><font color="#DC143C"> 目前支持测试的请求正文格式（Body） </font></label>
-                            <label><font color="#DC143C"> 1. 表单格式：请求头 {"Content-Type":"application/x-www-form-urlencoded"}</font></label>
-                            <label><font color="#DC143C"> 2. Json格式：请求头 {"Content-Type":"application/json"}</font></label>
-                            <label><font color="#DC143C"> 3. 文件格式：请求头 不能含有"Content-Type"字段，请求参数里面必须要包含"file"字段 </font></label>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="config_host" onclick="config_variable('{{ pro_name }}','{{ nginx_api_proxy }}', 'host')"></span> 新增 or 更新 </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 配置全局变量窗口 -->
-        <div id="add_global_variable_form" class="modal fade" tabindex="-1">
+        <!-- 查看当前 全局变量 模态框 -->
+        <div id="show_global_variable" class="modal fade" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
 
@@ -316,35 +302,16 @@
                             <span>&times;</span>
                         </button>
                         <div class="modal-title">
-                            <h2 class="text-center">配 置 全 局 变 量</h2>
+                            <h2 class="text-center">当 前 全 局 变 量</h2>
                         </div>
                     </div>
 
-                    <div class="modal-body">
-                        {% for global_variable_dict in global_variable_list %}
+                    <div id="current_global_variable" class="modal-body">
+                        {% for key, value in global_variable_dict.items() %}
                             <div class="form-group" style="margin-top:5px">
-                                <label style="margin-left:5px;font-size:20px;" class="text-info"><font color="#5B00AE">{{ global_variable_dict["global_variable_name"] }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ global_variable_dict["global_variable_value"] }}</label>
-                                <button style="margin-left:10px" class="btn" type="button" onclick="del_config('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ global_variable_dict["config_id"] }}')">
-                                    <i class="fa fa-trash-o fa-lg" style="color:#ff0000;margin-bottom:10px;"></i>
-                                </button>
+                                <label style="margin-left:5px;font-size:20px;" class="text-info"><font color="#5B00AE">{{ key }}</font>&nbsp;&nbsp;->&nbsp;&nbsp;{{ value }}</label>
                             </div>
                         {% endfor %}
-                        <div class="form-group" style="margin-top:30px">
-                            <label>global_variable_name：<font color="#DC143C">(必填)</font><font color="#B8860B">  调 用 时 使 用 < > 标 记 </font></label>
-                            <input class="form-control" type="text" id="global_variable_name_config">
-                        </div>
-                        <div class="form-group">
-                            <label>global_variable_value：<font color="#DC143C">(必填)</font></label>
-                            <input class="form-control" type="text" id="global_variable_value_config">
-                        </div>
-                        <div class="form-group">
-                            <label><font color="#DC143C"> 注意：全局变量 在 { } 中 使用时需要带上双引号，比如 "< test >" ，同理 依赖变量 也是如此 </font></label>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>关闭</button>
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="config_global_variable" onclick="config_variable('{{ pro_name }}','{{ nginx_api_proxy }}','global_variable')"></span> 新增 or 更新 </button>
                     </div>
                 </div>
             </div>

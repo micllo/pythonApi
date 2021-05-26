@@ -65,18 +65,12 @@
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
-{#                                            <div class="col-sm-3" align="center" style="line-height:45px; font-size:15px; margin-left:5%; margin-top:1%;">#}
-{#                                                <span id="exec_result" style="font-size:15px" class="label label-warning">当前项目正在运行中</span>#}
-{#                                            </div>#}
                                         {% else %}
                                             <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%;">
                                                 <button id="import_btn" name="import_btn" type="button" class="btn btn-primary"
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
-{#                                            <div class="col-sm-8" align="center" style="line-height:45px; font-size:15px;margin-left:5%; margin-top:1%;">#}
-{#                                                <span id="exec_result" style="font-size:15px" class="label label-info"></span>#}
-{#                                            </div>#}
                                         {% endif %}
                                     </div>
                                  </form>
@@ -299,8 +293,8 @@
                                             {# 搜索 按钮 #}
                                             <div class="col-sm-1" align="center">
                                                 <div class="input-group" id="search_btn">
-                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}', '_case')"><i class="fa fa-search"></i></button>#}
-                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}', '_case')"> 搜 索 </button>
+                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>#}
+                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"> 搜 索 </button>
                                                 </div>
                                             </div>
                                             {# 搜索 条数 #}

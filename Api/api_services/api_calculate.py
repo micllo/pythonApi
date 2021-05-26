@@ -244,8 +244,8 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     # 5.将项目'运行状态'设置为停止
     set_pro_run_status(pro_name=pro_name, run_status=False)
 
-    # 6.将测试结果数据保存入 _result 数据库（仅上线用例）
-    save_test_result(pro_name)
+    # 6.将测试结果数据保存入 _result 数据库（最新一次运行时间的用例）
+    save_test_result(pro_name, host, global_variable_dict)
 
     # 7.若存在'失败'或'错误'则发送钉钉
     if fail_list:
@@ -254,23 +254,29 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
         api_monitor_send_DD(pro_name=pro_name, wrong_type="error")
 
 
-def save_test_result(pro_name):
+def save_test_result(pro_name, host, global_variable_dict):
     """
-    将测试结果数据保存入 _result 数据库（仅上线用例）
+    将测试结果数据保存入 _result 数据库（最新一次运行时间的用例）
+    （ 包括 host 和 全局变量 ）
     :return:
     """
-    last_update_time_case_cursor = None
+    last_update_time_case_list = []
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
         try:
             # 获取最新更新时间
             last_update_time = pro_db.find().sort("update_time", -1)[0].get("update_time")
             last_update_time_case_cursor = pro_db.find({"update_time": last_update_time}, {"_id": 0})
+            # 将查询结果转成list，然后添加 host 和 全局变量字典
+            last_update_time_case_list = list(last_update_time_case_cursor)
+            for case in last_update_time_case_list:
+                case["host"] = host
+                case["global_variable_dict"] = global_variable_dict
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目所有是上线的用例")
 
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
         try:
-            pro_db.insert_many(last_update_time_case_cursor)
+            pro_db.insert_many(last_update_time_case_list)
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="新增'" + pro_name + "'项目所有是上线的用例")
 
@@ -657,6 +663,25 @@ def get_config_info(pro_name):
             return host_list, global_variable_list, cron_status
 
 
+def get_config_info_for_result(pro_name, last_test_time):
+    """
+    从测试结果中获取配置信息 （ HOST | 全局变量 ）
+    :return:
+    """
+    host = ""
+    global_variable_dict = {}
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+        try:
+            # 获取最新测试时间的第一条用例
+            case_dict = pro_db.find({"update_time": last_test_time})[0]
+            host = case_dict.get("host")
+            global_variable_dict = case_dict.get("global_variable_dict")
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目 测试结果中的配置信息")
+        finally:
+            return host, global_variable_dict
+
+
 def get_host_url(pro_name, host_name):
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
         try:
@@ -912,6 +937,9 @@ def get_case_search_result(request_args, pro_name, db_tag):
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["exec_time"] = res.get("update_time") == res.get("create_time") and "--------" or str(res.get("update_time"))
             test_case_dict["test_result"] = res.get("test_result")
+            if db_tag == "_result":
+                test_case_dict["host"] = res.get("host", "")
+                test_case_dict["global_variable_dict"] = res.get("global_variable_dict", "")
             if res.get("case_status"):
                 if res.get("is_depend"):
                     on_line_list_with_depend.append(test_case_dict)
@@ -922,10 +950,6 @@ def get_case_search_result(request_args, pro_name, db_tag):
         on_line_list_with_depend = sorted(on_line_list_with_depend, key=lambda keys: keys['depend_level'])
         test_case_list = on_line_list_with_depend + on_line_list_with_test + off_line_list
 
-        for test_case in test_case_list:
-            log.info(test_case.get("_id", "无"))
-            log.info("\n")
-        log.info("==========================================")
     return test_case_list, case_num, pro_is_running(pro_name)
 
 

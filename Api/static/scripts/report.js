@@ -2,7 +2,7 @@
 /**
  * 搜索用例
  */
-function search_case(pro_name, nginx_api_proxy, db_tag) {
+function search_case(pro_name, nginx_api_proxy) {
 
     // 隐藏之前已经弹出的气泡弹层
     $("[data-toggle='popover']").popover('hide');
@@ -15,34 +15,27 @@ function search_case(pro_name, nginx_api_proxy, db_tag) {
     var is_depend = $("#is_depend").val().trim();
     var test_result = $("#test_result").val().trim();
 
-    if (db_tag == "_case"){
-        var relate_run_time = $("#relate_run_time").val().trim();
-        var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
-        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result +
-        "&relate_run_time=" + relate_run_time
-    } else {  // "_result"
-        var test_time = $("#test_time").val().trim();
-        var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
-        interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result +
-        "&test_time=" + test_time
+    var test_time = $("#test_time").val().trim();
+    var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
+    interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result +
+    "&test_time=" + test_time
 
-        // 报告页面 需要更新 统计数据
-        var r_url = "/" + nginx_api_proxy + "/API/query_statist_data/" + pro_name + "?test_time=" + test_time
-        var r_info = request_interface_url_v2(url=r_url, method="GET", async=false);
-        if(r_info != "请求失败") {
-            var statist_data = r_info.statist_data;
-            console.log(statist_data)
-            $("#depend_num").html(statist_data['depend']);
-            $("#test_num").html(statist_data['test']);
-            $("#all_num").html(statist_data['test']);
-            $("#success_num").html(statist_data['success']);
-            $("#fail_num").html(statist_data['fail']);
-            $("#error_num").html(statist_data['error']);
-        }
+    // 报告页面 需要更新 统计数据
+    var r_url = "/" + nginx_api_proxy + "/API/query_statist_data/" + pro_name + "?test_time=" + test_time
+    var r_info = request_interface_url_v2(url=r_url, method="GET", async=false);
+    if(r_info != "请求失败") {
+        var statist_data = r_info.statist_data;
+        console.log(statist_data)
+        $("#depend_num").html(statist_data['depend']);
+        $("#test_num").html(statist_data['test']);
+        $("#all_num").html(statist_data['test']);
+        $("#success_num").html(statist_data['success']);
+        $("#fail_num").html(statist_data['fail']);
+        $("#error_num").html(statist_data['error']);
     }
 
     // 两个页面 公共搜索操作部分
-    var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "/" + db_tag + "?" + get_pramas
+    var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "/_result?" + get_pramas
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case_list = response_info.test_case_list;
@@ -51,6 +44,20 @@ function search_case(pro_name, nginx_api_proxy, db_tag) {
 
         // 替换搜索条数
         $("#search_case_num").html("共 " + case_num + " 条");
+
+        // 替换 查看当前host 模态框
+        $("#current_host").html(test_case_list[0]["host"]);
+
+        // 替换 查看当前全局变量 模态框 <div id="current_global_variable" class="modal-body">
+        var cgv_html = "";
+        var global_variable_dict = test_case_list[0]["global_variable_dict"];
+        for (var key in global_variable_dict){
+            var div_html = "<div class=\"form-group\" style=\"margin-top:5px\">";
+            div_html += "<label style=\"margin-left:5px;font-size:20px;\" class=\"text-info\"><font color=\"#5B00AE\">" + key + "</font>&nbsp;&nbsp;->&nbsp;&nbsp;" + global_variable_dict[key] + "</label>";
+            div_html += "</div>";
+            cgv_html += div_html;
+        }
+        $("#current_global_variable").html(cgv_html);
 
         // 重新渲染table页面 <tbody id="case_tbody">
         var tbody_html = "";
@@ -74,7 +81,6 @@ function search_case(pro_name, nginx_api_proxy, db_tag) {
             var case_status = test_case_list[i]["case_status"];
             var test_result = test_case_list[i]["test_result"];
             var exec_time = test_case_list[i]["exec_time"];
-
             var tr_html = "<tr>";
 
             // 接口名称（测试信息）

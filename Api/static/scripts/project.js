@@ -372,7 +372,7 @@ function update_cron_status(pro_name, nginx_api_proxy) {
 /**
  * 搜索用例
  */
-function search_case(pro_name, nginx_api_proxy, db_tag) {
+function search_case(pro_name, nginx_api_proxy) {
 
     // 隐藏之前已经弹出的气泡弹层
     $("[data-toggle='popover']").popover('hide');
@@ -391,7 +391,7 @@ function search_case(pro_name, nginx_api_proxy, db_tag) {
         "&relate_run_time=" + relate_run_time
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "/" + db_tag + "?" + get_pramas
+    var request_url = "/" + nginx_api_proxy + "/API/search_case/" + pro_name + "/_case?" + get_pramas
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case_list = response_info.test_case_list;
@@ -533,7 +533,7 @@ function config_variable(pro_name, nginx_api_proxy, config_type) {
         var msg = response_info.msg;
         if (msg.search("成功") != -1){
             swal({text: response_info.msg, type: "success", confirmButtonText: "知道了"});
-            setTimeout(function(){location.reload();}, 2000);
+            setTimeout(function(){location.reload();}, 1000);
         }else {
             swal({text: response_info.msg, type: "error", confirmButtonText: "知道了"});
         }
