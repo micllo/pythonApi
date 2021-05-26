@@ -14,8 +14,8 @@ function search_case(pro_name, nginx_api_proxy) {
     var case_status = $("#case_status").val().trim();
     var is_depend = $("#is_depend").val().trim();
     var test_result = $("#test_result").val().trim();
-
     var test_time = $("#test_time").val().trim();
+
     var get_pramas = "interface_name=" + interface_name + "&request_method=" + request_method + "&interface_url=" +
     interface_url + "&case_status=" + case_status + "&is_depend=" + is_depend + "&test_result=" + test_result +
     "&test_time=" + test_time
@@ -40,7 +40,7 @@ function search_case(pro_name, nginx_api_proxy) {
     if(response_info != "请求失败"){
         var test_case_list = response_info.test_case_list;
         var case_num = response_info.case_num
-        var is_run = response_info.is_run
+        // var is_run = response_info.is_run
 
         // 替换搜索条数
         $("#search_case_num").html("共 " + case_num + " 条");
@@ -243,5 +243,28 @@ function show_response_info(pro_name, nginx_api_proxy, _id, db_tag) {
 
         }
 
+    }
+}
+
+
+/**
+ *  通过'运行方式'下拉框 筛选 '测试时间'
+ */
+function screen_test_time(pro_name, nginx_api_proxy) {
+    // 获取选中的下拉框 key , value
+    var selectedOption = $("#run_type option:selected");
+    console.log(selectedOption.val(), selectedOption.text());
+    var option_val = selectedOption.val();
+    var option_text = selectedOption.text();
+    var request_url = "/" + nginx_api_proxy + "/API/screen_test_time/" + pro_name + "?run_type=" + option_val
+    var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
+    if(response_info != "请求失败") {
+        var test_time_list = response_info.test_time_list
+        // 替换 测试时间 下拉框 <select id="test_time">
+        var option_html = "";
+        for (var i = 0; i < test_time_list.length; i++){
+            option_html += "<option value=\"" + test_time_list[i] + "\">" + test_time_list[i] + "</option>";
+        }
+        $("#test_time").html(option_html);
     }
 }

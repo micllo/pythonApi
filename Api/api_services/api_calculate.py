@@ -162,12 +162,12 @@ def run_test_by_pro(host, pro_name, run_type):
         return "全局变量配置有误"
 
     test_interface(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
-                   test_interface_list=test_interface_list, global_variable_dict=global_variable_dict)
+                   test_interface_list=test_interface_list, global_variable_dict=global_variable_dict, run_type=run_type)
     return "测试进行中"
 
 
 @async
-def test_interface(pro_name, host, depend_interface_list, test_interface_list, global_variable_dict):
+def test_interface(pro_name, host, depend_interface_list, test_interface_list, global_variable_dict, run_type):
     """
     【 测 试 接 口 】（根据项目名）
     :param pro_name:
@@ -175,6 +175,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     :param depend_interface_list:
     :param test_interface_list:
     :param global_variable_dict:
+    :param run_type:
     :return:
 
         【 测 试 流 程 】
@@ -205,7 +206,9 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     adf = AcquireDependField(pro_name=pro_name, host=host, depend_interface_list=depend_interface_list,
                              test_interface_list=test_interface_list)
     if adf.is_need_depend():
-        test_interface_list = adf.acquire()
+        test_interface_list, update_time = adf.acquire()
+    else:
+        update_time = get_current_iso_date()
 
     # 4.验证接口
     error_list = []
@@ -234,7 +237,6 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
 
         # 更新测试结果
         with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
-            update_time = get_current_iso_date()
             for _id, test_info in id_result_dict.items():
                 test_info["update_time"] = update_time
                 pro_db.update({"_id": _id}, {"$set": test_info})
@@ -245,7 +247,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     set_pro_run_status(pro_name=pro_name, run_status=False)
 
     # 6.将测试结果数据保存入 _result 数据库（最新一次运行时间的用例）
-    save_test_result(pro_name, host, global_variable_dict)
+    save_test_result(pro_name, host, global_variable_dict, run_type)
 
     # 7.若存在'失败'或'错误'则发送钉钉
     if fail_list:
@@ -254,10 +256,10 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
         api_monitor_send_DD(pro_name=pro_name, wrong_type="error")
 
 
-def save_test_result(pro_name, host, global_variable_dict):
+def save_test_result(pro_name, host, global_variable_dict, run_type):
     """
     将测试结果数据保存入 _result 数据库（最新一次运行时间的用例）
-    （ 包括 host 和 全局变量 ）
+    （ 包括 host、 全局变量、运行类别 ）
     :return:
     """
     last_update_time_case_list = []
@@ -271,6 +273,7 @@ def save_test_result(pro_name, host, global_variable_dict):
             for case in last_update_time_case_list:
                 case["host"] = host
                 case["global_variable_dict"] = global_variable_dict
+                case["run_type"] = run_type
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目所有是上线的用例")
 
@@ -779,6 +782,34 @@ def get_test_time_list(pro_name):
             return test_time_list
 
 
+def screen_test_time_by_run_type(pro_name, run_type):
+    """
+    通过'运行方式' 筛选出对应 '测试时间'列表
+    :param run_type: all | cron | manual
+    :return:
+    """
+    test_time_list = []
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+        try:
+            pipline = []
+            # 筛选条件
+            if run_type != "all":
+                pipline.append({"$match": {"run_type": run_type}})
+            # 分组查询 ( _id 为必填的分组字段 )
+            pipline.append({"$group": {"_id": "$update_time", "case_num": {"$sum": 1}, "更新时间": {"$first": "$update_time"}}})
+            pipline.append({"$sort": {"更新时间": -1}})
+            statist_result = pro_db.aggregate(pipline, allowDiskUse=True)
+            for index, data in enumerate(statist_result):
+                test_time_list.append(str(data.get("更新时间")))
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目 运行方式='" + run_type + "'的测试时间列表")
+            return "mongo error", {}
+        finally:
+            # print(test_time_list)
+            # print(len(test_time_list))
+            return test_time_list
+
+
 def get_statist_data_for_case(pro_name):
     """
     获取用例统计数据（ _case 表 ）
@@ -871,6 +902,9 @@ def get_case_search_result(request_args, pro_name, db_tag):
     1.上线的排在前面
     2.依赖接口排在前面
     3.依赖等级小的排在前面
+
+    < 备 注 > 若搜索的是 _result 表，则还需要获取 host、global_variable_dict 等字段 供页面显示
+
     """
     search_pattern = {}
     interface_name = request_args.get("interface_name", "").strip()
@@ -897,7 +931,7 @@ def get_case_search_result(request_args, pro_name, db_tag):
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
         try:
             if db_tag == "_case":
-                # 判断是否需要获取最新执行时间加入搜索条件
+                # 判断 是否需要将最新执行时间加入搜索条件
                 relate_run_time = relate_run_time in ["true", "TRUE", "True"] and True or False
                 if relate_run_time:
                     search_pattern["update_time"] = pro_db.find().sort("update_time", -1)[0].get("update_time")
@@ -907,7 +941,7 @@ def get_case_search_result(request_args, pro_name, db_tag):
             results = search_pattern and pro_db.find(search_pattern) or pro_db.find({})
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目用例搜索结果")
-            return []
+            return [], 0, False
 
     test_case_list = []
     on_line_list_with_depend = []
@@ -1586,4 +1620,4 @@ if __name__ == "__main__":
     # generate_report_with_statis_case("pro_demo_1")
     # print(get_statist_data("pro_demo_1"))
 
-    get_test_time_list("pro_demo_1")
+    screen_test_time_by_run_type("pro_demo_1", "manual")

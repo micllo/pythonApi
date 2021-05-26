@@ -252,7 +252,7 @@ class AcquireDependField(object):
 
         # 显示相关变量字段（调试使用）
         self.debug_variable_field()
-        return self.test_interface_list
+        return self.test_interface_list, update_time
 
     def update_depend_interface_list_result(self, update_time):
         """

@@ -85,6 +85,17 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            {# 搜索 按钮 #}
+                                            <div class="col-sm-1" align="center">
+                                                <div class="input-group" id="search_btn">
+                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>#}
+                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"> 搜 索 </button>
+                                                </div>
+                                            </div>
+                                            {# 查看当前HOST #}
+                                            <div class="col-sm-1" align="center" style="margin-left:70px">
+                                                <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#show_host"> 查看当前 HOST </button>
+                                            </div>
 
                                         </div>
 
@@ -119,21 +130,23 @@
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {# 搜索 按钮 #}
-                                            <div class="col-sm-1" align="center">
-                                                <div class="input-group" id="search_btn">
-                                                   {# <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"><i class="fa fa-search"></i></button>#}
-                                                    <button class="btn btn-primary btn-icon" onclick="search_case('{{ pro_name }}','{{ nginx_api_proxy }}')"> 搜 索 </button>
+                                            <div class="col-sm-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">运行方式：</span>
+                                                    <div class="fg-line">
+                                                        <select class="form-control" id="run_type" name="request_method" style="text-align: center; text-align-last: center;" onchange="screen_test_time('{{ pro_name }}','{{ nginx_api_proxy }}')">
+                                                            <option value="all">全部</option>
+                                                            <option value="cron">定时</option>
+                                                            <option value="manual">手动</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
+
                                             {# 搜索 条数 #}
                                             <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:20px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
 
-                                            <div class="col-sm-1" align="center" style="margin-left:70px">
-                                                <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#show_host"> 查看当前 HOST </button>
-                                            </div>
-
+                                            {# 查看当前全局变量 #}
                                             <div class="col-sm-1" align="center" style="margin-left:70px">
                                                 <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#show_global_variable"> 查看当前 全局变量 </button>
                                             </div>

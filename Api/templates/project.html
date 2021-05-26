@@ -33,7 +33,11 @@
                       <div class="col-xs-12 col-md-4" style="margin-left:3%">
                           <div class="panel panel-success">
                              <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
-                                 批&nbsp;&nbsp;&nbsp;量&nbsp;&nbsp;&nbsp;导&nbsp;&nbsp;&nbsp;入&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
+                                 批&nbsp;&nbsp;&nbsp;量&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作&nbsp;&nbsp;&nbsp;用&nbsp;&nbsp;&nbsp;例
+                                 <a style="margin-left:10%;font-size:15px;" href="/api_case_tmpl" download="测试用例模板.xlsx"
+                                    onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
+                                    onMouseOut="this.style.color='#006699'"> 导 入 模 板
+                                </a>
                              </div>
                              <div class="panel-body">
                                  <form id="import_action_form" class="form-horizontal" enctype="multipart/form-data">
@@ -42,16 +46,23 @@
                                             <label style="font-size:15px; margin-left:10%;" class="text-success"> 用 例 文 件 格 式: xls xlsx csv</label>
                                             <input class="form-control" id="file" type="file" name="file"/>
                                         </div>
-                                        <div class="col-sm-5" align="center" style="line-height:70px;">
-                                            <a style="margin-left:10%" href="/api_case_tmpl" download="测试用例模板.xlsx"
-                                                onMouseOver="this.style.cursor='hand',this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'"> 下 载 测 试 用 例 模 板
-                                            </a>
-                                        </div>
+                                         {% if is_run %}
+                                             <div class="col-sm-4" align="center" style="line-height:45px; font-size:15px; margin-left:5%; margin-top:2%;">
+                                                 <button id="test_btn" name="test_btn" type="button" class="btn btn-success"  disabled="disabled"
+                                                        onclick="export_result('{{ pro_name }}','{{ nginx_api_proxy }}')"> 导 出 Excel
+                                                 </button>
+                                             </div>
+                                         {% else %}
+                                             <div class="col-sm-4" align="center" style="line-height:45px; font-size:15px; margin-left:5%; margin-top:2%;">
+                                                 <button id="test_btn" name="test_btn" type="button" class="btn btn-success"
+                                                        onclick="export_result('{{ pro_name }}','{{ nginx_api_proxy }}')"> 导 出 Excel
+                                                 </button>
+                                             </div>
+                                         {% endif %}
                                     </div>
 
                                     <div class="col-sm-12">
-                                        <div class="col-sm-7" style="margin-top:1%;">
+                                        <div class="col-sm-7" style="margin-top:2%;">
                                             <select class="form-control" name="import_method" id="import_method" style="text-align: center; text-align-last: center;">
                                                 <option value="">请 选 择 导 入 方 式</option>
                                                 <option value="batch_insert">批 量 新 增</option>
@@ -60,14 +71,14 @@
                                             </select>
                                         </div>
                                         {% if is_run %}
-                                            <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%;">
-                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-primary" disabled="disabled"
+                                            <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%; margin-top:1%;">
+                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-success" disabled="disabled"
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
                                         {% else %}
-                                            <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%;">
-                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-primary"
+                                            <div class="col-sm-4" align="center" style="line-height:45px; margin-left:5%; margin-top:1%;">
+                                                <button id="import_btn" name="import_btn" type="button" class="btn btn-success"
                                                         data-loading-text="Importing..." onclick="exec_import('{{ pro_name }}','{{ nginx_api_proxy }}')"> 批 量 导 入
                                                 </button>
                                             </div>
@@ -82,31 +93,31 @@
                       <div class="col-xs-12 col-md-5">
                           <div class="panel panel-primary">
                              <div class="panel-heading" align="center" style="font-size:18px;font-weight: bold;">
-                                 相 关 配 置 与 操 作
+                                 相&nbsp;&nbsp;&nbsp;关&nbsp;&nbsp;&nbsp;配&nbsp;&nbsp;&nbsp;置&nbsp;&nbsp;&nbsp;与&nbsp;&nbsp;&nbsp;操&nbsp;&nbsp;&nbsp;作
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button class="btn btn-info btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 配 置 全 局 变 量 </button>
+                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_global_variable_form"> 配 置 全 局 变 量 </button>
                                      </div>
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
-                                         <button class="btn btn-info btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
+                                         <button class="btn btn-primary btn-icon" type="button" data-toggle="modal" data-target="#add_host_form"> 配 置 HOST </button>
                                     </div>
                                      <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
                                          {% if is_run %}
-                                             <button id="on_line_all" type="button" class="btn btn-info" disabled="disabled"
+                                             <button id="on_line_all" type="button" class="btn btn-primary" disabled="disabled"
                                                  onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 上 线 所 有 用 例 </button>
                                          {% else %}
-                                             <button id="on_line_all" type="button" class="btn btn-info"
+                                             <button id="on_line_all" type="button" class="btn btn-primary"
                                                  onclick="update_case_status_all('{{pro_name}}','true','{{nginx_api_proxy}}')"> 上 线 所 有 用 例 </button>
                                          {% endif %}
                                      </div>
                                     <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px;">
                                          {% if is_run %}
-                                             <button id="off_line_all" type="button" class="btn btn-info" disabled="disabled"
+                                             <button id="off_line_all" type="button" class="btn btn-primary" disabled="disabled"
                                                      onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 下 线 所 有 用 例 </button>
                                          {% else %}
-                                             <button id="off_line_all" type="button" class="btn btn-info"
+                                             <button id="off_line_all" type="button" class="btn btn-primary"
                                                      onclick="update_case_status_all('{{pro_name}}','false','{{nginx_api_proxy}}')"> 下 线 所 有 用 例 </button>
                                          {% endif %}
                                      </div>
@@ -140,35 +151,21 @@
                       <div class="col-xs-12 col-md-2">
                           <div class="panel panel-warning">
                              <div class="panel-heading" align="center" style="font-size:18px; font-weight: bold;">
-                                 查 看 测 试 结 果 Excel
+                                 报&nbsp;&nbsp;告&nbsp;&nbsp;与&nbsp;&nbsp;用&nbsp;&nbsp;例&nbsp;&nbsp;Excel
                              </div>
                              <div class="panel-body">
                                  <div class="col-sm-12">
-                                     <div class="col-sm-8" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
-                                         <a id="history_report_url" onclick="window.open('{{history_report_path}}')"
-                                                onMouseOver="this.style.cursor='hand'; this.style.color='#FF0000'"
-                                                onMouseOut="this.style.color='#006699'" class="text-warning"> 历 史 结 果
-                                         </a>
+                                     <div class="col-sm-12" align="center" style="line-height:55px; font-size:15px; margin-left:1%;">
+                                         <a id="history_report_url" onclick="window.open('{{history_report_path}}')" class="text-warning"> 下 载 用 例 Excel </a>
+                                         {# onMouseOver="this.style.cursor='hand'; this.style.color='#FF0000'" onMouseOut="this.style.color='#006699'"#}
                                      </div>
                                  </div>
                                  <div class="col-sm-12">
-                                     {% if is_run %}
-                                         <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
-                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-info"  disabled="disabled"
-                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
-                                             </button>
-                                         </div>
-                                     {% else %}
-                                         <div class="col-sm-3" align="center" style="line-height:55px; font-size:15px; margin-left:15%;">
-                                             <button id="test_btn" name="test_btn" type="button" class="btn btn-info"
-                                                    onclick="generate_report('{{ pro_name }}','{{ nginx_api_proxy }}')"> 生 成 最 新 结 果
-                                             </button>
-                                         </div>
-                                     {% endif %}
+                                    <div class="col-sm-12" align="center" style="line-height:55px; font-size:15px; margin-left:1%;">
+                                        <a id="history_report_url" onclick="window.open('/{{ nginx_api_proxy }}/API/get_test_report/{{ pro_name }}')" class="text-warning"> 查 看 测 试 报 告 </a>
+                                    </div>
                                  </div>
                              </div>
-
-
                           </div>
                       </div>
 
@@ -248,13 +245,6 @@
                                                         </select>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <div class="col-sm-1" align="center" style="margin-left:70px">
-                                                 <a id="history_report_url" onclick="window.open('/{{ nginx_api_proxy }}/API/get_test_report/{{ pro_name }}')"
-                                                        onMouseOver="this.style.cursor='hand'; this.style.color='#FF0000'"
-                                                        onMouseOut="this.style.color='#006699'" class="text-warning"> 测 试 报 告
-                                                 </a>
                                             </div>
                                         </div>
 

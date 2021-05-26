@@ -3,7 +3,7 @@
  */
 function exec_import(pro_name, nginx_api_proxy){
     swal({
-        title: "确定要执行导入吗?",
+        title: "批 量 导 入 用 例 ?",
         text: "",
         type: "warning",
         showCancelButton: true,
@@ -61,9 +61,9 @@ function exec_import(pro_name, nginx_api_proxy){
 /**
  * 生成报告
  */
-function generate_report(pro_name, nginx_api_proxy) {
+function export_result(pro_name, nginx_api_proxy) {
     swal({
-        title: "确定要生成测试结果Excel吗?",
+        title: "导 出 最 新 测 试 结 果 Excel ?",
         text: "",
         type: "warning",
         showCancelButton: true,

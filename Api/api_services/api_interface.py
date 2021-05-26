@@ -51,9 +51,25 @@ def get_test_report(pro_name):
     test_time_list = get_test_time_list(pro_name)
     result_dict["test_time_list"] = test_time_list
     result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_result", last_test_time=test_time_list[0])
-    result_dict["statist_data"] = get_statist_data_for_result(pro_name, test_time_list[0])
-    result_dict["host"], result_dict["global_variable_dict"] = get_config_info_for_result(pro_name, test_time_list[0])
+    first_test_time = result_dict["test_case_list"] and test_time_list[0] and ""
+    result_dict["statist_data"] = get_statist_data_for_result(pro_name, first_test_time)
+    result_dict["host"], result_dict["global_variable_dict"] = get_config_info_for_result(pro_name, first_test_time)
     return render_template('report.html', tasks=result_dict)
+
+
+@flask_app.route("/API/screen_test_time/<pro_name>", methods=["GET"])
+def screen_test_time(pro_name):
+    """
+    通过'运行方式' 筛选 '测试时间'列表
+    :param pro_name
+    :param run_type: all | cron | manual
+    :return:
+    """
+    res_info = dict()
+    params = request.args
+    run_type = params.get("run_type", "")  # str
+    res_info["test_time_list"] = screen_test_time_by_run_type(pro_name, run_type)
+    return json.dumps(res_info, ensure_ascii=False)
 
 
 @flask_app.route("/API/query_statist_data/<pro_name>", methods=["GET"])
