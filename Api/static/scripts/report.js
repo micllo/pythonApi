@@ -45,19 +45,21 @@ function search_case(pro_name, nginx_api_proxy) {
         // 替换搜索条数
         $("#search_case_num").html("共 " + case_num + " 条");
 
-        // 替换 查看当前host 模态框
-        $("#current_host").html(test_case_list[0]["host"]);
+        if(test_case_list[0]){
+            // 替换 查看当前host 模态框
+            $("#current_host").html(test_case_list[0]["host"]);
 
-        // 替换 查看当前全局变量 模态框 <div id="current_global_variable" class="modal-body">
-        var cgv_html = "";
-        var global_variable_dict = test_case_list[0]["global_variable_dict"];
-        for (var key in global_variable_dict){
-            var div_html = "<div class=\"form-group\" style=\"margin-top:5px\">";
-            div_html += "<label style=\"margin-left:5px;font-size:20px;\" class=\"text-info\"><font color=\"#5B00AE\">" + key + "</font>&nbsp;&nbsp;->&nbsp;&nbsp;" + global_variable_dict[key] + "</label>";
-            div_html += "</div>";
-            cgv_html += div_html;
+            // 替换 查看当前全局变量 模态框 <div id="current_global_variable" class="modal-body">
+            var cgv_html = "";
+            var global_variable_dict = test_case_list[0]["global_variable_dict"];
+            for (var key in global_variable_dict){
+                var div_html = "<div class=\"form-group\" style=\"margin-top:5px\">";
+                div_html += "<label style=\"margin-left:5px;font-size:20px;\" class=\"text-info\"><font color=\"#5B00AE\">" + key + "</font>&nbsp;&nbsp;->&nbsp;&nbsp;" + global_variable_dict[key] + "</label>";
+                div_html += "</div>";
+                cgv_html += div_html;
+            }
+            $("#current_global_variable").html(cgv_html);
         }
-        $("#current_global_variable").html(cgv_html);
 
         // 重新渲染table页面 <tbody id="case_tbody">
         var tbody_html = "";
@@ -94,7 +96,7 @@ function search_case(pro_name, nginx_api_proxy) {
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>";
 
             // 接口地址（请求参数）
-            tr_html += "<td style=\"width: 200px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>";
+            tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>";
 
             if(is_depend){
                 // 依赖字段值（依赖的字段名列表、依赖的字段值列表）
@@ -262,8 +264,15 @@ function screen_test_time(pro_name, nginx_api_proxy) {
         var test_time_list = response_info.test_time_list
         // 替换 测试时间 下拉框 <select id="test_time">
         var option_html = "";
-        for (var i = 0; i < test_time_list.length; i++){
-            option_html += "<option value=\"" + test_time_list[i] + "\">" + test_time_list[i] + "</option>";
+        console.log(test_time_list)
+        console.log(test_time_list.length == 0)
+        console.log(test_time_list.length)
+        if (test_time_list.length == 0){
+            option_html += "<option value=\"\">暂无数据</option>";
+        }else{
+            for (var i = 0; i < test_time_list.length; i++){
+                option_html += "<option value=\"" + test_time_list[i] + "\">" + test_time_list[i] + "</option>";
+            }
         }
         $("#test_time").html(option_html);
     }

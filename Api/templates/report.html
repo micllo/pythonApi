@@ -32,7 +32,7 @@
                      <div class="col-xs-12 col-md-11" style="margin-left:3%">
                         <div class="panel panel-info">
                             <div id="statist_data" class="panel-heading" align="left" style="font-size:20px; font-weight: bold;">
-                                用 例 总 数（ <font color="#5B00AE">依 赖 : <label id="depend_num"> {{ statist_data['depend'] }}</label> &nbsp;&nbsp; 测 试 : <label id="test_num"> {{ statist_data['test'] }}</label></font> )  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                当 前 用 例 总 数（ <font color="#5B00AE">依 赖 : <label id="depend_num"> {{ statist_data['depend'] }}</label> &nbsp;&nbsp; 测 试 : <label id="test_num"> {{ statist_data['test'] }}</label></font> )  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 当 前 测 试 结 果  <  <font color="#5B4B00">总 计 : <label id="all_num"> {{ statist_data['success'] + statist_data['fail'] + statist_data['error'] }}</label></font>&nbsp;&nbsp;&nbsp;
                                                     <font color="#008000">成 功 : <label id="success_num"> {{ statist_data['success'] }}</label></font>&nbsp;&nbsp;&nbsp;&nbsp;
                                                     <font color="#FF0000">失 败 : <label id="fail_num"> {{ statist_data['fail'] }}</label></font>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -78,9 +78,13 @@
                                                     <span class="input-group-addon">测试时间：</span>
                                                     <div class="fg-line">
                                                         <select class="form-control" id="test_time" name="test_time" style="text-align: center; text-align-last: center;">
-                                                            {% for test_time in test_time_list %}
-                                                                <option value="{{ test_time }}">{{ test_time }}</option>
-                                                            {% endfor %}
+                                                            {% if not test_time_list %}
+                                                                <option value="">暂无数据</option>
+                                                            {% else %}
+                                                                {% for test_time in test_time_list %}
+                                                                    <option value="{{ test_time }}">{{ test_time }}</option>
+                                                                {% endfor %}
+                                                            {% endif %}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -199,7 +203,7 @@
                                                         {# 请求方式（请求头文件）#}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求头文件" data-content="{{ request_header }}">{{ request_method }}</td>
                                                         {# 接口地址（请求参数）#}
-                                                        <td style="width: 200px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
+                                                        <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
 
                                                         {% if is_depend %}
                                                             {# 依赖字段值（依赖的字段名列表、依赖的字段值列表）#}

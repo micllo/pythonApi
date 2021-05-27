@@ -673,6 +673,8 @@ def get_config_info_for_result(pro_name, last_test_time):
     """
     host = ""
     global_variable_dict = {}
+    if not last_test_time:
+        return host, global_variable_dict
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
         try:
             # 获取最新测试时间的第一条用例
@@ -803,7 +805,7 @@ def screen_test_time_by_run_type(pro_name, run_type):
                 test_time_list.append(str(data.get("更新时间")))
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目 运行方式='" + run_type + "'的测试时间列表")
-            return "mongo error", {}
+            return "mongo error"
         finally:
             # print(test_time_list)
             # print(len(test_time_list))
@@ -875,7 +877,7 @@ def get_statist_data_for_result(pro_name, test_time=None):
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
         try:
             # 转换 mongodb 时间格式
-            test_time = isinstance(test_time, str) and parser.parse(test_time) or test_time
+            test_time = (test_time and isinstance(test_time, str)) and parser.parse(test_time) or test_time
             depend_cursor = pro_db.find({"is_depend": True, "update_time": test_time})
             test_cursor = pro_db.find({"is_depend": False, "update_time": test_time})
             statist_data["depend"] = len(list(depend_cursor))
@@ -936,7 +938,8 @@ def get_case_search_result(request_args, pro_name, db_tag):
                 if relate_run_time:
                     search_pattern["update_time"] = pro_db.find().sort("update_time", -1)[0].get("update_time")
             else:  # "_result"
-                search_pattern["update_time"] = parser.parse(test_time)
+                test_time = test_time and parser.parse(test_time) or test_time
+                search_pattern["update_time"] = test_time
             # 判断是否存在搜索内容
             results = search_pattern and pro_db.find(search_pattern) or pro_db.find({})
         except Exception as e:

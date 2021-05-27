@@ -48,12 +48,11 @@ def get_test_report(pro_name):
     result_dict = dict()
     result_dict["nginx_api_proxy"] = cfg.NGINX_API_PROXY
     result_dict["pro_name"] = pro_name
-    test_time_list = get_test_time_list(pro_name)
-    result_dict["test_time_list"] = test_time_list
-    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_result", last_test_time=test_time_list[0])
-    first_test_time = result_dict["test_case_list"] and test_time_list[0] and ""
-    result_dict["statist_data"] = get_statist_data_for_result(pro_name, first_test_time)
-    result_dict["host"], result_dict["global_variable_dict"] = get_config_info_for_result(pro_name, first_test_time)
+    result_dict["test_time_list"] = get_test_time_list(pro_name)
+    last_test_time = result_dict["test_time_list"] and result_dict["test_time_list"][0] or ""
+    result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, db_tag="_result", last_test_time=last_test_time)
+    result_dict["statist_data"] = get_statist_data_for_result(pro_name, last_test_time)
+    result_dict["host"], result_dict["global_variable_dict"] = get_config_info_for_result(pro_name, last_test_time)
     return render_template('report.html', tasks=result_dict)
 
 
