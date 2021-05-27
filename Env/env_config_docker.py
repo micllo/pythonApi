@@ -36,6 +36,9 @@ BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_PATH
 # mongo 数据库
 MONGODB_ADDR = SERVER_IP + ":" + MONGO_PORT
 MONGODB_DATABASE = "api_auto_test"
+TABLE_CASE = "_case"
+TABLE_CONFIG = "_config"
+TABLE_RESULT = "_result"
 
 # 上传的临时用例文件
 UPLOAD_CASE_FILE = UPLOAD_CASE_DIR + "upload_case_file.xlsx"

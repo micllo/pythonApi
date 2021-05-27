@@ -16,16 +16,37 @@ from Tools.decorator_tools import async
 import xlwt, pymongo
 from dateutil import parser
 # sys.path.append("./")
-
+from Tools.date_helper import get_date_by_days
 
 """
 api 服务底层的业务逻辑
 """
 
 
-def clear_reports_logs(time, pro_name):
+def clear_test_result(pro_name, days):
     """
-    删除指定时间之前 生成的报告和日志
+    删除 指定x天之前的 测试结果
+    :param time:
+    :param pro_name:
+    :return:
+    """
+    date_str = get_date_by_days(days=days, time_type="%Y-%m-%dT%H:%M:%S")
+    log.info("\n==============================\n")
+    log.info("删除 " + pro_name + " 项目 " + date_str + " 之前的测试结果")
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_RESULT) as pro_db:
+        try:
+            query = {"update_time": {"$lt": parser.parse(date_str)}}
+            del_result = pro_db.delete_many(query)
+            log.info("共删除：" + str(del_result.deleted_count) + " 条记录！")
+            log.info("\n==============================\n")
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="删除'" + pro_name + "'项目指定日期前的测试结果")
+            return "mongo error"
+
+
+def clear_excel_logs(pro_name, time):
+    """
+    删除指定时间之前 生成的 excel 和 日志
       -mmin +1 -> 表示1分钟前的
       -mtime +1 -> 表示1天前的
     :param time:
@@ -47,7 +68,7 @@ def pro_is_running(pro_name):
     :param pro_name:
     :return:
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         run_status_case_list = []
         try:
             run_status_case_cursor = pro_db.find({"run_status": True})
@@ -66,7 +87,7 @@ def set_pro_run_status(pro_name, run_status=False):
     :param run_status:
     :return:
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             pro_db.update({}, {"$set": {"run_status": run_status}}, multi=True)
         except Exception as e:
@@ -80,7 +101,7 @@ def get_cron_status(pro_name):
     :param pro_name:
     :return:
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
             query_dict = {"config_name": "cron_status"}
             result = pro_db.find_one(query_dict)
@@ -121,7 +142,7 @@ def run_test_by_pro(host, pro_name, run_type):
         if get_cron_status(pro_name):
             host, error_msg = get_host_url(pro_name, host)
         else:
-            log.info("\n\n========================== 定 时 任 务 已 关 闭 ==========================\n\n")
+            log.info("\n\n========================== 定 时 测 试 任 务 已 关 闭 ==========================\n\n")
             return "定时任务已关闭"
     if is_null(pro_name):
         error_msg = "项目名不能为空"
@@ -138,7 +159,7 @@ def run_test_by_pro(host, pro_name, run_type):
             send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
         return error_msg
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             depend_interface_list = pro_db.find({"case_status": True, "is_depend": True})
             test_interface_list = pro_db.find({"case_status": True, "is_depend": False})
@@ -263,7 +284,7 @@ def save_test_result(pro_name, host, global_variable_dict, run_type):
     :return:
     """
     last_update_time_case_list = []
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             # 获取最新更新时间
             last_update_time = pro_db.find().sort("update_time", -1)[0].get("update_time")
@@ -277,7 +298,7 @@ def save_test_result(pro_name, host, global_variable_dict, run_type):
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目所有是上线的用例")
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_RESULT) as pro_db:
         try:
             pro_db.insert_many(last_update_time_case_list)
         except Exception as e:
@@ -306,7 +327,7 @@ def update_case_status_all(pro_name, case_status=False):
     :param case_status:
     :return:
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             update_dict = {"$set": {"case_status": case_status}}
             pro_db.update({}, update_dict, multi=True)
@@ -323,7 +344,7 @@ def update_case_status(pro_name, _id):
     :param _id:
     :return:
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             query_dict = {"_id": ObjectId(_id)}
             result = pro_db.find_one(query_dict, {"_id": 0})
@@ -344,7 +365,7 @@ def update_cron_status(pro_name):
     :param _id:
     :return:
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
             query_dict = {"config_name": "cron_status"}
             result = pro_db.find_one(query_dict)
@@ -398,7 +419,7 @@ def import_mongodb(pro_name, excel_list, import_method):
     batch_insert：区分'不在数据库中的用例列表'和'需要更新的用例列表'，只执行插入操作
     batch_insert_and_replace：区分'不在数据库中的用例列表'和'需要更新的用例列表'，分别执行插入和更新操作
     """
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
 
             if import_method == "all_replace":
@@ -640,7 +661,7 @@ def get_config_info(pro_name):
     host_list = []
     global_variable_list = []
     cron_status = False
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
             host_results_cursor = pro_db.find({})
             for res in host_results_cursor:
@@ -675,7 +696,7 @@ def get_config_info_for_result(pro_name, last_test_time):
     global_variable_dict = {}
     if not last_test_time:
         return host, global_variable_dict
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_RESULT) as pro_db:
         try:
             # 获取最新测试时间的第一条用例
             case_dict = pro_db.find({"update_time": last_test_time})[0]
@@ -698,12 +719,12 @@ def get_host_url(pro_name, host_name):
             return "", "获取host_url失败"
 
 
-def get_test_case(pro_name, db_tag, last_test_time=None):
+def get_test_case(pro_name, table_tag, last_test_time=None):
     """
     根据项目获取测试用例列表（上线的依赖接口排在前面）
     :param pro_name:
     :return: 用例列表、是否存在运行的用例
-    :param db_tag:  _case | _result
+    :param table_tag:  _case | _result
 
       < 备 注 >
 
@@ -719,7 +740,7 @@ def get_test_case(pro_name, db_tag, last_test_time=None):
     on_line_list_with_test = []
     off_line_list = []
     run_case_list = []
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + table_tag) as pro_db:
         try:
             results_cursor = last_test_time and pro_db.find({"update_time": last_test_time}) or pro_db.find({})
             for res in results_cursor:
@@ -769,7 +790,7 @@ def get_test_time_list(pro_name):
     :return:
     """
     test_time_list = []
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_RESULT) as pro_db:
         try:
             pipline = []
             # 分组查询 ( _id 为必填的分组字段 )
@@ -791,7 +812,7 @@ def screen_test_time_by_run_type(pro_name, run_type):
     :return:
     """
     test_time_list = []
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_RESULT) as pro_db:
         try:
             pipline = []
             # 筛选条件
@@ -823,7 +844,7 @@ def get_statist_data_for_case(pro_name):
     """
     statist_data = {"depend": 0, "test": 0, "success": 0, "fail": 0, "error": 0}
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             depend_cursor = pro_db.find({"is_depend": True})
             test_cursor = pro_db.find({"is_depend": False})
@@ -857,7 +878,7 @@ def get_statist_data_for_case(pro_name):
                 statist_data["fail"] = "fail" in res and statist_data["fail"] + 1 or statist_data["fail"]
                 statist_data["error"] = "error" in res and statist_data["error"] + 1 or statist_data["error"]
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据(_case)")
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据(" + cfg.TABLE_CASE + ")")
         finally:
             return statist_data
 
@@ -874,7 +895,7 @@ def get_statist_data_for_result(pro_name, test_time=None):
     """
     statist_data = {"depend": 0, "test": 0, "success": 0, "fail": 0, "error": 0}
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_result") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_RESULT) as pro_db:
         try:
             # 转换 mongodb 时间格式
             test_time = (test_time and isinstance(test_time, str)) and parser.parse(test_time) or test_time
@@ -888,17 +909,17 @@ def get_statist_data_for_result(pro_name, test_time=None):
                 statist_data["fail"] = "fail" in res and statist_data["fail"] + 1 or statist_data["fail"]
                 statist_data["error"] = "error" in res and statist_data["error"] + 1 or statist_data["error"]
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据(_result)")
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目统计数据(" + cfg.TABLE_RESULT + ")")
         finally:
             return statist_data
 
 
-def get_case_search_result(request_args, pro_name, db_tag):
+def get_case_search_result(request_args, pro_name, table_tag):
     """
     获取用例搜索结果
     :param request_args: GET请求参数
     :param pro_name:
-    :param db_tag:  _case | _result
+    :param table_tag:  _case | _result
     :return:
     【 搜 索 用 例 的 排 序 】
     1.上线的排在前面
@@ -930,9 +951,9 @@ def get_case_search_result(request_args, pro_name, db_tag):
     if is_depend:
         search_pattern["is_depend"] = is_depend in ["true", "TRUE", "True"] and True or False
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + table_tag) as pro_db:
         try:
-            if db_tag == "_case":
+            if table_tag == "_case":
                 # 判断 是否需要将最新执行时间加入搜索条件
                 relate_run_time = relate_run_time in ["true", "TRUE", "True"] and True or False
                 if relate_run_time:
@@ -974,7 +995,7 @@ def get_case_search_result(request_args, pro_name, db_tag):
             test_case_dict["case_status"] = res.get("case_status")
             test_case_dict["exec_time"] = res.get("update_time") == res.get("create_time") and "--------" or str(res.get("update_time"))
             test_case_dict["test_result"] = res.get("test_result")
-            if db_tag == "_result":
+            if table_tag == "_result":
                 test_case_dict["host"] = res.get("host", "")
                 test_case_dict["global_variable_dict"] = res.get("global_variable_dict", "")
             if res.get("case_status"):
@@ -1019,7 +1040,7 @@ def get_config_result(request_json, pro_name, config_type):
     if config_type == "host" and config_value[-1] == "/":
         return "host_url 最后不能带有 /"
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
             config_data = pro_db.find_one({"config_type": config_type, "config_name": config_name})
             if config_data:
@@ -1044,7 +1065,7 @@ def get_check_depend_variable_result(pro_name):
     5.判断'测试接口列表'中的依赖字段是否都包含在'依赖接口列表'中的依赖字段里面
     """
     # 1.获取所有上线的"依赖接口列表"和"测试接口列表"
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             depend_interface_list = pro_db.find({"case_status": True, "is_depend": True})
             test_interface_list = pro_db.find({"case_status": True, "is_depend": False})
@@ -1102,12 +1123,12 @@ def get_check_global_variable_result(pro_name):
     4.判断 是否使用了未配置的全局变量
     """
     # 1.获取所有上线的"接口列表"
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             interface_list = pro_db.find({"case_status": True})
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目上线接口列表")
-            return "mongo error"
+            return "mongo error", {}
         interface_list = list(interface_list)
 
     # 2.获取"接口列表"中带有<>标记的"全局变量字典" { "接口名称"：[全局变量字段名列表] }
@@ -1126,32 +1147,35 @@ def get_check_global_variable_result(pro_name):
         if variable_field_list:
             interface_variable_dict[interface_dict.get("interface_name")] = variable_field_list
 
+    # 3.获取数据库中已经配置的'global_variable'字典
+    global_variable_dict = {}
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE,
+                      collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
+        try:
+            results_cursor = pro_db.find({"config_type": "global_variable"})
+            for res in results_cursor:
+                global_variable_dict[res.get("config_name")] = res.get("config_value")
+        except Exception as e:
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目配置")
+            return "mongo error", {}
+
+    log.info("\n")
+    log.info("global_variable_dict  ->  " + str(global_variable_dict))
+    log.info("interface_variable_dict  ->  " + str(interface_variable_dict))
+    log.info("\n")
+
     # 判断是否使用了全局变量
+    msg = "检查通过"
     if not interface_variable_dict:
-        return "未使用全局变量", {}
+        msg = "未使用全局变量"
     else:
-        # 3.获取数据库中已经配置的'global_variable'字典
-        global_variable_dict = {}
-        with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
-            try:
-                results_cursor = pro_db.find({"config_type": "global_variable"})
-                for res in results_cursor:
-                    global_variable_dict[res.get("config_name")] = res.get("config_value")
-            except Exception as e:
-                mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目配置")
-                return "mongo error", {}
-
-        log.info("\n")
-        log.info("global_variable_dict  ->  " + str(global_variable_dict))
-        log.info("interface_variable_dict  ->  " + str(interface_variable_dict))
-        log.info("\n")
-
         # 4.判断 是否使用了未配置的全局变量
         for interface_name, variable_list in interface_variable_dict.items():
             for variable in variable_list:
                 if variable not in global_variable_dict.keys():
-                    return "'" + interface_name + "' 接口含有的全局变量 " + variable + " 没有配置", {}
-        return "检查通过", global_variable_dict
+                    msg = "'" + interface_name + "' 接口含有的全局变量 " + variable + " 没有配置"
+
+    return msg, global_variable_dict
 
 
 def get_case_operation_result(request_json, pro_name, mode):
@@ -1266,7 +1290,7 @@ def get_case_operation_result(request_json, pro_name, mode):
                       "expect_field_name_list": expect_field_name_list, "is_depend": is_depend, "depend_field_name_list": depend_field_name_list,
                       "depend_level": depend_level, "case_status": case_status}
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             if mode == "edit":
                 # 9.验证数据库中是否已存在
@@ -1327,7 +1351,7 @@ def get_config_del_result(request_json, pro_name):
     # 获取请求中的参数
     config_id = request_json.get("config_id", "").strip()
     query_dict = {"_id": ObjectId(config_id)}
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
             remove_case = pro_db.find_one(query_dict)
         except Exception as e:
@@ -1355,7 +1379,7 @@ def get_case_del_result(request_json, pro_name):
     # 获取请求中的参数
     _id = request_json.get("_id", "").strip()
     query_dict = {"_id": ObjectId(_id)}
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             remove_case = pro_db.find_one(query_dict)
         except Exception as e:
@@ -1378,7 +1402,7 @@ def get_case_by_name(request_json, pro_name):
     """
     interface_name = request_json.get("interface_name", "").strip()
 
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             exist_case_dict = pro_db.find_one({"interface_name": interface_name})
         except Exception as e:
@@ -1401,12 +1425,12 @@ def get_case_by_name(request_json, pro_name):
     return exist_case_dict
 
 
-def get_case_by_id(request_args, pro_name, db_tag):
+def get_case_by_id(request_args, pro_name, table_tag):
     """
     通过id获取用例（填充编辑弹层）
     :param request_args:
     :param pro_name:
-    :param db_tag:  _case | _result
+    :param table_tag:  _case | _result
     :return:
       【 字 段 格 式 】
       01.接口名称：interface_name（ 必填 ）
@@ -1438,7 +1462,7 @@ def get_case_by_id(request_args, pro_name, db_tag):
     """
     _id = request_args.get("_id", "").strip()
     query_dict = {"_id": ObjectId(_id)}
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + db_tag) as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + table_tag) as pro_db:
         try:
             test_case_dict = pro_db.find_one(query_dict)
         except Exception as e:
@@ -1472,7 +1496,7 @@ def statis_case(pro_name):
         {"success_1":[], "fail_2":[], "error_1":[], "depend_2":[], "offline_3":[]}
     """
     # 获取所有用例
-    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_case") as pro_db:
+    with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CASE) as pro_db:
         try:
             all_cursor = pro_db.find({}, {"_id": 0})
         except Exception as e:
@@ -1521,7 +1545,7 @@ def statis_case(pro_name):
     return statis_dict
 
 
-def generate_report_with_statis_case(pro_name):
+def generate_excel_with_statis_case(pro_name):
     """
     生成测试报告 ( Excel )
     :param pro_name:
@@ -1623,4 +1647,4 @@ if __name__ == "__main__":
     # generate_report_with_statis_case("pro_demo_1")
     # print(get_statist_data("pro_demo_1"))
 
-    screen_test_time_by_run_type("pro_demo_1", "manual")
+    clear_test_result("pro_demo_1", 0.16)

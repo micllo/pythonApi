@@ -288,7 +288,7 @@
                                                 </div>
                                             </div>
                                             {# 搜索 条数 #}
-                                            <div class="col-sm-1" align="center" style="color:#5B00AE; line-height:35px; font-size:20px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
+                                            <div class="col-sm-1" align="center" style="color:#3A006F; line-height:35px; font-size:20px;" id="search_case_num">共 {{ statist_data['depend'] + statist_data['test'] }} 条</div>
 
                                             {# 测试 按钮 #} {# 执行 结果 #}
                                             {% if is_run %}
@@ -320,15 +320,15 @@
                                             <table class="table table-striped">
                                                 <thead>
                                                 <tr>
-                                                    <th>接口名称</th>
-                                                    <th class="text-center">请求方式</th>
-                                                    <th>接口地址</th>
-                                                    <th>验证关键字段</th>
-                                                    <th class="text-center">验证模式</th>
-                                                    <th class="text-center">用例状态</th>
-                                                    <th class="text-center">测试结果</th>
-                                                    <th class="text-center">上次测试时间</th>
-                                                    <th class="text-center">操作</th>
+                                                    <th style="font-size:18px;">接口名称</th>
+                                                    <th style="font-size:18px;" class="text-center">请求方式</th>
+                                                    <th style="font-size:18px;">接口地址</th>
+                                                    <th style="font-size:18px;">验证关键字段</th>
+                                                    <th style="font-size:18px;" class="text-center">验证模式</th>
+                                                    <th style="font-size:18px;" class="text-center">用例状态</th>
+                                                    <th style="font-size:18px;" class="text-center">测试结果</th>
+                                                    <th style="font-size:18px;" class="text-center">上次测试时间</th>
+                                                    <th style="font-size:18px;" class="text-center">操作</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody id="case_tbody">
@@ -355,32 +355,32 @@
                                                     <tr>
                                                         {# 接口名称（测试信息） #}
                                                         {% if is_depend %}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#BB5E00">(依赖)</font></td>
+                                                            <td style="width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#show_depend_response_info">{{ interface_name }} <font color="#BB5E00">(依赖)</font></td>
                                                         {% else %}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#show_test_response_info">{{ interface_name }}</td>
+                                                            <td style="width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;" onclick="show_response_info('{{ pro_name }}','{{ nginx_api_proxy }}', '{{ _id }}', '_case')" data-toggle="modal" data-target="#show_test_response_info">{{ interface_name }}</td>
                                                         {% endif %}
 
                                                         {# 请求方式（请求头文件）#}
-                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求头文件" data-content="{{ request_header }}">{{ request_method }}</td>
+                                                        <td class="text-center" style="width: 100px; color:#4D0000; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求头文件" data-content="{{ request_header }}">{{ request_method }}</td>
                                                         {# 接口地址（请求参数）#}
-                                                        <td style="width: 200px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
+                                                        <td style="width: 200px; color:#4D0000; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="请求参数" data-content="{{ request_params }}">{{ interface_url }}</td>
 
                                                         {% if is_depend %}
                                                             {# 依赖字段值（依赖的字段名列表、依赖的字段值列表）#}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="字段名：{{ depend_field_name_list }}" data-content="字段值：{{ depend_field_value_list }}"><span style="font-size:14px" class="label label-info">依 赖 字 段 值</span></td>
+                                                            <td style="width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="字段名：{{ depend_field_name_list }}" data-content="字段值：{{ depend_field_value_list }}"><span style="font-size:14px" class="label label-info">依 赖 字 段 值</span></td>
                                                             {# 依赖等级 #}
-                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">依赖等级：{{ depend_level }}</td>
+                                                            <td class="text-center" style="width: 100px; color:#4D0000; display:table-cell; vertical-align:middle;">依赖等级：{{ depend_level }}</td>
                                                         {% else %}
                                                             {# 验证关键字段（期望的关键字段值）#}
-                                                            <td style="width: 150px; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value_list }}">{{ compare_core_field_name_list }}</td>
+                                                            <td style="width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-container="body" title="期望的关键字段值" data-content="{{ expect_core_field_value_list }}">{{ compare_core_field_name_list }}</td>
                                                             {# 验证模式（期望的响应字段列表）#}
-                                                            <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">
+                                                            <td class="text-center" style="width: 100px; color:#4D0000; display:table-cell; vertical-align:middle;">
                                                                 {% if verify_mode == 1 %} 仅关键字段 {% else %} 关键字段+响应字段列表 {% endif %}
                                                             </td>
                                                         {% endif %}
 
                                                         {# 用例状态 #}
-                                                        <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;" onclick="update_case_status('{{pro_name}}','{{nginx_api_proxy}}','{{_id}}')" id="case_status_{{_id}}">
+                                                        <td class="text-center" style="width:100px; color:#4D0000; display:table-cell; vertical-align:middle;" onclick="update_case_status('{{pro_name}}','{{nginx_api_proxy}}','{{_id}}')" id="case_status_{{_id}}">
                                                         {% if case_status %}
                                                             <font color="#00A600">上线</font>
                                                         {% else %}
@@ -415,7 +415,7 @@
                                                         </td>
 
                                                         {# 上次执行时间 #}
-                                                        <td class="text-center" style="width: 150px; display:table-cell; vertical-align:middle;">{{ exec_time }}</td>
+                                                        <td class="text-center" style="width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;">{{ exec_time }}</td>
 
                                                         {# 操作 #}
                                                         <td class="text-center" style="width: 100px; display:table-cell; vertical-align:middle;">

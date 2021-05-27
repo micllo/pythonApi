@@ -29,19 +29,19 @@ function exec_import(pro_name, nginx_api_proxy){
                 var response_info = request_interface_url_v2(url=request_url, method="POST", data=file_data, async=false, is_file=true);
                 if(response_info == "请求失败"){
                     swal({text: response_info, type: "error", confirmButtonText: "知道了"});
-                    $("#exec_result").html(response_info);
-                    $("#exec_result").removeClass().addClass("label label-danger");
+                    // $("#import_result").html(response_info);
+                    // $("#import_result").removeClass().addClass("label label-danger");
                 }else{
                     var msg = response_info.msg;
                     if (msg.search("成功") != -1){
                         swal({text: msg, type: "success", confirmButtonText: "知道了"});
-                        $("#exec_result").html(msg);
-                        $("#exec_result").removeClass().addClass("label label-success");
+                        // $("#import_result").html(msg);
+                        // $("#import_result").removeClass().addClass("label label-success");
                         setTimeout(function(){location.reload();}, 2000);
                     }else{
                         swal({text: msg, type: "error", confirmButtonText: "知道了"});
-                        $("#exec_result").html(msg);
-                        $("#exec_result").removeClass().addClass("label label-warning");
+                        // $("#import_result").html(msg);
+                        // $("#import_result").removeClass().addClass("label label-warning");
                         if (msg.search("运行中") != -1){
                             setTimeout(function(){location.reload();}, 2000);
                         }
@@ -73,7 +73,7 @@ function export_result(pro_name, nginx_api_proxy) {
     }).then(function(isConfirm){
         if (isConfirm) {
             // 调用ajax请求(同步)
-            var request_url = "/" + nginx_api_proxy + "/API/generate_report/" + pro_name
+            var request_url = "/" + nginx_api_proxy + "/API/generate_excel/" + pro_name
             var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
             if(response_info != "请求失败"){
                 var msg = response_info.msg;
@@ -428,27 +428,27 @@ function search_case(pro_name, nginx_api_proxy) {
 
             // 接口名称（测试信息）
             if(is_depend){
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#BB5E00\"> (依赖) </font></td>";
+                tr_html += "<td style=\"width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#show_depend_response_info\">" + interface_name + "<font color=\"#BB5E00\"> (依赖) </font></td>";
             }else{
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#show_test_response_info\">" + interface_name + "</td>";
+                tr_html += "<td style=\"width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;\" onclick=\"show_response_info('" + pro_name + "','" + nginx_api_proxy + "','" + _id + "','_case')\" data-toggle=\"modal\" data-target=\"#show_test_response_info\">" + interface_name + "</td>";
             }
 
             // 请求方式（请求头文件）
-            tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>";
+            tr_html += "<td class=\"text-center\" style=\"width: 100px; color:#4D0000; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求头文件\" data-content=\"" + request_header + "\">" + request_method + "</td>";
 
             // 接口地址（请求参数）
-            tr_html += "<td style=\"width: 200px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>";
+            tr_html += "<td style=\"width: 200px; color:#4D0000; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"请求参数\" data-content=\"" + request_params + "\">" + interface_url + "</td>";
 
             if(is_depend){
                 // 依赖字段值（依赖的字段名列表、依赖的字段值列表）
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"字段名：" + depend_field_name_list + "\" data-content=\"字段值：" + depend_field_value_list + "\"><span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-info\">依 赖 字 段 值</span></td>";
+                tr_html += "<td style=\"width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"字段名：" + depend_field_name_list + "\" data-content=\"字段值：" + depend_field_value_list + "\"><span id=\"exec_result\" style=\"font-size:14px\" class=\"label label-info\">依 赖 字 段 值</span></td>";
                 // 依赖等级
-                tr_html += "<td class=\"text-center\"  style=\"width: 100px; display:table-cell; vertical-align:middle;\">依赖等级：" + depend_level + "</td>";
+                tr_html += "<td class=\"text-center\"  style=\"width: 100px; color:#4D0000; display:table-cell; vertical-align:middle;\">依赖等级：" + depend_level + "</td>";
             }else{
                 // 验证关键字段（期望的关键字段值）
-                tr_html += "<td style=\"width: 150px; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>";
+                tr_html += "<td style=\"width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;\" data-toggle=\"popover\" data-trigger=\"hover\" data-placement=\"bottom\" data-container=\"body\" title=\"期望的关键字段值\" data-content=\"" + expect_core_field_value_list + "\">" + compare_core_field_name_list + "</td>";
                 // 验证模式
-                tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
+                tr_html += "<td class=\"text-center\" style=\"width: 100px; color:#4D0000; display:table-cell; vertical-align:middle;\">";
                 if(verify_mode == 1){
                     tr_html += "仅关键字段</td>";
                 }else{
@@ -489,7 +489,7 @@ function search_case(pro_name, nginx_api_proxy) {
                 }
             }
             // 上次执行时间
-            tr_html += "<td class=\"text-center\" style=\"width: 150px; display:table-cell; vertical-align:middle;\">" + exec_time + "</td>";
+            tr_html += "<td class=\"text-center\" style=\"width: 150px; color:#4D0000; display:table-cell; vertical-align:middle;\">" + exec_time + "</td>";
 
             // 操作
             tr_html += "<td class=\"text-center\" style=\"width: 100px; display:table-cell; vertical-align:middle;\">";
@@ -725,10 +725,10 @@ function get_current_case(pro_name, nginx_api_proxy) {
 /**
  *  填充编辑弹框（ 编辑之前 ）
  */
-function fill_edit_frame(pro_name, nginx_api_proxy, _id, db_tag) {
+function fill_edit_frame(pro_name, nginx_api_proxy, _id, table_tag) {
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "/" + db_tag + "?_id=" + _id
+    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "/" + table_tag + "?_id=" + _id
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case = response_info.test_case
@@ -831,10 +831,10 @@ function edit_case(pro_name, nginx_api_proxy) {
 /**
  *  显示接口响应信息
  */
-function show_response_info(pro_name, nginx_api_proxy, _id, db_tag) {
+function show_response_info(pro_name, nginx_api_proxy, _id, table_tag) {
 
     // 调用ajax请求(同步)
-    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "/" + db_tag + "?_id=" + _id
+    var request_url = "/" + nginx_api_proxy + "/API/get_case_by_id/" + pro_name + "/" + table_tag + "?_id=" + _id
     var response_info = request_interface_url_v2(url=request_url, method="GET", async=false);
     if(response_info != "请求失败"){
         var test_case = response_info.test_case
