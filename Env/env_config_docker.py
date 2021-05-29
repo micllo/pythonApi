@@ -6,7 +6,8 @@ REPORTS_DIR = "/opt/project/reports/"
 
 # 服务器地址
 # SERVER_IP_PORT = "192.168.3.102"  #  MERCURY_1602
-SERVER_IP = "192.168.31.9"  # Demba Ba_5G
+SERVER_IP = "192.168.31.9"  # Demba Ba
+# SERVER_IP = "192.168.31.198"  # 旧 mac Demba Ba
 
 # Nginx 端口
 NGINX_PORT = "1180"
@@ -19,6 +20,7 @@ REPORT_PATH = "/test_report/"
 
 # Mongo 地址
 MONGODB_ADDR = "192.168.31.9:27077"
+# MONGODB_ADDR = "192.168.31.198:27077"  # 旧 mac Demba Ba
 
 # 上传的临时用例目录
 UPLOAD_CASE_DIR = "/opt/project/tmp/"
