@@ -140,7 +140,7 @@ def run_test_by_pro(host, pro_name, run_type):
 
     if run_type == "cron":
         if get_cron_status(pro_name):
-            host, error_msg = get_host_url(pro_name, host)
+            host = get_host_url(pro_name, host)
         else:
             log.info("\n\n========================== 定 时 测 试 任 务 已 关 闭 ==========================\n\n")
             return "定时任务已关闭"
@@ -710,13 +710,15 @@ def get_config_info_for_result(pro_name, last_test_time):
 
 def get_host_url(pro_name, host_name):
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + "_config") as pro_db:
+        host_url = ""
         try:
             host_dict = pro_db.find_one({"config_type": "host", "config_name": host_name})
-            host_url = host_dict.get("config_value")
-            return host_url, ""
+            if host_dict:
+                host_url = host_dict.get("config_value", "")
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目 host_url")
-            return "", "获取host_url失败"
+        finally:
+            return host_url
 
 
 def get_test_case(pro_name, table_tag, last_test_time=None):

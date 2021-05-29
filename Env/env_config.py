@@ -17,8 +17,8 @@ NGINX_API_PROXY = "api_local"
 # 测试报告路径
 REPORT_PATH = "/test_report_local/"
 
-# Mongo 端口
-MONGO_PORT = "27017"
+# Mongo 地址
+MONGODB_ADDR = SERVER_IP + ":27017"
 
 # 上传的临时用例目录
 UPLOAD_CASE_DIR = "/Users/micllo/Documents/works/GitHub/pythonApi/tmp/"
@@ -34,7 +34,6 @@ API_ADDR = SERVER_IP + ":" + NGINX_PORT + "/" + NGINX_API_PROXY
 BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_PATH
 
 # mongo 数据库
-MONGODB_ADDR = SERVER_IP + ":" + MONGO_PORT
 MONGODB_DATABASE = "api_auto_test"
 TABLE_CASE = "_case"
 TABLE_CONFIG = "_config"

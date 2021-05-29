@@ -17,8 +17,8 @@ NGINX_API_PROXY = "api"
 # 测试报告路径
 REPORT_PATH = "/test_report/"
 
-# Mongo 端口（ docker 多项目需要映射不同的端口 ）
-MONGO_PORT = "27037"
+# Mongo 地址
+MONGODB_ADDR = "192.168.31.9:27077"
 
 # 上传的临时用例目录
 UPLOAD_CASE_DIR = "/opt/project/tmp/"
@@ -33,8 +33,7 @@ API_ADDR = SERVER_IP + ":" + NGINX_PORT + "/" + NGINX_API_PROXY
 # 测试报告地址
 BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_PATH
 
-# mongo 数据库
-MONGODB_ADDR = SERVER_IP + ":" + MONGO_PORT
+# Mongo 数据库
 MONGODB_DATABASE = "api_auto_test"
 TABLE_CASE = "_case"
 TABLE_CONFIG = "_config"
