@@ -1,0 +1,10 @@
+{
+  "bootstrap.min.js": "bootstrap-4becdc9104.min.js",
+  "common.js": "common-afd42073e5.js",
+  "dataTables.bootstrap.js": "dataTables-2be5d77c55.bootstrap.js",
+  "jquery.dataTables.js": "jquery-8f77d5ae3f.dataTables.js",
+  "jquery.min.js": "jquery-4a356126b9.min.js",
+  "project.js": "project-fdaa5c0938.js",
+  "report.js": "report-cc5d6bd04b.js",
+  "sweetalert.min.js": "sweetalert-73703859f8.min.js"
+}

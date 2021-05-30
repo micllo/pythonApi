@@ -95,20 +95,22 @@ def set_pro_run_status(pro_name, run_status=False):
             return "mongo error"
 
 
-def get_cron_status(pro_name):
+def get_run_type_status(pro_name, run_type):
     """
-    获取定时任务状态
+    获取 运行方式 任务状态
     :param pro_name:
+    :param run_type: cron | deploy
     :return:
     """
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
-            query_dict = {"config_name": "cron_status"}
+            query_dict = {"config_name": run_type}
             result = pro_db.find_one(query_dict)
             cron_status = result.get("config_value")
             return cron_status
         except Exception as e:
-            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目定时任务状态")
+            run_type_name = run_type == "cron" and "定时任务" or "部署测试"
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目" + run_type_name + "状态")
             return "mongo error"
 
 
@@ -117,7 +119,7 @@ def run_test_by_pro(host, pro_name, run_type):
     运行测试
     :param host：手动执行传入 host_url，定时任务传入 host_name
     :param pro_name:
-    :param run_type: 运行方式：定时 cron、手动 manual
+    :param run_type: 运行方式：manual | cron | deploy
     :return:
         1.<判断>相关信息
            host是否可以ping通
@@ -137,13 +139,13 @@ def run_test_by_pro(host, pro_name, run_type):
         6.异步执行 接口测试
     """
     error_msg = ""
-
-    if run_type == "cron":
-        if get_cron_status(pro_name):
+    run_type_name = run_type == "cron" and "定 时 任 务" or (run_type == "deploy" and "部 署 测 试" or "手 动 执 行")
+    if run_type in ["cron", "deploy"]:
+        if get_run_type_status(pro_name, run_type):
             host = get_host_url(pro_name, host)
         else:
-            log.info("\n\n========================== 定 时 测 试 任 务 已 关 闭 ==========================\n\n")
-            return "定时任务已关闭"
+            log.info("\n\n========================== " + run_type_name + " 已 关 闭 ==========================\n\n")
+            return run_type + "任务已关闭"
     if is_null(pro_name):
         error_msg = "项目名不能为空"
     elif is_null(host):
@@ -154,8 +156,8 @@ def run_test_by_pro(host, pro_name, run_type):
         error_msg = "本地无法 ping 通 HOST"
 
     if error_msg:
-        if run_type == "cron":
-            text = "#### '" + pro_name + "'项目 定时任务执行 提示：" + error_msg
+        if run_type in ["cron", "deploy"]:
+            text = "#### '" + pro_name + "'项目 " + run_type_name + " 执 行 提 示：" + error_msg
             send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
         return error_msg
 
@@ -196,7 +198,7 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
     :param depend_interface_list:
     :param test_interface_list:
     :param global_variable_dict:
-    :param run_type:
+    :param run_type:  manual | cron | gitlab
     :return:
 
         【 测 试 流 程 】
@@ -272,9 +274,9 @@ def test_interface(pro_name, host, depend_interface_list, test_interface_list, g
 
     # 7.若存在'失败'或'错误'则发送钉钉
     if fail_list:
-        api_monitor_send_DD(pro_name=pro_name, wrong_type="fail")
+        api_monitor_send_DD(pro_name=pro_name, run_type=run_type, test_time=update_time, wrong_type="fail")
     elif error_list:
-        api_monitor_send_DD(pro_name=pro_name, wrong_type="error")
+        api_monitor_send_DD(pro_name=pro_name, run_type=run_type, test_time=update_time, wrong_type="error")
 
 
 def save_test_result(pro_name, host, global_variable_dict, run_type):
@@ -358,22 +360,22 @@ def update_case_status(pro_name, _id):
             return "mongo error"
 
 
-def update_cron_status(pro_name):
+def update_run_type_status(pro_name, run_type):
     """
-    更新定时任务状态
+    更新 运行方式 任务状态
     :param pro_name:
-    :param _id:
+    :param run_type: cron | deploy
     :return:
     """
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
-            query_dict = {"config_name": "cron_status"}
+            query_dict = {"config_name": run_type}
             result = pro_db.find_one(query_dict)
-            old_cron_status = result.get("config_value")
-            new_cron_status = bool(1 - old_cron_status)  # 布尔值取反
-            update_dict = {"$set": {"config_value": new_cron_status}}
+            old_run_type_status = result.get("config_value")
+            new_run_type_status = bool(1 - old_run_type_status)  # 布尔值取反
+            update_dict = {"$set": {"config_value": new_run_type_status}}
             pro_db.update_one(query_dict, update_dict)
-            return new_cron_status
+            return new_run_type_status
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="更新'" + pro_name + "'项目定时任务状态")
             return "mongo error"
@@ -661,6 +663,7 @@ def get_config_info(pro_name):
     host_list = []
     global_variable_list = []
     cron_status = False
+    deploy_status = False
     with MongodbUtils(ip=cfg.MONGODB_ADDR, database=cfg.MONGODB_DATABASE, collection=pro_name + cfg.TABLE_CONFIG) as pro_db:
         try:
             host_results_cursor = pro_db.find({})
@@ -678,13 +681,15 @@ def get_config_info(pro_name):
                     global_variable_dict["global_variable_value"] = str(res.get("config_value"))
                     global_variable_list.append(global_variable_dict)
                 else:  # status
-                    if res.get("config_name") == "cron_status":
+                    if res.get("config_name") == "cron":
                         cron_status = res.get("config_value")
+                    if res.get("config_name") == "deploy":
+                        deploy_status = res.get("config_value")
         except Exception as e:
             mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目配置列表")
             return []
         finally:
-            return host_list, global_variable_list, cron_status
+            return host_list, global_variable_list, cron_status, deploy_status
 
 
 def get_config_info_for_result(pro_name, last_test_time):
@@ -810,7 +815,7 @@ def get_test_time_list(pro_name):
 def screen_test_time_by_run_type(pro_name, run_type):
     """
     通过'运行方式' 筛选出对应 '测试时间'列表
-    :param run_type: all | cron | manual
+    :param run_type: all | cron | manual | deploy
     :return:
     """
     test_time_list = []

@@ -14,8 +14,8 @@ NGINX_PORT = "7060"
 # Nginx中的接口反向代理名称
 NGINX_API_PROXY = "api_local"
 
-# 测试报告路径
-REPORT_PATH = "/test_report_local/"
+# 测试报告路径(Excel)
+REPORT_EXCEL_PATH = "/test_report_local/"
 
 # Mongo 地址
 MONGODB_ADDR = SERVER_IP + ":27017"
@@ -30,8 +30,11 @@ UPLOAD_CASE_DIR = "/Users/micllo/Documents/works/GitHub/pythonApi/tmp/"
 # 接口地址( uwsgi )
 API_ADDR = SERVER_IP + ":" + NGINX_PORT + "/" + NGINX_API_PROXY
 
-# 测试报告地址
-BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_PATH
+# 测试报告地址(Excel)
+BASE_REPORT_EXCEL_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_EXCEL_PATH
+
+# 测试报告地址(HTML)
+TEST_REPORT_URL = API_ADDR + "/API/get_test_report/"
 
 # mongo 数据库
 MONGODB_DATABASE = "api_auto_test"

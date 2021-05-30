@@ -6,8 +6,8 @@ REPORTS_DIR = "/opt/project/reports/"
 
 # 服务器地址
 # SERVER_IP_PORT = "192.168.3.102"  #  MERCURY_1602
-SERVER_IP = "192.168.31.9"  # Demba Ba
-# SERVER_IP = "192.168.31.198"  # 旧 mac Demba Ba
+# SERVER_IP = "192.168.31.9"  # Demba Ba
+SERVER_IP = "192.168.31.198"  # 旧 mac Demba Ba
 
 # Nginx 端口
 NGINX_PORT = "1180"
@@ -15,12 +15,12 @@ NGINX_PORT = "1180"
 # Nginx中的接口反向代理名称
 NGINX_API_PROXY = "api"
 
-# 测试报告路径
-REPORT_PATH = "/test_report/"
+# 测试报告路径(Excel)
+REPORT_EXCEL_PATH = "/test_report/"
 
 # Mongo 地址
-MONGODB_ADDR = "192.168.31.9:27077"
-# MONGODB_ADDR = "192.168.31.198:27077"  # 旧 mac Demba Ba
+# MONGODB_ADDR = "192.168.31.9:27077"
+MONGODB_ADDR = "192.168.31.198:27077"  # 旧 mac Demba Ba
 
 # 上传的临时用例目录
 UPLOAD_CASE_DIR = "/opt/project/tmp/"
@@ -32,8 +32,11 @@ UPLOAD_CASE_DIR = "/opt/project/tmp/"
 # 接口地址( uwsgi )
 API_ADDR = SERVER_IP + ":" + NGINX_PORT + "/" + NGINX_API_PROXY
 
-# 测试报告地址
-BASE_REPORT_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_PATH
+# 测试报告地址(Excel)
+BASE_REPORT_EXCEL_PATH = "http://" + SERVER_IP + ":" + NGINX_PORT + REPORT_EXCEL_PATH
+
+# 测试报告地址(HTML)
+TEST_REPORT_URL = API_ADDR + "/API/get_test_report/"
 
 # Mongo 数据库
 MONGODB_DATABASE = "api_auto_test"

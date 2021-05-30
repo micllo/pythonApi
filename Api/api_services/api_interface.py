@@ -35,9 +35,10 @@ def get_test_case_info(pro_name):
     result_dict["pro_name"] = pro_name
     result_dict["test_case_list"], result_dict["is_run"] = get_test_case(pro_name=pro_name, table_tag=cfg.TABLE_CASE)
     result_dict["statist_data"] = get_statist_data_for_case(pro_name)
-    result_dict["host_list"], result_dict["global_variable_list"], result_dict["cron_status"] = get_config_info(pro_name)
-    result_dict["current_report_url"] = cfg.BASE_REPORT_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
-    result_dict["history_report_path"] = cfg.BASE_REPORT_PATH + pro_name + "/history/"
+    result_dict["host_list"], result_dict["global_variable_list"], \
+    result_dict["cron_status"], result_dict["deploy_status"] = get_config_info(pro_name)
+    result_dict["current_report_url"] = cfg.BASE_REPORT_EXCEL_PATH + pro_name + "/[API_report]" + pro_name + ".xls"
+    result_dict["history_report_path"] = cfg.BASE_REPORT_EXCEL_PATH + pro_name + "/history/"
     return render_template('project.html', tasks=result_dict)
 
 
@@ -57,12 +58,40 @@ def get_test_report(pro_name):
     return render_template('report.html', tasks=result_dict)
 
 
+# http://192.168.31.198:1180/api/API/exec/deploy/docker/pro_demo_1
+@flask_app.route("/API/exec/<run_type>/<host_tag>/<pro_name>", methods=["GET"])
+def exec_test(pro_name, run_type, host_tag):
+    """
+    执行测试
+    :param pro_name：
+    :param run_type：运行方式 manual | cron | deploy
+    :param host_tag：HOST标记 local | docker
+    :return:
+    """
+    res_info = dict()
+    res_info["msg"] = run_test_by_pro(host=host_tag, pro_name=pro_name, run_type=run_type)
+    return json.dumps(res_info, ensure_ascii=False)
+
+
+@flask_app.route("/API/run_test/<pro_name>", methods=["POST"])
+def run_test(pro_name):
+    """
+    运行测试
+    :param pro_name
+    :return:
+    """
+    res_info = dict()
+    host = request.json.get("host", "").strip()
+    res_info["msg"] = run_test_by_pro(host=host, pro_name=pro_name, run_type="manual")
+    return json.dumps(res_info, ensure_ascii=False)
+
+
 @flask_app.route("/API/screen_test_time/<pro_name>", methods=["GET"])
 def screen_test_time(pro_name):
     """
     通过'运行方式' 筛选 '测试时间'列表
     :param pro_name
-    :param run_type: all | cron | manual
+    :param run_type: all | cron | manual | deploy
     :return:
     """
     res_info = dict()
@@ -125,19 +154,6 @@ def get_run_status(pro_name):
     return json.dumps(res_info, ensure_ascii=False)
 
 
-@flask_app.route("/API/run_test/<pro_name>", methods=["POST"])
-def run_test(pro_name):
-    """
-    运行测试
-    :param pro_name
-    :return:
-    """
-    res_info = dict()
-    host = request.json.get("host", "").strip()
-    res_info["msg"] = run_test_by_pro(host=host, pro_name=pro_name, run_type="manual")
-    return json.dumps(res_info, ensure_ascii=False)
-
-
 @flask_app.route("/API/set_case_status_all/<pro_name>/<case_status>", methods=["GET"])
 def set_case_status_all(pro_name, case_status):
     """
@@ -181,20 +197,21 @@ def set_case_status(pro_name, _id):
     return json.dumps(re_dict, ensure_ascii=False)
 
 
-@flask_app.route("/API/set_cron_status/<pro_name>", methods=["GET"])
-def set_cron_status(pro_name):
+@flask_app.route("/API/set_run_type_status/<pro_name>/<run_type>", methods=["GET"])
+def set_run_type_status(pro_name, run_type):
     """
-    修改定时任务状态
+    修改 运行方式 任务状态
     :param pro_name:
+    :param run_type: cron | deploy
     :return:
     """
-    new_cron_status = None
+    new_run_type_status = None
     if is_null(pro_name):
         msg = PARAMS_NOT_NONE
     else:
-        new_cron_status = update_cron_status(pro_name)
-        msg = new_cron_status == "mongo error" and MONGO_CONNECT_FAIL or UPDATE_SUCCESS
-    re_dict = interface_template(msg, {"pro_name": pro_name, "new_case_status": new_cron_status})
+        new_run_type_status = update_run_type_status(pro_name, run_type)
+        msg = new_run_type_status == "mongo error" and MONGO_CONNECT_FAIL or UPDATE_SUCCESS
+    re_dict = interface_template(msg, {"pro_name": pro_name, "new_run_type_status": new_run_type_status})
     return json.dumps(re_dict, ensure_ascii=False)
 
 

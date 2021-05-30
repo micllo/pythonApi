@@ -155,14 +155,19 @@ def mongo_exception_send_DD(e, msg):
     send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=title, text=text, at_phones=cfg.DD_AT_FXC, is_at_all=False)
 
 
-def api_monitor_send_DD(pro_name, wrong_type):
+def api_monitor_send_DD(pro_name, run_type, test_time, wrong_type):
     """
     接口监控 发钉钉
     :param pro_name:
+    :param run_type:  manual | cron | deploy
+    :param test_time:
     :param wrong_type: error、fail
     :return:
     """
-    text = "#### [API]'" + pro_name + "'项目存在 '" + wrong_type + "' 的用例"
+    run_type_name = run_type == "cron" and "定 时 任 务" or (run_type == "deploy" and "部 署 测 试" or "手 动 执 行")
+    text = "#### ****[API]'" + pro_name + "'项目存在 '" + wrong_type + "' 的用例****\n\n****测试时间：**** " + \
+           str(test_time) + "\n\n****运行方式：**** " + run_type_name + "\n\n****报告地址：**** [http://" + \
+           cfg.TEST_REPORT_URL + pro_name + "](http://" + cfg.TEST_REPORT_URL + pro_name + ")"
     if wrong_type == "fail":
         send_DD(dd_group_id=cfg.DD_MONITOR_GROUP, title=pro_name, text=text, is_at_all=True)
     else:

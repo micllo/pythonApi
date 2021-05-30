@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="utf-8">
+        <title>API测试平台</title>
+        {% set nginx_api_proxy = tasks['nginx_api_proxy'] %}
+        {% set api_addr = tasks['api_addr'] %}
+        {% set pro_name_list = tasks['pro_name_list'] %}
+        {% set pro_num = tasks['pro_num'] %}
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <link href="/{{nginx_api_proxy}}/Build/css/bootstrap-c3f6119851.min.css" rel="stylesheet">
+        <script src="/{{nginx_api_proxy}}/Build/scripts/jquery-4a356126b9.min.js" type="text/javascript"></script>
+        <script src="/{{nginx_api_proxy}}/Build/scripts/bootstrap-4becdc9104.min.js" type="text/javascript"></script>
+    </head>
+
+    <body>
+         <div class="container-fluid">
+             <div class="row clearfix">
+                 <div class="col-md-3 column"  align="center">
+                     {% for i in range(pro_num) %}
+                        <div class="jumbotron">
+                            <h4> 测试项目 {{ i + 1 }} </h4>
+                            <p><h5> 测 试 环 境 </h5></p>
+                            <p><a class="btn btn-primary btn-large" href="http://{{api_addr}}/API/get_project_case_info/{{ pro_name_list[i] }}">进 入</a></p>
+                        </div>
+                     {% endfor %}
+                 </div>
+             </div>
+         </div>
+    </body>
+</html>
+
+
