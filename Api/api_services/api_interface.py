@@ -91,7 +91,7 @@ def screen_test_time(pro_name):
     """
     通过'运行方式' 筛选 '测试时间'列表
     :param pro_name
-    :param run_type: all | cron | manual | deploy
+           run_type: all | cron | manual | deploy
     :return:
     """
     res_info = dict()
