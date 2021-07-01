@@ -3,11 +3,11 @@ import pymongo
 from Env import env_config as cfg
 
 """
-    【 Docker 项 目 配 置 】
-    1.在 Docker 中启动新项目时，需要创建 xxxx_config 数据库
+    【 新 项 目 配 置 】
+    1.添加新项目时，需要创建 xxxx_config 数据库
     2.为该数据库添加 添加 定时任务、部署测试 状态记录 
         {"config_type":"status", "config_name":"cron", "config_value": False}
-        {"config_type":"status", "config_name":"deploy", "config_value": False}
+        {"config_type":"status", "config_name":"deploy", "config_value": True}
 """
 
 
@@ -41,4 +41,5 @@ def create_collection(pro_name):
 
 if __name__ == '__main__':
 
-    create_collection("pro_demo_1")
+    # create_collection("pro_demo_1")
+    create_collection("deploy")

@@ -110,7 +110,7 @@ def get_run_type_status(pro_name, run_type):
             return cron_status
         except Exception as e:
             run_type_name = run_type == "cron" and "定时任务" or "部署测试"
-            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目" + run_type_name + "状态")
+            mongo_exception_send_DD(e=e, msg="获取'" + pro_name + "'项目'" + run_type_name + "'状态")
             return "mongo error"
 
 

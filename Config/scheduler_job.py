@@ -33,14 +33,14 @@ class Config(object):
         #     'seconds': 60
         #     # 生成Excel测试结果（测试使用）
         # },
-        {
-            'id': 'run_test',
-            'func': 'Api.api_services.api_calculate:run_test_by_pro',
-            'args': ["local", "pro_demo_1", "cron"],
-            'trigger': 'interval',
-            'seconds': 30
-            # 执行批量测试（测试使用）
-        },
+        # {
+        #     'id': 'run_test',
+        #     'func': 'Api.api_services.api_calculate:run_test_by_pro',
+        #     'args': ["local", "pro_demo_1", "cron"],
+        #     'trigger': 'interval',
+        #     'seconds': 30
+        #     # 执行批量测试（测试使用）
+        # },
         {
             'id': 'clear_excel_logs',
             'func': 'Api.api_services.api_calculate:clear_excel_logs',
